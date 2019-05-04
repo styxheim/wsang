@@ -1,7 +1,10 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
-    android:orientation="vertical">
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="fill_parent"
+	android:layout_height="fill_parent"
+	android:orientation="vertical"
+  android:onClick="startTimeOnClick">
 
 	<TableRow
 		android:id="@+id/start_row_time"
@@ -18,72 +21,80 @@
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
 			android:text="wgat\?"
-      android:padding="5dp"/>
+			android:padding="5dp"/>
 
-    <TextView
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"
-			android:text="wgat\?"
-			android:padding="5dp"/>
-    
-
-    <TextView
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"
-			android:text="wgat\?"
-			android:padding="5dp"/>
-   <TextView
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"
-			android:text="wgat\?"
-			android:padding="5dp"/>
-   <TextView
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"
-			android:text="wgat\?"
-			android:padding="5dp"/>
-   <TextView
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"
-			android:text="wgat\?"
-			android:padding="5dp"/>
-   <TextView
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"
-			android:text="wgat\?"
-			android:padding="5dp"/>
-   <TextView
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"
-			android:text="wgat\?"
-			android:padding="5dp"/>
-   <TextView
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"
-			android:text="wgat\?"
-			android:padding="5dp"/>
-   <TextView
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"
-			android:text="wgat\?"
-			android:padding="5dp"/>
-   <TextView
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"
-			android:text="wgat\?"
-			android:padding="5dp"/>
-   <TextView
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"
-			android:text="wgat\?"
-			android:padding="5dp"/>
-   <TextView
+		<TextView
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
 			android:text="wgat\?"
 			android:padding="5dp"/>
 
+		<TextView
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="wgat\?"
+			android:padding="5dp"/>
+
+		<TextView
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="wgat\?"
+			android:padding="5dp"/>
+
+		<TextView
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="wgat\?"
+			android:padding="5dp"/>
+
+		<TextView
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="wgat\?"
+			android:padding="5dp"/>
+
+		<TextView
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="wgat\?"
+			android:padding="5dp"/>
+
+		<TextView
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="wgat\?"
+			android:padding="5dp"/>
+
+		<TextView
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="wgat\?"
+			android:padding="5dp"/>
+
+		<TextView
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="wgat\?"
+			android:padding="5dp"/>
+
+		<TextView
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="wgat\?"
+			android:padding="5dp"/>
+
+		<TextView
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="wgat\?"
+			android:padding="5dp"/>
+
+		<TextView
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="wgat\?"
+			android:padding="5dp"/>
 
 	</TableRow>
-	
+
 </LinearLayout>
