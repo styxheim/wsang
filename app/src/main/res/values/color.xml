@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <color name="transparent">#00ffffff</color>
+
+  <color name="rowEven">#C8D2DD</color>
+  <color name="rowOdd">#169e1d</color>
+</resources>
