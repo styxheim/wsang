@@ -9,6 +9,10 @@
         android:resizeableActivity = "true"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+
+        <service
+            android:name=".MainService" />
+
         <activity
             android:name=".MainActivity"
             android:label="@string/app_name"

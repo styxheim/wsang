@@ -4,4 +4,7 @@
 
   <color name="rowEven">#C8D2DD</color>
   <color name="rowOdd">#169e1d</color>
+
+  <color name="notSynced">#E07C51</color>
+  <color name="Synced">#51E064</color>
 </resources>

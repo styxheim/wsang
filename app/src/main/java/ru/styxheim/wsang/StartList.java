@@ -79,7 +79,7 @@ public class StartList implements Iterable<StartRow>
     try {
       jw.beginArray();
       for( StartRow row: Rows ) {
-        row.saveJSON(jw);
+        row.saveJSON(jw, true /* system save */);
       }
       jw.endArray();
     } catch( Exception e ) {
@@ -139,7 +139,7 @@ public class StartList implements Iterable<StartRow>
 
       while( jr.hasNext() ) {
         StartRow row = new StartRow(-1);
-        row.loadJSON(jr);
+        row.loadJSON(jr, true /* system */);
         addRecord(row);
       }
 

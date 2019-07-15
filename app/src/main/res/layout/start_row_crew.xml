@@ -5,6 +5,10 @@
   android:layout_height="wrap_content">
 
   <TextView
+    android:id="@+id/start_row_synced"
+    android:padding="3dp"/>
+
+  <TextView
     android:id="@+id/start_row_crew_id"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"

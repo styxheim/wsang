@@ -11,8 +11,8 @@ public class StartRow
   public int lapId;
   public String startAt;
 
-  /* UI settings */
-  public boolean visible;
+  /* Sync settings */
+  public boolean synced = false;
 
   public StartRow(int rowId)
   {
@@ -24,33 +24,54 @@ public class StartRow
     return rowId;
   }
 
-  public void saveJSON(JsonWriter w) throws IOException
+  public String toString()
+  {
+    return "<Start " + 
+           "id='" + Integer.toString(this.rowId) + "'" +
+           "lapId='" + Integer.toString(this.lapId) + "'" +
+           "crewId='" + Integer.toString(this.crewId) + "'" +
+           "startTime='" + this.startAt + "'" +
+           ">";
+  }
+
+  public void saveJSON(JsonWriter w, boolean system) throws IOException
   {
     w.beginObject();
-    w.name("id").value(this.rowId);
-    w.name("crewId").value(this.crewId);
-    w.name("lapId").value(this.lapId);
-    w.name("start_time").value(this.startAt);
+    /* confusing names: for compatable with old WSA application */
+    w.name("lapId").value(this.rowId);
+    w.name("raceNumber").value(this.lapId);
+    w.name("crewNumber").value(this.crewId);
+    w.name("startTime").value(this.startAt);
+    w.name("isStarted").value(true);
+    if( system ) {
+      w.name("synced").value(this.synced);
+    }
     w.endObject();
   }
 
-  public void loadJSON(JsonReader r) throws IOException
+  public void loadJSON(JsonReader r, boolean system) throws IOException
   {
     r.beginObject();
     while( r.hasNext() ) {
       switch( r.nextName() ) {
-      case "id":
+      case "lapId":
         this.rowId = r.nextInt();
         break;
-      case "crewId":
-        this.crewId = r.nextInt();
-        break;
-      case "lapId":
+      case "raceNumber":
         this.lapId = r.nextInt();
         break;
-      case "start_time":
+      case "crewNumber":
+        this.crewId = r.nextInt();
+        break;
+      case "startTime":
         this.startAt = r.nextString();
         break;
+      case "synced":
+        if( system ) {
+          this.synced = r.nextBoolean();
+          break;
+        }
+        /* skip */
       default:
         r.skipValue();
       }
