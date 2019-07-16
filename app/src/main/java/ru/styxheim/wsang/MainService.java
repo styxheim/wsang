@@ -4,6 +4,16 @@ import android.app.*;
 import android.os.*;
 import android.content.*;
 import android.util.Log;
+import android.util.JsonWriter;
+import java.io.*;
+
+import org.apache.http.HttpResponse;
+import org.apache.http.entity.ByteArrayEntity;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.client.ClientProtocolException;
+
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -18,6 +28,8 @@ import org.greenrobot.eventbus.ThreadMode;
 public class MainService extends Service
 {
   private StartList starts;
+  private static final String LAPS_URL = "http://127.0.0.1:5000/api/laps/updatelaps";
+  private HttpClient client;
 
   @Override
   public void onCreate() {
@@ -25,6 +37,7 @@ public class MainService extends Service
     Log.i("wsa-ng", "service created");
     EventBus.getDefault().register(this);
     starts = new StartList();
+    client = HttpClientBuilder.create().build();
   }
 
   @Override
@@ -49,25 +62,63 @@ public class MainService extends Service
     super.onDestroy();
   }
 
+  private void _sync_row(StartRow row)
+  {
+    final byte[] body;
+
+    StringWriter sw = new StringWriter();
+    JsonWriter jw = new JsonWriter(sw);
+
+    try {
+      jw.beginArray();
+      row.saveJSON(jw, false /* not a system json */);
+      jw.endArray();
+
+      body = sw.toString().getBytes("utf-8");
+    } catch( Exception e ) {
+      e.printStackTrace();
+      row.errored = true;
+      return;
+    }
+
+    /* TODO: send query in another Thread */
+    HttpPost rq = new HttpPost(LAPS_URL);
+    rq.setHeader("User-Agent", "wsa-ng/1.0");
+    rq.setEntity(new ByteArrayEntity(body));
+
+    HttpResponse rs;
+    Log.i("wsa-ng", "sync url: " + LAPS_URL);
+    try {
+      rs = client.execute(rq);
+    } catch( ClientProtocolException e ) {
+      row.errored = true;
+      Log.e("wsa-ng", "sync " + row.toString() + " client errored: " + e.getMessage());
+      return;
+    } catch( IOException e ) {
+      row.errored = true;
+      Log.e("wsa-ng", "sync " + row.toString() + " io errored: " + e.getMessage());
+      return;
+    }
+    int rs_code = rs.getStatusLine().getStatusCode();
+
+    Log.i("wsa-ng", "sync " + row.toString() + "code: " + Integer.toString(rs_code));
+  }
 
   @Subscribe(threadMode = ThreadMode.MAIN)
   public void onEventMessage(EventMessage msg) {
-    /* TODO:
-     * 1. Read list
-     * 2. Get not synced rows
-     * 3. Sync
-     * 4. Send `Refresh Screen` message
-     */
     if( !msg.newData )
       return;
 
+    /* 1: read list */
     starts.Load(getApplicationContext());
     for( StartRow row : starts ) {
       if( row.synced )
         continue;
-      Log.i("wsa-ng", "sync: " + row.toString());
-      row.synced = true;
+      /* 2: get non-synced rows */
+      /* 3: sync */
+      _sync_row(row);
     }
+    /* 4: update screen */
     starts.Save(getApplicationContext());
     EventBus.getDefault().post(new EventMessage(true, false));
   }

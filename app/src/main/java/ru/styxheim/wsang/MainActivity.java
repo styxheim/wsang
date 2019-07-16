@@ -83,6 +83,9 @@ public class MainActivity extends Activity
         if( row.synced ) {
           s.setBackgroundResource(R.color.Synced);
         }
+        else if ( row.errored ) {
+          s.setBackgroundResource(R.color.errSync);
+        }
         else {
           s.setBackgroundResource(R.color.notSynced);
         }

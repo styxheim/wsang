@@ -13,6 +13,7 @@ public class StartRow
 
   /* Sync settings */
   public boolean synced = false;
+  public boolean errored = false;
 
   public StartRow(int rowId)
   {
@@ -44,7 +45,8 @@ public class StartRow
     w.name("startTime").value(this.startAt);
     w.name("isStarted").value(true);
     if( system ) {
-      w.name("synced").value(this.synced);
+      w.name("_synced").value(this.synced);
+      w.name("_errored").value(this.errored);
     }
     w.endObject();
   }
@@ -66,12 +68,22 @@ public class StartRow
       case "startTime":
         this.startAt = r.nextString();
         break;
-      case "synced":
+      case "_synced":
         if( system ) {
           this.synced = r.nextBoolean();
-          break;
         }
-        /* skip */
+        else {
+          r.skipValue();
+        }
+        break;
+      case "_errored":
+        if( system ) {
+          this.errored = r.nextBoolean();
+        }
+        else {
+          r.skipValue();
+        }
+        break;
       default:
         r.skipValue();
       }
