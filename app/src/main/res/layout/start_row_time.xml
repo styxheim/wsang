@@ -7,9 +7,16 @@
   android:onClick="startTimeOnClick">
 
   <TextView
+    android:id="@+id/start_row_time_view"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:text="00:00:00"
+    android:padding="5dp"/>
+  
+  <TextView
+    android:id="@+id/start_row_time_info"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
     android:padding="5dp"/>
 
 </TableRow>

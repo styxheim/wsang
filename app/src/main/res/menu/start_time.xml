@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+  android:id="@+id/start_time_menu">
+  <group android:title="111">
+      <item android:id="@+id/start_time_menu_title"
+            android:title="xxx"
+            android:checkable="false"
+            android:enabled="false"/>
+      <item android:id="@+id/start_time_menu_ten"
+            android:title="@string/ten_seconds_button"/>
+      <item android:id="@+id/start_time_menu_thiry"
+            android:title="@string/thirty_seconds_button"/>
+      <item android:id="@+id/start_time_menu_sixty"
+            android:title="@string/sixty_seconds_button"/>
+  </group>
+ </menu>

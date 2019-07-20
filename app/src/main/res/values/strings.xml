@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">WSA-ng</string>
+  <string name="app_name">WSA-ng</string>
 
+  <string name="ten_seconds_button">10 секунд</string>
+  <string name="thirty_seconds_button">30 секунд</string>
+  <string name="sixty_seconds_button">60 секунд</string>
+  <string name="cancel_button">Отмена</string>
+
+  <string name="timer_started">Обратный отсчёт уже запущен</string>
 </resources>

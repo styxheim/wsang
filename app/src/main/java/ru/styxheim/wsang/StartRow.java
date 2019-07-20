@@ -11,9 +11,13 @@ public class StartRow
   public int lapId;
   public String startAt;
 
-  /* Sync settings */
-  public boolean synced = false;
-  public boolean errored = false;
+  public static enum SyncState {
+    NONE,
+    ERROR,
+    SYNCED
+  };
+  
+  public SyncState state;
 
   public StartRow(int rowId)
   {
@@ -28,10 +32,10 @@ public class StartRow
   public String toString()
   {
     return "<Start " + 
-           "id='" + Integer.toString(this.rowId) + "'" +
-           "lapId='" + Integer.toString(this.lapId) + "'" +
-           "crewId='" + Integer.toString(this.crewId) + "'" +
-           "startTime='" + this.startAt + "'" +
+           " id='" + Integer.toString(this.rowId) + "'" +
+           " lapId='" + Integer.toString(this.lapId) + "'" +
+           " crewId='" + Integer.toString(this.crewId) + "'" +
+           " startTime='" + this.startAt + "'" +
            ">";
   }
 
@@ -45,8 +49,7 @@ public class StartRow
     w.name("startTime").value(this.startAt);
     w.name("isStarted").value(true);
     if( system ) {
-      w.name("_synced").value(this.synced);
-      w.name("_errored").value(this.errored);
+      w.name("_state").value(this.state.ordinal());
     }
     w.endObject();
   }
@@ -68,17 +71,9 @@ public class StartRow
       case "startTime":
         this.startAt = r.nextString();
         break;
-      case "_synced":
+      case "_state":
         if( system ) {
-          this.synced = r.nextBoolean();
-        }
-        else {
-          r.skipValue();
-        }
-        break;
-      case "_errored":
-        if( system ) {
-          this.errored = r.nextBoolean();
+          this.state = SyncState.values()[r.nextInt()];
         }
         else {
           r.skipValue();

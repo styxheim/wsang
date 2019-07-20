@@ -6,6 +6,7 @@ import android.content.*;
 import android.util.Log;
 import android.util.JsonWriter;
 import java.io.*;
+import android.widget.Toast;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.entity.ByteArrayEntity;
@@ -14,10 +15,11 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.client.ClientProtocolException;
 
-
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
+import android.icu.util.*;
+import android.widget.*;
 
 /* TODO:
  *  Receive message from MainActivity
@@ -30,14 +32,22 @@ public class MainService extends Service
   private StartList starts;
   private static final String LAPS_URL = "http://127.0.0.1:5000/api/laps/updatelaps";
   private HttpClient client;
+  private CountDownTimer timer;
+
+  public String _(String in) {
+    return "[" + android.os.Process.myTid() + "] " + in;
+  }
 
   @Override
   public void onCreate() {
     // The service is being created
-    Log.i("wsa-ng", "service created");
+    Log.i("wsa-ng", _("service created"));
     EventBus.getDefault().register(this);
     starts = new StartList();
     client = HttpClientBuilder.create().build();
+
+    /* Load data */
+    starts.Load(getApplicationContext());
   }
 
   @Override
@@ -48,18 +58,34 @@ public class MainService extends Service
   @Override
   public int onStartCommand(Intent intent, int flags, int startId) {
     // The service is starting, due to a call to startService()
-    Log.i("wsa-ng", "service got start command: flags=" +
-                          Integer.toString(flags) + " startId=" +
-                          Integer.toString(startId));
+    Log.i("wsa-ng", _("service got start command: flags= " +
+                      Integer.toString(flags) + " startId=" +
+                      Integer.toString(startId)));
+
+    _boot();
     return super.onStartCommand(intent, flags, startId);
   }
 
   @Override
   public void onDestroy() {
     EventBus.getDefault().unregister(this);
-    // The service is no longer used and is being destroyed
-    Log.i("wsa-ng", "service destroyed");
+
+    starts.Save(getApplicationContext());
+
+    Log.i("wsa-ng", _("service destroyed"));
     super.onDestroy();
+  }
+
+  private void _boot()
+  {
+    Log.i("wsa-ng", _("Begin boot"));
+
+    for( StartRow row : starts ) {
+      Log.d("wsa-ng", _("Post row: " + row.toString()));
+      EventBus.getDefault().post(new EventMessage(EventMessage.EventType.UPDATE, row));
+    }
+
+    Log.i("wsa-ng", _("Boot End"));
   }
 
   private void _sync_row(StartRow row)
@@ -77,7 +103,7 @@ public class MainService extends Service
       body = sw.toString().getBytes("utf-8");
     } catch( Exception e ) {
       e.printStackTrace();
-      row.errored = true;
+      row.state = StartRow.SyncState.ERROR;
       return;
     }
 
@@ -91,11 +117,11 @@ public class MainService extends Service
     try {
       rs = client.execute(rq);
     } catch( ClientProtocolException e ) {
-      row.errored = true;
+      row.state = StartRow.SyncState.ERROR;
       Log.e("wsa-ng", "sync " + row.toString() + " client errored: " + e.getMessage());
       return;
     } catch( IOException e ) {
-      row.errored = true;
+      row.state = StartRow.SyncState.ERROR;
       Log.e("wsa-ng", "sync " + row.toString() + " io errored: " + e.getMessage());
       return;
     }
@@ -103,23 +129,109 @@ public class MainService extends Service
 
     Log.i("wsa-ng", "sync " + row.toString() + "code: " + Integer.toString(rs_code));
   }
-
-  @Subscribe(threadMode = ThreadMode.MAIN)
-  public void onEventMessage(EventMessage msg) {
-    if( !msg.newData )
-      return;
-
-    /* 1: read list */
-    starts.Load(getApplicationContext());
-    for( StartRow row : starts ) {
-      if( row.synced )
-        continue;
-      /* 2: get non-synced rows */
-      /* 3: sync */
-      _sync_row(row);
+  
+  private void _event_new(Object none) {
+    StartRow last = starts.getRecord(-1);
+    if( last != null ) {
+     starts.addRecord(last.crewId + 1, last.lapId + 1, "00:00:00");
     }
-    /* 4: update screen */
+    else {
+      starts.addRecord(0, 0, "00:00:00");
+    }
+
+    last = starts.getRecord(-1);
+
     starts.Save(getApplicationContext());
-    EventBus.getDefault().post(new EventMessage(true, false));
+
+    EventBus.getDefault().post(new EventMessage(EventMessage.EventType.UPDATE, last));
+  }
+  
+  private void _timer_free()
+  {
+    if( timer == null )
+      return;
+      
+    timer.cancel();
+    timer = null;
+  }
+  
+  private void _event_countdown_start(EventMessage.CountDownMsg msg)
+  {
+    final Calendar cal = Calendar.getInstance();
+    final int lapId = msg.lapId;
+    
+    if( timer != null ) {
+      Toast toast = Toast.makeText(getApplicationContext(),
+                                   R.string.timer_started,
+                                   Toast.LENGTH_SHORT);
+      toast.show();
+      return;
+    }
+    
+    timer = new CountDownTimer(msg.leftMs * 1000, 1000) {
+      public void onTick(long left) {
+        EventMessage.CountDownMsg smsg = new EventMessage.CountDownMsg(lapId, left, 0);
+        
+        Log.d("wsa-ng", _("Tick: " + Long.toString(left) + " " +
+                          "msec: " + Long.toString(cal.getTimeInMillis())));
+        
+        EventBus.getDefault().post(new EventMessage(EventMessage.EventType.COUNTDOWN, smsg));
+      }
+      public void onFinish() {
+        long endAt = cal.getTimeInMillis();
+        EventMessage.CountDownMsg smsg = new EventMessage.CountDownMsg(lapId, 0, endAt);
+        
+        Log.d("wsa-ng", _("Tick: finish " +
+                          "msec: " + Long.toString(endAt)));
+        _timer_free();
+        EventBus.getDefault().post(new EventMessage(EventMessage.EventType.COUNTDOWN_END, smsg));
+      }
+    };
+    timer.start();
+  }
+  
+  private void _event_countdown_end(EventMessage.CountDownMsg msg)
+  {
+    Calendar cal = Calendar.getInstance();
+    String time;
+    cal.setTimeInMillis(msg.endAtMs);
+    time = String.format("%02d:%02d:%02d",
+                         cal.get(Calendar.HOUR),
+                         cal.get(Calendar.MINUTE),
+                         cal.get(Calendar.SECOND));
+    
+    for( StartRow row : starts ) {
+      if( row.lapId != msg.lapId )
+        continue;
+      Log.d("wsa-ng", _("Set time to " + time + " (" + msg.endAtMs + ") for row #" + row.getRowId()));
+      row.startAt = time;
+      row.state = StartRow.SyncState.NONE;
+      EventBus.getDefault().post(new EventMessage(EventMessage.EventType.UPDATE, row));
+    }
+    starts.Save(getApplicationContext());
+  }
+  
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  public void onEventMessage(EventMessage ev)
+  {
+    if( ev.type == EventMessage.EventType.CHANGED ) {
+      Log.i("wsa-ng", _("Event " + ev.type.name() + " received"));
+    }
+    else if( ev.type == EventMessage.EventType.COUNTDOWN_START ) {
+      Log.i("wsa-ng", _("Event " + ev.type.name() + " received"));
+      _event_countdown_start((EventMessage.CountDownMsg)ev.obj);
+    }
+    else if( ev.type == EventMessage.EventType.COUNTDOWN_END ) {
+      Log.i("wsa-ng", _("Event " + ev.type.name() + " received"));
+      _event_countdown_end((EventMessage.CountDownMsg)ev.obj);
+    }
+    else if( ev.type == EventMessage.EventType.COUNTDOWN_STOP ) {
+      Log.i("wsa-ng", _("Event " + ev.type.name() + " received"));
+      _timer_free();
+    }
+    else if( ev.type == EventMessage.EventType.NEW ) {
+      Log.i("wsa-ng", _("Event " + ev.type.name() + " received"));
+      _event_new(ev.obj);
+    }
   }
 }
