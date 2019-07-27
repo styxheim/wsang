@@ -15,6 +15,8 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.client.ClientProtocolException;
 
+import android.media.MediaPlayer;
+
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
@@ -33,6 +35,7 @@ public class MainService extends Service
   private static final String LAPS_URL = "http://127.0.0.1:5000/api/laps/updatelaps";
   private HttpClient client;
   private CountDownTimer timer;
+  MediaPlayer mPlayer;
 
   public String _(String in) {
     return "[" + android.os.Process.myTid() + "] " + in;
@@ -45,7 +48,13 @@ public class MainService extends Service
     EventBus.getDefault().register(this);
     starts = new StartList();
     client = HttpClientBuilder.create().build();
-
+    mPlayer = new MediaPlayer();
+    try {
+      mPlayer.setDataSource("TODO");
+      mPlayer.prepare();
+    } catch( IOException e ) {
+      Log.e("wsa-ng", "Mplayer exception: " + e.getMessage());
+    }
     /* Load data */
     starts.Load(getApplicationContext());
   }
