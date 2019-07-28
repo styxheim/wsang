@@ -40,13 +40,14 @@ public class StartList implements Iterable<StartRow>
 
   /* Add parsed record to array
    */
-  private void addRecord(StartRow row)
+  private StartRow addRecord(StartRow row)
   {
     if( row.getRowId() >= genId ) {
       genId = row.getRowId() + 1;
     }
     Rows.add(row);
     Log.d("wsa-ng", "load record id: " + Integer.toString(row.getRowId()));
+    return row;
   }
 
   /* Get record by Id

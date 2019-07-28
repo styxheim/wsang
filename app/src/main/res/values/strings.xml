@@ -9,4 +9,10 @@
   <string name="cancel_button">Отмена</string>
 
   <string name="timer_started">Обратный отсчёт уже запущен</string>
+
+  <string name="new_crew_cancel_title">Отменить</string>
+  <string name="new_crew_save_title">Добавить</string>
+  <string name="new_crew_dialog_title">Редактирование заезда</string>
+  <string name="crew_title">Команда</string>
+  <string name="lap_title">Заезд</string>
 </resources>

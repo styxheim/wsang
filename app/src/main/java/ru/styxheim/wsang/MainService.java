@@ -138,23 +138,7 @@ public class MainService extends Service
 
     Log.i("wsa-ng", "sync " + row.toString() + "code: " + Integer.toString(rs_code));
   }
-  
-  private void _event_new(Object none) {
-    StartRow last = starts.getRecord(-1);
-    if( last != null ) {
-     starts.addRecord(last.crewId + 1, last.lapId + 1, "00:00:00");
-    }
-    else {
-      starts.addRecord(0, 0, "00:00:00");
-    }
 
-    last = starts.getRecord(-1);
-
-    starts.Save(getApplicationContext());
-
-    EventBus.getDefault().post(new EventMessage(EventMessage.EventType.UPDATE, last));
-  }
-  
   private void _timer_free()
   {
     if( timer == null )
@@ -177,7 +161,7 @@ public class MainService extends Service
       return;
     }
     
-    timer = new CountDownTimer(msg.leftMs * 1000, 1000) {
+    timer = new CountDownTimer(msg.leftMs, 1000) {
       public void onTick(long left) {
         EventMessage.CountDownMsg smsg = new EventMessage.CountDownMsg(lapId, left, 0);
         
@@ -220,27 +204,51 @@ public class MainService extends Service
     starts.Save(getApplicationContext());
   }
   
+  private void _event_propose(EventMessage.ProposeMsg msg)
+  {
+    StartRow row;
+    if( msg.rowId == -1 ) {
+      /* new record */
+      row = starts.addRecord(msg.crewId, msg.lapId, "00:00:00");
+    }
+    else {
+      row = starts.getRecord(msg.rowId);
+      if( row == null ) {
+        Log.e("wsa-ng", "StartList does not have rowId #" +
+                        Integer.toString(msg.rowId));
+        return;
+      }
+      row.crewId = msg.crewId;
+      row.lapId = msg.lapId;
+      row.state = StartRow.SyncState.NONE;
+    }
+    EventBus.getDefault().post(new EventMessage(EventMessage.EventType.UPDATE, row));
+    starts.Save(getApplicationContext());
+  }
+
   @Subscribe(threadMode = ThreadMode.MAIN)
   public void onEventMessage(EventMessage ev)
   {
-    if( ev.type == EventMessage.EventType.CHANGED ) {
-      Log.i("wsa-ng", _("Event " + ev.type.name() + " received"));
-    }
-    else if( ev.type == EventMessage.EventType.COUNTDOWN_START ) {
+    switch( ev.type ) {
+    case COUNTDOWN_START:
       Log.i("wsa-ng", _("Event " + ev.type.name() + " received"));
       _event_countdown_start((EventMessage.CountDownMsg)ev.obj);
-    }
-    else if( ev.type == EventMessage.EventType.COUNTDOWN_END ) {
+      break;
+    case COUNTDOWN_END:
       Log.i("wsa-ng", _("Event " + ev.type.name() + " received"));
       _event_countdown_end((EventMessage.CountDownMsg)ev.obj);
-    }
-    else if( ev.type == EventMessage.EventType.COUNTDOWN_STOP ) {
+      break;
+    case COUNTDOWN_STOP:
       Log.i("wsa-ng", _("Event " + ev.type.name() + " received"));
       _timer_free();
-    }
-    else if( ev.type == EventMessage.EventType.NEW ) {
+      break;
+    case PROPOSE:
       Log.i("wsa-ng", _("Event " + ev.type.name() + " received"));
-      _event_new(ev.obj);
+      _event_propose((EventMessage.ProposeMsg)ev.obj);
+      break;
+    default:
+      Log.i("wsa-ng", _("Event " + ev.type.name() + " received"));
+      break;
     }
   }
 }

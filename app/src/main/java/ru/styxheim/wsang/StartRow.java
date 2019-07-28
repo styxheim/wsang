@@ -17,7 +17,7 @@ public class StartRow
     SYNCED
   };
   
-  public SyncState state;
+  public SyncState state = SyncState.NONE;
 
   public StartRow(int rowId)
   {

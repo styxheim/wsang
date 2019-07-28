@@ -12,17 +12,57 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.ThreadMode;
 import org.greenrobot.eventbus.Subscribe;
 
-public class MainActivity extends Activity implements PopupMenu.OnMenuItemClickListener
+public class MainActivity extends Activity
 {
-  /* offset for start_row_time id from rowId */
-  static final int ROW_TIME_ID_OFFSET = 1000000;
-  /* offset for start_crew_time id */
-  static final int ROW_CREW_ID_OFFSET = 5000000;
-  /* offset for time field in table from rowId */
-  static final int ROW_TIME_INFO_ID_OFFSET = 9000000;
-  
-  private int menuLapId;
-  ArrayList<int[]> lapId2RowId;
+  private class RowHelper {
+    public int rowId;
+    public int lapId;
+
+    public int rowCrewId;
+    public int rowTimeId;
+    public int rowInfoId;
+
+    public RowHelper(int rowId)
+    {
+      this.rowId = rowId;
+    }
+
+    public void genViewIds()
+    {
+      this.rowCrewId = View.generateViewId();
+      this.rowTimeId = View.generateViewId();
+      this.rowInfoId = View.generateViewId();
+    }
+
+    public boolean isThis(int id)
+    {
+      return ( id == this.rowCrewId ||
+               id == this.rowTimeId ||
+               id == this.rowInfoId );
+    }
+
+    public void setIds(int lapId)
+    {
+      this.lapId = lapId;
+    }
+  };
+
+  ArrayList<RowHelper> lapId2RowId;
+
+  private int lastCrewId;
+  private int lastLapId;
+  private boolean countDownMode = false;
+
+
+  private RowHelper getHelper(int viewId)
+  {
+    for( RowHelper helper : lapId2RowId ) {
+      if( helper.isThis(viewId) ) {
+        return helper;
+      }
+    }
+    return null;
+  }
 
   @Override
   protected void onCreate(Bundle savedInstanceState)
@@ -32,7 +72,7 @@ public class MainActivity extends Activity implements PopupMenu.OnMenuItemClickL
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_start);
     
-    lapId2RowId = new ArrayList<int[]>();
+    lapId2RowId = new ArrayList<RowHelper>();
   }
 
   @Override
@@ -58,41 +98,68 @@ public class MainActivity extends Activity implements PopupMenu.OnMenuItemClickL
 
   private void publishStartRow(StartRow row)
   {
+    ScrollView sv = findViewById(R.id.start_scroll);
     TextView v;
-    View tr_crew;
-    View tr_time;
+    View tr_crew = null;
+    View tr_time = null;
     boolean visible = false;
+    RowHelper helper = null;
+
+    if( row.crewId > this.lastCrewId )
+      this.lastCrewId = row.crewId;
+
+    if( row.lapId > this.lastLapId )
+      this.lastLapId = row.lapId;
+
+    for( RowHelper _helper : lapId2RowId ) {
+      if( _helper.rowId == row.getRowId() ) {
+        helper = _helper;
+        break;
+      }
+      else {
+        _helper = null;
+      }
+    }
 
     Log.d("wsa-ng", "Update row #" + Integer.toString(row.getRowId()));
-    
+
     try {
       TableLayout tl_crew = findViewById(R.id.start_table_crew);
       TableLayout tl_time = findViewById(R.id.start_table_time);
       LayoutInflater inflater = getLayoutInflater();
 
-      tr_crew = findViewById(row.getRowId() + ROW_CREW_ID_OFFSET);
-      tr_time = findViewById(row.getRowId() + ROW_TIME_ID_OFFSET);
-      if( tr_time != null && tr_crew != null ) {
-        visible = true;
-        
-        v = findViewById(row.getRowId() + ROW_TIME_INFO_ID_OFFSET);
-        v.setText("");
+      if( helper != null ) {
+        tr_crew = findViewById(helper.rowCrewId);
+        tr_time = findViewById(helper.rowTimeId);
+        if( tr_time != null && tr_crew != null ) {
+          visible = true;
+
+          v = findViewById(helper.rowInfoId);
+          v.setText("");
+        }
       }
       else {
-        visible = false;
+        helper = new RowHelper(row.getRowId());
+        lapId2RowId.add(helper);
+      }
+
+      if( !visible ) {
+        /* inflate new row */
+        helper.genViewIds();
+
         tr_crew = inflater.inflate(R.layout.start_row_crew, null);
         tr_time = inflater.inflate(R.layout.start_row_time, null);
 
-        tr_time.setId(row.getRowId() + ROW_TIME_ID_OFFSET);
-        tr_crew.setId(row.getRowId() + ROW_CREW_ID_OFFSET);
-        
+        tr_time.setId(helper.rowTimeId);
+        tr_crew.setId(helper.rowCrewId);
+
         v = tr_time.findViewById(R.id.start_row_time_info);
-        v.setId(row.getRowId() + ROW_TIME_INFO_ID_OFFSET);
+        v.setId(helper.rowInfoId);
       }
 
       v = tr_crew.findViewById(R.id.start_row_crew_id);
       v.setText("C" + Integer.toString(row.crewId));
-      
+
       v = tr_crew.findViewById(R.id.start_row_lap_id);
       v.setText("L" + Integer.toString(row.lapId));
 
@@ -108,7 +175,7 @@ public class MainActivity extends Activity implements PopupMenu.OnMenuItemClickL
           v.setBackgroundResource(R.color.notSynced);
           break;
       }
-      
+
       v = tr_time.findViewById(R.id.start_row_time_view);
       v.setText(row.startAt);
 
@@ -119,71 +186,60 @@ public class MainActivity extends Activity implements PopupMenu.OnMenuItemClickL
       }
 
       if( !visible ) {
-        int[] helper = new int[3];
-        
         tl_crew.addView(tr_crew);
         tl_time.addView(tr_time);
-        
-        /* {rowid, lapId, textview id} */
-        helper[0] = row.getRowId();
-        helper[1] = row.lapId;
-        helper[2] = row.getRowId() + ROW_TIME_INFO_ID_OFFSET;
-        lapId2RowId.add(helper);
+        sv.fullScroll(View.FOCUS_DOWN);
 
         registerForContextMenu(tr_time);
       }
-      else {
-        /* TODO: update lapId in lapId2RowId */
-      }
+
+      helper.setIds(row.lapId);
     } catch( Exception e ) {
       e.printStackTrace();
     }
   }
 
-  public void showTimeCounterPopup(View v)
+  public void showTimeCounterPopup(View v, RowHelper helper)
   {
     String title;
-    int lapId = v.getId() - ROW_TIME_ID_OFFSET;
+    final int lapId = helper.lapId;
 
     title = "Старт заезда №" + Integer.toString(lapId) + " через";
 
     PopupMenu popup = new PopupMenu(this, v);
     popup.inflate(R.menu.start_time);
-    popup.setOnMenuItemClickListener(this);
+    popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+      @Override
+      public boolean onMenuItemClick(MenuItem item)
+      {
+        switch( item.getItemId() ) {
+        case R.id.start_time_menu_ten:
+          startCountDown(lapId, 10);
+          break;
+        case R.id.start_time_menu_thiry:
+          startCountDown(lapId, 30);
+          break;
+        case R.id.start_time_menu_sixty:
+          startCountDown(lapId, 60);
+          break;
+        default:
+          return false;
+        }
+        return true;
+      }
+    });
     MenuItem titleItem = popup.getMenu().findItem(R.id.start_time_menu_title);
     titleItem.setTitle(title);
     popup.show();
-    menuLapId = lapId;
   }
 
-  @Override
-  public boolean onMenuItemClick(MenuItem item)
-  {
-    int lapId = menuLapId;
-    
-    switch( item.getItemId() )
-    {
-    case R.id.start_time_menu_ten:
-      startCountDown(lapId, 10);
-      break;
-    case R.id.start_time_menu_thiry:
-      startCountDown(lapId, 30);
-      break;
-    case R.id.start_time_menu_sixty:
-      startCountDown(lapId, 60);
-      break;
-    default:
-      return false;
-    }
-    return true;
-  }
   
   public void startCountDown(int lapId, int seconds)
   {
     Log.i("wsa-ng", "Send COUNTDOWN event for lap #" +
           Integer.toString(lapId) + ": " +
           Integer.toString(seconds) + "s");
-    EventMessage.CountDownMsg msg = new EventMessage.CountDownMsg(lapId, seconds, 0);
+    EventMessage.CountDownMsg msg = new EventMessage.CountDownMsg(lapId, seconds * 1000, 0);
     EventBus.getDefault().post(new EventMessage(EventMessage.EventType.COUNTDOWN_START, msg));
   }
   
@@ -194,39 +250,96 @@ public class MainActivity extends Activity implements PopupMenu.OnMenuItemClickL
 
   public void startOnClick(View v)
   {
-    EventBus.getDefault().post(new EventMessage(EventMessage.EventType.NEW, null));
+    StartLineEditDialog sled = new StartLineEditDialog(this.lastCrewId + 1, this.lastLapId + 1);
+    sled.setStartLineEditDialogListener(new StartLineEditDialog.StartLineEditDialogListener() {
+      @Override
+      public void onStartLineEditDialogResult(StartLineEditDialog sled, int crewId, int lapId) {
+        EventMessage.ProposeMsg req;
+        lastCrewId = crewId;
+        lastLapId = lapId;
+
+        req = new EventMessage.ProposeMsg(crewId, lapId);
+
+        EventBus.getDefault().post(new EventMessage(EventMessage.EventType.PROPOSE, req));
+      }
+    });
+    sled.show(getFragmentManager(), "StartLineEditDialog");
+
+  }
+
+  private void _event_countdown_start(EventMessage.CountDownMsg msg)
+  {
+    ProgressBar pb = (ProgressBar)findViewById(R.id.start_progress);
+
+    pb.setMax((int)msg.leftMs);
+    pb.setMin(0);
+    pb.setProgress(0, true);
   }
 
   private void _event_countdown(EventMessage.CountDownMsg msg)
   {
     TextView tv;
+    ProgressBar pb = (ProgressBar)findViewById(R.id.start_progress);
+
+    pb.setProgress(pb.getMax() - (int)msg.leftMs, true);
+
+    countDownMode = true;
     
     Log.d("wsa-ng",
           "COUNTDOWN: lapId=" + Integer.toString(msg.lapId) +
           " left=" + Long.toString(msg.leftMs));
     
-    for( int[] helper : lapId2RowId ) {
-      if( helper[1] == msg.lapId ) {
-        tv = findViewById(helper[2]);
+    for( RowHelper helper : lapId2RowId ) {
+      if( helper.lapId == msg.lapId ) {
+        tv = findViewById(helper.rowInfoId);
         tv.setText("Старт через " + Long.toString(msg.leftMs / 1000 + 1));
       }
     }
   }
-  
+
+  private void _event_countdown_end(EventMessage.CountDownMsg msg)
+  {
+    ProgressBar pb = (ProgressBar)findViewById(R.id.start_progress);
+
+    pb.setProgress(pb.getMax(), true);
+  }
+
   @Subscribe(threadMode = ThreadMode.MAIN)
-  public void onServiceMessageUpdate(EventMessage ev) {
-    if( ev.type == EventMessage.EventType.UPDATE ) {
+  public void onServiceMessageUpdate(EventMessage ev)
+  {
+    switch( ev.type ) {
+    case UPDATE:
       publishStartRow((StartRow)ev.obj);
-    }
-    else if( ev.type == EventMessage.EventType.COUNTDOWN ) {
+      break;
+    case COUNTDOWN_START:
+      _event_countdown_start((EventMessage.CountDownMsg)ev.obj);
+      break;
+    case COUNTDOWN:
       _event_countdown((EventMessage.CountDownMsg)ev.obj);
+      break;
+    case COUNTDOWN_END:
+      _event_countdown_end((EventMessage.CountDownMsg)ev.obj);
+      break;
     }
   }
 
   public void startTimeOnClick(View v)
   {
-    int id = v.getId();
-    Log.i("wsa-ng", "clicked: " + Integer.toString(id - ROW_TIME_ID_OFFSET));
-    showTimeCounterPopup(v);
+    RowHelper helper = getHelper(v.getId());
+
+    if( helper == null )
+      return;
+
+    showTimeCounterPopup(v, helper);
+  }
+
+  public void startCrewOnClick(View v)
+  {
+    RowHelper helper = getHelper(v.getId());
+
+    if( helper == null )
+      return;
+
+    Log.i("wsa-ng", "clicked: " + Integer.toString(helper.rowId));
   }
 }

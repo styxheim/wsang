@@ -2,7 +2,8 @@
   xmlns:android="http://schemas.android.com/apk/res/android"
   android:id="@+id/start_row_crew"
   android:layout_width="wrap_content"
-  android:layout_height="wrap_content">
+  android:layout_height="wrap_content"
+  android:onClick="startCrewOnClick">
 
   <TextView
     android:id="@+id/start_row_synced"
