@@ -14,7 +14,8 @@ public class EventMessage
     COUNTDOWN_START,
     COUNTDOWN_STOP,
     COUNTDOWN,      /* notify UI about current countdown */
-    COUNTDOWN_END   /* countdown successfull comoleted */
+    COUNTDOWN_END   /* countdown successfull completed.
+                      endAtMs == -1 says what timer is stopped (forced or normal) */
   };
 
   public static class ProposeMsg

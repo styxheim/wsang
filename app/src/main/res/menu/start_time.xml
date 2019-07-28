@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
   android:id="@+id/start_time_menu">
-  <group android:title="111">
+  <group>
       <item android:id="@+id/start_time_menu_title"
             android:title="xxx"
             android:checkable="false"
@@ -13,4 +13,4 @@
       <item android:id="@+id/start_time_menu_sixty"
             android:title="@string/sixty_seconds_button"/>
   </group>
- </menu>
+</menu>

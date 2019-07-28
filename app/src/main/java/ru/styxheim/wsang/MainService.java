@@ -139,13 +139,19 @@ public class MainService extends Service
     Log.i("wsa-ng", "sync " + row.toString() + "code: " + Integer.toString(rs_code));
   }
 
-  private void _timer_free()
+  private void _timer_free(boolean forced)
   {
     if( timer == null )
       return;
-      
+
     timer.cancel();
     timer = null;
+
+    if( forced ) {
+      /* send message about timer force stopped */
+      EventMessage.CountDownMsg smsg = new EventMessage.CountDownMsg(-1, -1, -1);
+      EventBus.getDefault().post(new EventMessage(EventMessage.EventType.COUNTDOWN_END, smsg));
+    }
   }
   
   private void _event_countdown_start(EventMessage.CountDownMsg msg)
@@ -176,8 +182,9 @@ public class MainService extends Service
         
         Log.d("wsa-ng", _("Tick: finish " +
                           "msec: " + Long.toString(endAt)));
-        _timer_free();
+        /* send notice about complete time */
         EventBus.getDefault().post(new EventMessage(EventMessage.EventType.COUNTDOWN_END, smsg));
+        _timer_free(false);
       }
     };
     timer.start();
@@ -187,6 +194,10 @@ public class MainService extends Service
   {
     Calendar cal = Calendar.getInstance();
     String time;
+
+    if( msg.endAtMs == -1 )
+      return;
+
     cal.setTimeInMillis(msg.endAtMs);
     time = String.format("%02d:%02d:%02d",
                          cal.get(Calendar.HOUR),
@@ -240,7 +251,7 @@ public class MainService extends Service
       break;
     case COUNTDOWN_STOP:
       Log.i("wsa-ng", _("Event " + ev.type.name() + " received"));
-      _timer_free();
+      _timer_free(true);
       break;
     case PROPOSE:
       Log.i("wsa-ng", _("Event " + ev.type.name() + " received"));

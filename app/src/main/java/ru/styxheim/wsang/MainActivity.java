@@ -52,6 +52,7 @@ public class MainActivity extends Activity
   private int lastCrewId;
   private int lastLapId;
   private boolean countDownMode = false;
+  private int countDownLap = -1;
 
 
   private RowHelper getHelper(int viewId)
@@ -98,7 +99,7 @@ public class MainActivity extends Activity
 
   private void publishStartRow(StartRow row)
   {
-    ScrollView sv = findViewById(R.id.start_scroll);
+    final ScrollView sv = findViewById(R.id.start_scroll);
     TextView v;
     View tr_crew = null;
     View tr_time = null;
@@ -133,9 +134,6 @@ public class MainActivity extends Activity
         tr_time = findViewById(helper.rowTimeId);
         if( tr_time != null && tr_crew != null ) {
           visible = true;
-
-          v = findViewById(helper.rowInfoId);
-          v.setText("");
         }
       }
       else {
@@ -188,7 +186,14 @@ public class MainActivity extends Activity
       if( !visible ) {
         tl_crew.addView(tr_crew);
         tl_time.addView(tr_time);
-        sv.fullScroll(View.FOCUS_DOWN);
+        /* tell to scrollview what need update position */
+        sv.post(new Runnable() {
+          @Override
+          public void run()
+          {
+            sv.scrollTo(0, sv.getBottom());
+          }
+        });
 
         registerForContextMenu(tr_time);
       }
@@ -201,35 +206,52 @@ public class MainActivity extends Activity
 
   public void showTimeCounterPopup(View v, RowHelper helper)
   {
-    String title;
-    final int lapId = helper.lapId;
-
-    title = "Старт заезда №" + Integer.toString(lapId) + " через";
 
     PopupMenu popup = new PopupMenu(this, v);
-    popup.inflate(R.menu.start_time);
-    popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-      @Override
-      public boolean onMenuItemClick(MenuItem item)
-      {
-        switch( item.getItemId() ) {
-        case R.id.start_time_menu_ten:
-          startCountDown(lapId, 10);
-          break;
-        case R.id.start_time_menu_thiry:
-          startCountDown(lapId, 30);
-          break;
-        case R.id.start_time_menu_sixty:
-          startCountDown(lapId, 60);
-          break;
-        default:
-          return false;
+    if( countDownMode ) {
+      popup.inflate(R.menu.start_cancel);
+      popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+        @Override
+        public boolean onMenuItemClick(MenuItem item)
+        {
+          switch( item.getItemId() ) {
+          case R.id.start_cancel_stop:
+            /* stop countdown */
+            EventBus.getDefault().post(new EventMessage(EventMessage.EventType.COUNTDOWN_STOP, null));
+            break;
+          default:
+            return false;
+          }
+          return true;
         }
-        return true;
-      }
-    });
-    MenuItem titleItem = popup.getMenu().findItem(R.id.start_time_menu_title);
-    titleItem.setTitle(title);
+      });
+    } else {
+      final int lapId = helper.lapId;
+      final String title = "Старт заезда №" + Integer.toString(lapId) + " через";
+      popup.inflate(R.menu.start_time);
+      popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+        @Override
+        public boolean onMenuItemClick(MenuItem item)
+        {
+          switch( item.getItemId() ) {
+          case R.id.start_time_menu_ten:
+            startCountDown(lapId, 10);
+            break;
+          case R.id.start_time_menu_thiry:
+            startCountDown(lapId, 30);
+            break;
+          case R.id.start_time_menu_sixty:
+            startCountDown(lapId, 60);
+            break;
+          default:
+            return false;
+          }
+          return true;
+        }
+      });
+      MenuItem titleItem = popup.getMenu().findItem(R.id.start_time_menu_title);
+      titleItem.setTitle(title);
+    }
     popup.show();
   }
 
@@ -245,7 +267,6 @@ public class MainActivity extends Activity
   
   public void cancelOnClick(View v)
   {
-    EventBus.getDefault().post(new EventMessage(EventMessage.EventType.COUNTDOWN_STOP, null));
   }
 
   public void startOnClick(View v)
@@ -274,6 +295,9 @@ public class MainActivity extends Activity
     pb.setMax((int)msg.leftMs);
     pb.setMin(0);
     pb.setProgress(0, true);
+
+    countDownMode = true;
+    countDownLap = msg.lapId;
   }
 
   private void _event_countdown(EventMessage.CountDownMsg msg)
@@ -284,11 +308,12 @@ public class MainActivity extends Activity
     pb.setProgress(pb.getMax() - (int)msg.leftMs, true);
 
     countDownMode = true;
-    
+    countDownLap = msg.lapId;
+
     Log.d("wsa-ng",
           "COUNTDOWN: lapId=" + Integer.toString(msg.lapId) +
           " left=" + Long.toString(msg.leftMs));
-    
+
     for( RowHelper helper : lapId2RowId ) {
       if( helper.lapId == msg.lapId ) {
         tv = findViewById(helper.rowInfoId);
@@ -299,9 +324,24 @@ public class MainActivity extends Activity
 
   private void _event_countdown_end(EventMessage.CountDownMsg msg)
   {
+    TextView tv;
     ProgressBar pb = (ProgressBar)findViewById(R.id.start_progress);
+    int lapId = (msg.endAtMs == -1 ? countDownLap : msg.lapId);
 
     pb.setProgress(pb.getMax(), true);
+
+    countDownMode = false;
+
+    for( RowHelper helper : lapId2RowId ) {
+      if( helper.lapId == lapId ) {
+        tv = findViewById(helper.rowInfoId);
+        if( msg.endAtMs == -1 )
+          tv.setText("Старт отменён");
+        else
+          tv.setText("Старт выполнен");
+      }
+    }
+
   }
 
   @Subscribe(threadMode = ThreadMode.MAIN)
