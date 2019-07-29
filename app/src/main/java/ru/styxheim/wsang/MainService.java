@@ -32,10 +32,12 @@ import android.widget.*;
 public class MainService extends Service
 {
   private StartList starts;
-  private static final String LAPS_URL = "http://127.0.0.1:5000/api/laps/updatelaps";
+  private static final String LAPS_URL = "http://%s/api/laps/updatelaps";
   private HttpClient client;
   private CountDownTimer timer;
   MediaPlayer mPlayer;
+
+  private SharedPreferences settings;
 
   public String _(String in) {
     return "[" + android.os.Process.myTid() + "] " + in;
@@ -43,6 +45,7 @@ public class MainService extends Service
 
   @Override
   public void onCreate() {
+    settings = getSharedPreferences("main", Context.MODE_PRIVATE);
     // The service is being created
     Log.i("wsa-ng", _("service created"));
     EventBus.getDefault().register(this);
@@ -100,6 +103,12 @@ public class MainService extends Service
   private void _sync_row(StartRow row)
   {
     final byte[] body;
+    String url;
+
+    if( !settings.contains("server_addr") ) {
+      Log.d("wsa-ng", _("`server_addr` is not defined: row not synced"));
+      return;
+    }
 
     StringWriter sw = new StringWriter();
     JsonWriter jw = new JsonWriter(sw);
@@ -116,6 +125,8 @@ public class MainService extends Service
       return;
     }
 
+
+    url = String.format(LAPS_URL, settings.getString("server_addr", ""));
     /* TODO: send query in another Thread */
     HttpPost rq = new HttpPost(LAPS_URL);
     rq.setHeader("User-Agent", "wsa-ng/1.0");

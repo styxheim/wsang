@@ -65,6 +65,19 @@ public class MainActivity extends Activity
     return null;
   }
 
+/*
+  @Override
+  public boolean onKeyDown(int keyCode, KeyEvent event) {
+      super.onKeyDown(keyCode, event);
+      if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN)
+      {
+          Toast.makeText(MainActivity.this,"Down working",Toast.LENGTH_SHORT).show();
+          return true;
+      }
+    return false;
+  }
+*/
+
   @Override
   protected void onCreate(Bundle savedInstanceState)
   {
@@ -267,6 +280,8 @@ public class MainActivity extends Activity
   
   public void cancelOnClick(View v)
   {
+    Intent intent = new Intent(this, SettingsActivity.class);
+    startActivity(intent);
   }
 
   public void startOnClick(View v)

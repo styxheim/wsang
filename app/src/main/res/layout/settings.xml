@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	android:orientation="vertical"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent">
+
+	<LinearLayout
+		android:orientation="vertical"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content">
+
+		<LinearLayout
+			android:orientation="horizontal"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:gravity="right">
+
+			<Button
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:text="Done"
+				android:onClick="doneOnClick"/>
+
+		</LinearLayout>
+
+		<ProgressBar
+			android:layout_width="match_parent"
+			style="?android:attr/progressBarStyleHorizontal"
+			android:layout_height="wrap_content"/>
+
+	</LinearLayout>
+
+	<LinearLayout
+		android:orientation="vertical"
+		android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingLeft="10dp"
+    android:paddingRight="10dp">
+
+		<LinearLayout
+			android:orientation="vertical"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+      android:paddingBottom="10dp"
+      android:onClick="chooseTimeButton">
+
+			<TextView
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:text="Клавиша отсечения"
+				android:textAppearance="?android:attr/textAppearanceMedium"/>
+
+			<TextView
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:text="- ??? -"
+				android:textAppearance="?android:attr/textAppearanceSmall"
+				android:paddingLeft="10dp"/>
+
+		</LinearLayout>
+
+		<LinearLayout
+			android:orientation="vertical"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+      android:paddingBottom="10dp"
+      android:onClick="chooseTimeOffset">
+
+			<TextView
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:textAppearance="?android:attr/textAppearanceMedium"
+				android:text="Смещение относительно системного времени"/>
+
+			<TextView
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:text="- ??? -"
+				android:textAppearance="?android:attr/textAppearanceSmall"
+				android:paddingLeft="10dp"/>
+
+		</LinearLayout>
+
+		<LinearLayout
+			android:orientation="vertical"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:paddingBottom="10dp">
+
+			<TextView
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:textAppearance="?android:attr/textAppearanceMedium"
+				android:text="Текущее время"/>
+
+      <TextView
+        android:id="@+id/settings_chronometer"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:text="- ??? -"
+				android:textAppearance="?android:attr/textAppearanceSmall"
+				android:paddingLeft="10dp"/>
+
+		</LinearLayout>
+
+    <LinearLayout
+			android:orientation="vertical"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:paddingBottom="10dp">
+
+			<TextView
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:textAppearance="?android:attr/textAppearanceMedium"
+				android:text="Адрес сервера"/>
+
+      <TextView
+        android:id="@+id/settings_server_addr"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:text="- ??? -"
+				android:textAppearance="?android:attr/textAppearanceSmall"
+				android:paddingLeft="10dp"/>
+
+		</LinearLayout>
+
+
+	</LinearLayout>
+
+</LinearLayout>
+
