@@ -291,6 +291,11 @@ public class MainActivity extends Activity
     }
   }
 
+  public void cancelOnClick(View v)
+  {
+    EventBus.getDefault().post(new EventMessage(EventMessage.EventType.COUNTDOWN_STOP, null));
+  }
+
   public void startOnClick(View v)
   {
     StartLineEditDialog sled = new StartLineEditDialog(this.lastCrewId + 1, this.lastLapId + 1);
@@ -318,8 +323,8 @@ public class MainActivity extends Activity
     pb.setMin(0);
     pb.setProgress(0, true);
 
-    countDownMode = true;
     countDownLap = msg.lapId;
+    _set_countdown_mode(true);
   }
 
   private void _event_countdown(EventMessage.CountDownMsg msg)
@@ -329,7 +334,7 @@ public class MainActivity extends Activity
 
     pb.setProgress(pb.getMax() - (int)msg.leftMs, true);
 
-    countDownMode = true;
+    _set_countdown_mode(true);
     countDownLap = msg.lapId;
 
     Log.d("wsa-ng",
@@ -352,7 +357,7 @@ public class MainActivity extends Activity
 
     pb.setProgress(pb.getMax(), true);
 
-    countDownMode = false;
+    _set_countdown_mode(false);
 
     for( RowHelper helper : lapId2RowId ) {
       if( helper.lapId == lapId ) {
@@ -364,6 +369,31 @@ public class MainActivity extends Activity
       }
     }
 
+  }
+
+  public void _set_countdown_mode(boolean enabled)
+  {
+    final Button settings_bt;
+    final Button cancel_bt;
+
+    if( countDownMode == enabled )
+      return;
+
+    countDownMode = enabled;
+
+    settings_bt = (Button)findViewById(R.id.start_settings_button);
+    cancel_bt = (Button)findViewById(R.id.start_cancel_button);
+
+    if( countDownMode ) {
+      Log.i("wsa-ng", "Enter countdown mode");
+      settings_bt.setVisibility(settings_bt.GONE);
+      cancel_bt.setVisibility(settings_bt.VISIBLE);
+    }
+    else {
+      Log.i("wsa-ng", "Leave countdown mode");
+      settings_bt.setVisibility(settings_bt.VISIBLE);
+      cancel_bt.setVisibility(settings_bt.GONE);
+    }
   }
 
   @Subscribe(threadMode = ThreadMode.MAIN)
