@@ -280,8 +280,15 @@ public class MainActivity extends Activity
   
   public void cancelOnClick(View v)
   {
-    Intent intent = new Intent(this, SettingsActivity.class);
-    startActivity(intent);
+    if( countDownMode ) {
+      Toast.makeText(MainActivity.this,
+                     "Дождитесь окончания отсчёта",
+                     Toast.LENGTH_SHORT).show();
+    }
+    else {
+      Intent intent = new Intent(this, SettingsActivity.class);
+      startActivity(intent);
+    }
   }
 
   public void startOnClick(View v)
