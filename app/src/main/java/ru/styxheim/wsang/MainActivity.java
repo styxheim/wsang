@@ -278,7 +278,7 @@ public class MainActivity extends Activity
     EventBus.getDefault().post(new EventMessage(EventMessage.EventType.COUNTDOWN_START, msg));
   }
   
-  public void cancelOnClick(View v)
+  public void settingsOnClick(View v)
   {
     if( countDownMode ) {
       Toast.makeText(MainActivity.this,

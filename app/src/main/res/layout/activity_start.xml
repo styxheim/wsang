@@ -18,7 +18,7 @@
 				android:layout_width="wrap_content"
 				style="?android:attr/buttonBarButtonStyle"
 				android:layout_height="wrap_content"
-				android:text="Bar Button"
+				android:text="Новый"
 				android:onClick="startOnClick"/>
 
 		</LinearLayout>
@@ -29,11 +29,12 @@
 			android:layout_height="wrap_content"
 			android:gravity="right">
 
-			<ImageButton
-				android:src="@android:drawable/ic_menu_close_clear_cancel"
+			<Button
+				style="?android:attr/buttonBarButtonStyle"
 				android:layout_width="wrap_content"
-				android:layout_height="wrap_content"
-				android:onClick="cancelOnClick"/>
+        android:layout_height="wrap_content"
+        android:text="Настройки"
+				android:onClick="settingsOnClick"/>
 
 		</LinearLayout>
 
