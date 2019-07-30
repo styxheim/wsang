@@ -20,8 +20,9 @@ import android.media.MediaPlayer;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
-import android.icu.util.*;
 import android.widget.*;
+import java.util.Calendar;
+import java.util.TimeZone;
 
 /* TODO:
  *  Receive message from MainActivity
@@ -167,7 +168,7 @@ public class MainService extends Service
   
   private void _event_countdown_start(EventMessage.CountDownMsg msg)
   {
-    final Calendar cal = Calendar.getInstance();
+    final Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
     final int lapId = msg.lapId;
     
     if( timer != null ) {
@@ -180,17 +181,22 @@ public class MainService extends Service
     
     timer = new CountDownTimer(msg.leftMs, 1000) {
       public void onTick(long left) {
+        long endAt = System.currentTimeMillis();
         EventMessage.CountDownMsg smsg = new EventMessage.CountDownMsg(lapId, left, 0);
-        
+
+        endAt -= settings.getLong("chrono_offset", 0);
+
         Log.d("wsa-ng", _("Tick: " + Long.toString(left) + " " +
-                          "msec: " + Long.toString(cal.getTimeInMillis())));
+                          "msec: " + Long.toString(endAt)));
         
         EventBus.getDefault().post(new EventMessage(EventMessage.EventType.COUNTDOWN, smsg));
       }
       public void onFinish() {
-        long endAt = cal.getTimeInMillis();
+        long endAt = System.currentTimeMillis();
+
+        endAt -= settings.getLong("chrono_offset", 0);
         EventMessage.CountDownMsg smsg = new EventMessage.CountDownMsg(lapId, 0, endAt);
-        
+
         Log.d("wsa-ng", _("Tick: finish " +
                           "msec: " + Long.toString(endAt)));
         /* send notice about complete time */
@@ -203,17 +209,18 @@ public class MainService extends Service
   
   private void _event_countdown_end(EventMessage.CountDownMsg msg)
   {
-    Calendar cal = Calendar.getInstance();
+    Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
     String time;
 
     if( msg.endAtMs == -1 )
       return;
 
     cal.setTimeInMillis(msg.endAtMs);
-    time = String.format("%02d:%02d:%02d",
+    time = String.format("%02d:%02d:%02d.%02d",
                          cal.get(Calendar.HOUR),
                          cal.get(Calendar.MINUTE),
-                         cal.get(Calendar.SECOND));
+                         cal.get(Calendar.SECOND),
+                         (int)(cal.get(Calendar.MILLISECOND) / 10));
     
     for( StartRow row : starts ) {
       if( row.lapId != msg.lapId )

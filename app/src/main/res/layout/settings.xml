@@ -34,29 +34,29 @@
 	<LinearLayout
 		android:orientation="vertical"
 		android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:paddingLeft="10dp"
-    android:paddingRight="10dp">
+		android:layout_height="wrap_content"
+		android:paddingLeft="20dp"
+		android:paddingRight="20dp">
 
 		<LinearLayout
 			android:orientation="vertical"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
-      android:paddingBottom="10dp"
-      android:onClick="chooseTimeButton">
+			android:paddingBottom="20dp">
 
 			<TextView
 				android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
-				android:text="Клавиша отсечения"
-				android:textAppearance="?android:attr/textAppearanceMedium"/>
+				android:textAppearance="?android:attr/textAppearanceMedium"
+				android:text="Время секундомера"
+				android:textStyle="bold"/>
 
 			<TextView
+				android:id="@+id/settings_chronometer"
 				android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
 				android:text="- ??? -"
-				android:textAppearance="?android:attr/textAppearanceSmall"
-				android:paddingLeft="10dp"/>
+				android:textAppearance="?android:attr/textAppearanceSmall"/>
 
 		</LinearLayout>
 
@@ -64,21 +64,22 @@
 			android:orientation="vertical"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
-      android:paddingBottom="10dp"
-      android:onClick="chooseTimeOffset">
+      android:paddingBottom="20dp"
+      android:onClick="changeChronoKeyOnClick">
 
 			<TextView
 				android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
 				android:textAppearance="?android:attr/textAppearanceMedium"
-				android:text="Смещение относительно системного времени"/>
+				android:text="Кнопка секундомера"
+				android:textStyle="bold"/>
 
 			<TextView
+				android:id="@+id/settings_chrono_key"
 				android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
 				android:text="- ??? -"
-				android:textAppearance="?android:attr/textAppearanceSmall"
-				android:paddingLeft="10dp"/>
+				android:textAppearance="?android:attr/textAppearanceSmall"/>
 
 		</LinearLayout>
 
@@ -86,21 +87,51 @@
 			android:orientation="vertical"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
-			android:paddingBottom="10dp">
+			android:paddingBottom="20dp">
 
 			<TextView
 				android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
 				android:textAppearance="?android:attr/textAppearanceMedium"
-				android:text="Текущее время"/>
+				android:text="Смещение секундомера"
+				android:textStyle="bold"/>
 
       <TextView
-        android:id="@+id/settings_chronometer"
+				android:id="@+id/settings_chrono_offset"
 				android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
-				android:text="- ??? -"
-				android:textAppearance="?android:attr/textAppearanceSmall"
-				android:paddingLeft="10dp"/>
+				android:text=" "
+				android:textAppearance="?android:attr/textAppearanceSmall"/>
+
+		</LinearLayout>
+
+
+		<LinearLayout
+			android:orientation="vertical"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:paddingBottom="20dp">
+
+			<TextView
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:textAppearance="?android:attr/textAppearanceMedium"
+				android:text="Адрес сервера"
+				android:textStyle="bold"/>
+
+      <EditText
+        android:id="@+id/settings_server_edit"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:ems="10"/>
+
+      <Button
+        android:id="@+id/settings_server_addr_apply"
+        android:visibility="invisible"
+				android:layout_width="match_parent"
+				style="?android:attr/buttonBarButtonStyle"
+				android:layout_height="wrap_content"
+				android:text="Применить"/>
 
 		</LinearLayout>
 
@@ -108,24 +139,16 @@
 			android:orientation="vertical"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
-			android:paddingBottom="10dp">
+			android:paddingBottom="20dp">
 
-			<TextView
-				android:layout_width="wrap_content"
+      <Button
+				android:layout_width="match_parent"
+				style="?android:attr/buttonBarButtonStyle"
 				android:layout_height="wrap_content"
-				android:textAppearance="?android:attr/textAppearanceMedium"
-				android:text="Адрес сервера"/>
-
-      <TextView
-        android:id="@+id/settings_server_addr"
-				android:layout_width="wrap_content"
-				android:layout_height="wrap_content"
-				android:text="- ??? -"
-				android:textAppearance="?android:attr/textAppearanceSmall"
-				android:paddingLeft="10dp"/>
+        android:text="Сброс данных"
+        android:onClick="resetOnClick"/>
 
 		</LinearLayout>
-
 
 	</LinearLayout>
 
