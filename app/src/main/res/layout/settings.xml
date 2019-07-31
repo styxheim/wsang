@@ -135,7 +135,6 @@
 
 		</LinearLayout>
 
-
     <LinearLayout
 			android:orientation="vertical"
 			android:layout_width="match_parent"
@@ -148,14 +147,6 @@
 				android:layout_height="wrap_content"
         android:text="Экспорт в CSV"
         android:onClick="exportOnClick"/>
-
-		</LinearLayout>
-
-    <LinearLayout
-			android:orientation="vertical"
-			android:layout_width="match_parent"
-			android:layout_height="wrap_content"
-			android:paddingBottom="20dp">
 
       <Button
 				android:layout_width="match_parent"
