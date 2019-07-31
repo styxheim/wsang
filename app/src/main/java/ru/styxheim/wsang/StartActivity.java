@@ -16,7 +16,7 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.ThreadMode;
 import org.greenrobot.eventbus.Subscribe;
 
-public class MainActivity extends Activity
+public class StartActivity extends Activity
 {
   private class RowHelper {
     public int rowId;
@@ -76,7 +76,7 @@ public class MainActivity extends Activity
       super.onKeyDown(keyCode, event);
       if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN)
       {
-          Toast.makeText(MainActivity.this,"Down working",Toast.LENGTH_SHORT).show();
+          Toast.makeText(StartActivity.this,"Down working",Toast.LENGTH_SHORT).show();
           return true;
       }
     return false;
@@ -86,7 +86,7 @@ public class MainActivity extends Activity
   @Override
   protected void onCreate(Bundle savedInstanceState)
   {
-    Log.d("wsa-ng", "MainActivity:onCreate()");
+    Log.d("wsa-ng", "StartActivity:onCreate()");
 
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_start);
@@ -100,7 +100,7 @@ public class MainActivity extends Activity
   public void onStart()
   {
     final Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
-    Log.d("wsa-ng", "MainActivity:onStart()");
+    Log.d("wsa-ng", "StartActivity:onStart()");
 
     super.onStart();
     EventBus.getDefault().register(this);
@@ -131,7 +131,7 @@ public class MainActivity extends Activity
   @Override
   public void onStop()
   {
-    Log.d("wsa-ng", "MainActivity:onStop()");
+    Log.d("wsa-ng", "StartActivity:onStop()");
 
     EventBus.getDefault().unregister(this);
     super.onStop();
@@ -340,7 +340,7 @@ public class MainActivity extends Activity
   public void settingsOnClick(View v)
   {
     if( countDownMode ) {
-      Toast.makeText(MainActivity.this,
+      Toast.makeText(StartActivity.this,
                      "Дождитесь окончания отсчёта",
                      Toast.LENGTH_SHORT).show();
     }
