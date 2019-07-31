@@ -25,26 +25,6 @@
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
 			android:gravity="center"
-			android:layout_marginRight="10dp">
-
-			<TextView
-				android:layout_width="wrap_content"
-				android:layout_height="wrap_content"
-				android:text="@string/crew_title"
-				android:padding="5dp"/>
-
-			<NumberPicker
-				android:id="@+id/start_line_edit_dialog_crew_picker"
-				android:layout_width="wrap_content"
-				android:layout_height="wrap_content"/>
-
-		</LinearLayout>
-
-		<LinearLayout
-			android:orientation="vertical"
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"
-			android:gravity="center"
 			android:layout_marginLeft="10dp">
 
 			<TextView
@@ -55,6 +35,26 @@
 
 			<NumberPicker
 				android:id="@+id/start_line_edit_dialog_lap_picker"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"/>
+
+		</LinearLayout>
+
+    <LinearLayout
+			android:orientation="vertical"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:gravity="center"
+			android:layout_marginRight="10dp">
+
+			<TextView
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:text="@string/crew_title"
+				android:padding="5dp"/>
+
+			<NumberPicker
+				android:id="@+id/start_line_edit_dialog_crew_picker"
 				android:layout_width="wrap_content"
 				android:layout_height="wrap_content"/>
 

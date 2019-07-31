@@ -232,9 +232,10 @@ public class SettingsActivity extends Activity
     }
 
     try {
+      fos.write(String.format("lap,crew,time\n").getBytes());
       for( StartRow row : starts ) {
         String s = String.format("%d,%d,%s\n",
-                                 row.crewId, row.lapId, row.startAt);
+                                 row.lapId, row.crewId, row.startAt);
         fos.write(s.getBytes());
       }
       fos.close();
