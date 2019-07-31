@@ -36,10 +36,18 @@ public class MainService extends Service
   private static final String LAPS_URL = "http://%s/api/laps/updatelaps";
   private HttpClient client;
 
-  private CountDownTimer mTimer;
-  private MediaPlayer mPlayer;
-  private boolean inCountDownMode = false;
+  private enum CountDownMode {
+    NONE,
+    COUNTDOWN,
+    CANCEL
+  };
+
+  private CountDownTimer mTimer = null;
+  private MediaPlayer mPlayer = null;
+  private CountDownMode inCountDownMode = CountDownMode.NONE;
   private long startCountDownAt = 0;
+  /* simple event queue */
+  private EventMessage.CountDownMsg nextCountDownMsg = null;
 
   private SharedPreferences settings;
 
@@ -94,7 +102,7 @@ public class MainService extends Service
       EventBus.getDefault().post(new EventMessage(EventMessage.EventType.UPDATE, row));
     }
 
-    if( !inCountDownMode )
+    if( inCountDownMode != CountDownMode.COUNTDOWN )
       EventBus.getDefault().post(new EventMessage(EventMessage.EventType.COUNTDOWN_END, null));
 
     Log.i("wsa-ng", _("Boot End"));
@@ -152,10 +160,10 @@ public class MainService extends Service
 
   private void _countdown_cleanup()
   {
-    if( !inCountDownMode )
+    if( inCountDownMode == CountDownMode.NONE )
       return;
 
-    inCountDownMode = false;
+    inCountDownMode = CountDownMode.NONE;
 
     if( mPlayer != null ) {
       mPlayer.stop();
@@ -173,11 +181,30 @@ public class MainService extends Service
 
   private void _event_countdown_stop(Object none)
   {
-    if( !inCountDownMode ) {
+    if( inCountDownMode != CountDownMode.COUNTDOWN ) {
       return;
     }
 
     _countdown_cleanup();
+
+    inCountDownMode = CountDownMode.CANCEL;
+
+    Log.d("wsa-ng", _("MediaPlayer: play stop sound"));
+    mPlayer = MediaPlayer.create(MainService.this, R.raw.seconds_stop);
+    mPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+      @Override
+      public void onCompletion(MediaPlayer mp) {
+        _countdown_cleanup();
+        if( nextCountDownMsg != null ) {
+          _event_countdown_start(nextCountDownMsg);
+          nextCountDownMsg = null;
+        }
+        Log.d("wsa-ng", _("MediaPlayer: stop sound ended"));
+        mp.release();
+      }
+    });
+
+    mPlayer.start();
   }
 
   private void _event_countdown_start(EventMessage.CountDownMsg msg)
@@ -188,15 +215,20 @@ public class MainService extends Service
     final int signal_offset; /* time in ms from start of sound for signal */
 
     /* exit on countdown mode */
-    if( inCountDownMode ) {
+    if( inCountDownMode == CountDownMode.COUNTDOWN ) {
       Toast toast = Toast.makeText(getApplicationContext(),
                                    R.string.timer_started,
                                    Toast.LENGTH_SHORT);
       toast.show();
       return;
     }
+    else if( inCountDownMode == CountDownMode.CANCEL ) {
+      /* setup count down queue */
+      nextCountDownMsg = msg;
+      return;
+    }
 
-    inCountDownMode = true;
+    inCountDownMode = CountDownMode.COUNTDOWN;
 
     switch( (int)timeout ) {
     case 60000:
