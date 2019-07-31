@@ -368,8 +368,12 @@ public class MainActivity extends Activity
 
     for( RowHelper helper : lapId2RowId ) {
       if( helper.lapId == msg.lapId ) {
+        long time = 0;
         tv = findViewById(helper.rowInfoId);
-        tv.setText("Старт через " + Long.toString(msg.leftMs / 1000 + 1));
+        if( msg.leftMs != 0 ) {
+          time = msg.leftMs / 1000 + 1;
+        }
+        tv.setText("Старт через " + Long.toString(time));
       }
     }
   }

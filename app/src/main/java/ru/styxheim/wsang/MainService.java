@@ -256,7 +256,8 @@ public class MainService extends Service
         EventBus.getDefault().post(new EventMessage(EventMessage.EventType.COUNTDOWN, smsg));
       }
       public void onFinish() {
-        /* nothing */
+        EventMessage.CountDownMsg smsg = new EventMessage.CountDownMsg(lapId, 0, 0);
+        EventBus.getDefault().post(new EventMessage(EventMessage.EventType.COUNTDOWN, smsg));
       }
     };
 
