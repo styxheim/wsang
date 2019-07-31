@@ -215,6 +215,22 @@ public class SettingsActivity extends Activity
 
   public void exportOnClick(View v)
   {
+    AlertDialog.Builder builder = new AlertDialog.Builder(this);
+    final String[] keys = {",", ";"};
+
+    builder.setTitle("Тип разделителя:");
+    builder.setItems(keys, new DialogInterface.OnClickListener() {
+      @Override
+      public void onClick(DialogInterface dialog, int item)
+      {
+        _export(keys[item]);
+      }
+    });
+    builder.create().show();
+  }
+
+  public void _export(String separator)
+  {
     StartList starts = new StartList();
 
     starts.Load(getApplicationContext());
@@ -232,10 +248,13 @@ public class SettingsActivity extends Activity
     }
 
     try {
-      fos.write(String.format("lap,crew,time\n").getBytes());
+      fos.write(String.format("lap%screw%stime\n",
+                              separator, separator).getBytes());
       for( StartRow row : starts ) {
-        String s = String.format("%d,%d,%s\n",
-                                 row.lapId, row.crewId, row.startAt);
+        String s = String.format("%d%s%d%s\"%s\"\n",
+                                 row.lapId, separator,
+                                 row.crewId, separator,
+                                 row.startAt);
         fos.write(s.getBytes());
       }
       fos.close();
