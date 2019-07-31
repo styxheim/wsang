@@ -7,6 +7,8 @@ import android.view.*;
 import android.content.*;
 import android.util.Log;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.TimeZone;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.ThreadMode;
@@ -54,6 +56,7 @@ public class MainActivity extends Activity
   private boolean countDownMode = false;
   private int countDownLap = -1;
 
+  private SharedPreferences settings;
 
   private RowHelper getHelper(int viewId)
   {
@@ -85,13 +88,16 @@ public class MainActivity extends Activity
 
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_start);
-    
+
+    settings = getSharedPreferences("main", Context.MODE_PRIVATE);
+
     lapId2RowId = new ArrayList<RowHelper>();
   }
 
   @Override
   public void onStart()
   {
+    final Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
     Log.d("wsa-ng", "MainActivity:onStart()");
 
     super.onStart();
@@ -99,6 +105,25 @@ public class MainActivity extends Activity
     
     Intent intent = new Intent(this, MainService.class);
     startService(intent); /* boot data records */
+
+    /* chronometer */
+    final TextView tv = (TextView)findViewById(R.id.start_chrono);
+
+    Runnable cron = new Runnable() {
+      public void run() {
+        long offsetMIllis = settings.getLong("chrono_offset", 0);
+        cal.setTimeInMillis(System.currentTimeMillis() - offsetMIllis);
+        String time = String.format("%02d:%02d:%02d",
+                                    cal.get(Calendar.HOUR),
+                                    cal.get(Calendar.MINUTE),
+                                    cal.get(Calendar.SECOND));
+
+        tv.setText(time);
+        tv.postDelayed(this, 20);
+      }
+    };
+
+    tv.post(cron);
   }
 
   @Override
