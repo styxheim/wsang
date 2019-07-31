@@ -353,19 +353,19 @@ public class MainActivity extends Activity
   {
     TextView tv;
     ProgressBar pb = (ProgressBar)findViewById(R.id.start_progress);
-    int lapId = (msg.endAtMs == -1 ? countDownLap : msg.lapId);
+    int lapId = (msg == null ? countDownLap : msg.lapId);
 
     pb.setProgress(pb.getMax(), true);
 
     _set_countdown_mode(false);
 
+    if( msg == null )
+      return;
+
     for( RowHelper helper : lapId2RowId ) {
       if( helper.lapId == lapId ) {
         tv = findViewById(helper.rowInfoId);
-        if( msg.endAtMs == -1 )
-          tv.setText("Старт отменён");
-        else
-          tv.setText("Старт выполнен");
+        tv.setText("Старт выполнен");
       }
     }
 

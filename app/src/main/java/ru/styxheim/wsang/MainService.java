@@ -35,8 +35,11 @@ public class MainService extends Service
   private StartList starts;
   private static final String LAPS_URL = "http://%s/api/laps/updatelaps";
   private HttpClient client;
-  private CountDownTimer timer;
-  MediaPlayer mPlayer;
+
+  private CountDownTimer mTimer;
+  private MediaPlayer mPlayer;
+  private boolean inCountDownMode = false;
+  private long startCountDownAt = 0;
 
   private SharedPreferences settings;
 
@@ -52,13 +55,6 @@ public class MainService extends Service
     EventBus.getDefault().register(this);
     starts = new StartList();
     client = HttpClientBuilder.create().build();
-    mPlayer = new MediaPlayer();
-    try {
-      mPlayer.setDataSource("TODO");
-      mPlayer.prepare();
-    } catch( IOException e ) {
-      Log.e("wsa-ng", "Mplayer exception: " + e.getMessage());
-    }
     /* Load data */
     starts.Load(getApplicationContext());
   }
@@ -97,6 +93,9 @@ public class MainService extends Service
       Log.d("wsa-ng", _("Post row: " + row.toString()));
       EventBus.getDefault().post(new EventMessage(EventMessage.EventType.UPDATE, row));
     }
+
+    if( !inCountDownMode )
+      EventBus.getDefault().post(new EventMessage(EventMessage.EventType.COUNTDOWN_END, null));
 
     Log.i("wsa-ng", _("Boot End"));
   }
@@ -151,69 +150,116 @@ public class MainService extends Service
     Log.i("wsa-ng", "sync " + row.toString() + "code: " + Integer.toString(rs_code));
   }
 
-  private void _timer_free(boolean forced)
+  private void _countdown_cleanup()
   {
-    if( timer == null )
+    if( !inCountDownMode )
       return;
 
-    timer.cancel();
-    timer = null;
+    inCountDownMode = false;
 
-    if( forced ) {
-      /* send message about timer force stopped */
-      EventMessage.CountDownMsg smsg = new EventMessage.CountDownMsg(-1, -1, -1);
-      EventBus.getDefault().post(new EventMessage(EventMessage.EventType.COUNTDOWN_END, smsg));
+    if( mPlayer != null ) {
+      mPlayer.stop();
+      mPlayer.release();
+      mPlayer = null;
     }
+
+    if( mTimer != null ) {
+      mTimer.cancel();
+      mTimer = null;
+    }
+
+    EventBus.getDefault().post(new EventMessage(EventMessage.EventType.COUNTDOWN_END, null));
   }
-  
+
+  private void _event_countdown_stop(Object none)
+  {
+    if( !inCountDownMode ) {
+      return;
+    }
+
+    _countdown_cleanup();
+  }
+
   private void _event_countdown_start(EventMessage.CountDownMsg msg)
   {
-    final Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
     final int lapId = msg.lapId;
-    
-    if( timer != null ) {
+    final long timeout = msg.leftMs;
+    final int sound_id;
+    final int signal_offset; /* time in ms from start of sound for signal */
+
+    /* exit on countdown mode */
+    if( inCountDownMode ) {
       Toast toast = Toast.makeText(getApplicationContext(),
                                    R.string.timer_started,
                                    Toast.LENGTH_SHORT);
       toast.show();
       return;
     }
-    
-    timer = new CountDownTimer(msg.leftMs, 1000) {
+
+    inCountDownMode = true;
+
+    switch( (int)timeout ) {
+    case 60000:
+      sound_id = R.raw.seconds_60;
+      signal_offset = 60000;
+      break;
+    case 30000:
+      sound_id = R.raw.seconds_30;
+      signal_offset = 32000;
+      break;
+    case 10000:
+      sound_id = R.raw.seconds_10;
+      signal_offset = 12000;
+      break;
+    default:
+      Log.d("wsa-ng", "Unknown timeout mode: " + Long.toString(timeout));
+      return;
+    }
+
+    /* create mplayer and timer */
+    mPlayer = MediaPlayer.create(MainService.this, sound_id);
+    mTimer = new CountDownTimer(signal_offset, 1000) {
       public void onTick(long left) {
-        long endAt = System.currentTimeMillis();
         EventMessage.CountDownMsg smsg = new EventMessage.CountDownMsg(lapId, left, 0);
-
-        endAt -= settings.getLong("chrono_offset", 0);
-
-        Log.d("wsa-ng", _("Tick: " + Long.toString(left) + " " +
-                          "msec: " + Long.toString(endAt)));
-        
         EventBus.getDefault().post(new EventMessage(EventMessage.EventType.COUNTDOWN, smsg));
       }
       public void onFinish() {
-        long endAt = System.currentTimeMillis();
-
-        endAt -= settings.getLong("chrono_offset", 0);
-        EventMessage.CountDownMsg smsg = new EventMessage.CountDownMsg(lapId, 0, endAt);
-
-        Log.d("wsa-ng", _("Tick: finish " +
-                          "msec: " + Long.toString(endAt)));
-        /* send notice about complete time */
-        EventBus.getDefault().post(new EventMessage(EventMessage.EventType.COUNTDOWN_END, smsg));
-        _timer_free(false);
+        /* nothing */
       }
     };
-    timer.start();
+
+    /* setup mPlayer */
+    mPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+      @Override
+      public void onPrepared(MediaPlayer mp) {
+        long millis = System.currentTimeMillis();
+        mp.start();
+        mTimer.start();
+        Log.d("wsa-ng", _("MediaPlayer: prepared at " + Long.toString(millis)));
+        startCountDownAt = millis;
+      }
+    });
+
+    mPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+      @Override
+      public void onCompletion(MediaPlayer mp) {
+        long millis = System.currentTimeMillis();
+        Log.d("wsa-ng", _("MediaPlayer: end at " + Long.toString(millis)));
+        mTimer.cancel();
+
+        long endAt = startCountDownAt - settings.getLong("chrono_offset", 0) + signal_offset;
+        EventMessage.CountDownMsg smsg = new EventMessage.CountDownMsg(lapId, 0, endAt);
+        EventBus.getDefault().post(new EventMessage(EventMessage.EventType.COUNTDOWN_END, smsg));
+
+        _countdown_cleanup();
+      }
+    });
   }
-  
+
   private void _event_countdown_end(EventMessage.CountDownMsg msg)
   {
     Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
     String time;
-
-    if( msg.endAtMs == -1 )
-      return;
 
     cal.setTimeInMillis(msg.endAtMs);
     time = String.format("%02d:%02d:%02d.%02d",
@@ -265,11 +311,15 @@ public class MainService extends Service
       break;
     case COUNTDOWN_END:
       Log.i("wsa-ng", _("Event " + ev.type.name() + " received"));
+
+      if( ev.obj == null )
+        return;
+
       _event_countdown_end((EventMessage.CountDownMsg)ev.obj);
       break;
     case COUNTDOWN_STOP:
       Log.i("wsa-ng", _("Event " + ev.type.name() + " received"));
-      _timer_free(true);
+      _event_countdown_stop(null);
       break;
     case PROPOSE:
       Log.i("wsa-ng", _("Event " + ev.type.name() + " received"));
