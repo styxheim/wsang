@@ -10,6 +10,8 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.TimeZone;
 
+import android.graphics.drawable.Drawable;
+
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.ThreadMode;
 import org.greenrobot.eventbus.Subscribe;
@@ -244,23 +246,41 @@ public class MainActivity extends Activity
 
   public void showTimeCounterPopup(View v, RowHelper helper)
   {
-
     PopupMenu popup = new PopupMenu(this, v);
+    final Drawable fv_normal;
+    final Drawable sv_normal;
+    final View fv;
+    final View sv;
+
+    fv = (View)findViewById(helper.rowCrewId);
+    sv = (View)findViewById(helper.rowTimeId);
+
+    fv_normal = fv.getBackground();
+    sv_normal = fv.getBackground();
+    fv.setBackgroundResource(R.color.selected_row);
+    sv.setBackgroundResource(R.color.selected_row);
+
     if( countDownMode ) {
       popup.inflate(R.menu.start_cancel);
       popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
         @Override
         public boolean onMenuItemClick(MenuItem item)
         {
-          switch( item.getItemId() ) {
-          case R.id.start_cancel_stop:
-            /* stop countdown */
-            EventBus.getDefault().post(new EventMessage(EventMessage.EventType.COUNTDOWN_STOP, null));
-            break;
-          default:
-            return false;
+          try {
+            switch( item.getItemId() ) {
+            case R.id.start_cancel_stop:
+              /* stop countdown */
+              EventBus.getDefault().post(new EventMessage(EventMessage.EventType.COUNTDOWN_STOP, null));
+              break;
+            default:
+              return false;
+            }
+            return true;
           }
-          return true;
+          finally {
+            fv.setBackground(fv_normal);
+            sv.setBackground(sv_normal);
+          }
         }
       });
     } else {
@@ -271,29 +291,43 @@ public class MainActivity extends Activity
         @Override
         public boolean onMenuItemClick(MenuItem item)
         {
-          switch( item.getItemId() ) {
-          case R.id.start_time_menu_ten:
-            startCountDown(lapId, 10);
-            break;
-          case R.id.start_time_menu_thiry:
-            startCountDown(lapId, 30);
-            break;
-          case R.id.start_time_menu_sixty:
-            startCountDown(lapId, 60);
-            break;
-          default:
-            return false;
+          try {
+            switch( item.getItemId() ) {
+            case R.id.start_time_menu_ten:
+              startCountDown(lapId, 10);
+              break;
+            case R.id.start_time_menu_thiry:
+              startCountDown(lapId, 30);
+              break;
+            case R.id.start_time_menu_sixty:
+              startCountDown(lapId, 60);
+              break;
+            default:
+              return false;
+            }
+            return true;
           }
-          return true;
+          finally {
+            fv.setBackground(fv_normal);
+            sv.setBackground(sv_normal);
+          }
         }
       });
       MenuItem titleItem = popup.getMenu().findItem(R.id.start_time_menu_title);
       titleItem.setTitle(title);
     }
+
+    popup.setOnDismissListener(new PopupMenu.OnDismissListener() {
+      @Override
+      public void onDismiss(PopupMenu menu) {
+        fv.setBackground(fv_normal);
+        sv.setBackground(sv_normal);
+      }
+    });
+
     popup.show();
   }
 
-  
   public void startCountDown(int lapId, int seconds)
   {
     Log.i("wsa-ng", "Send COUNTDOWN event for lap #" +
