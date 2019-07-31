@@ -7,14 +7,35 @@ import android.util.Log;
 
 public class Launcher extends Activity
 {
+
+  enum Mode {
+    START,
+    DISTANCE,
+    FINISH,
+  };
+
+  protected Mode launch_mode = Mode.START;
+  //protected Mode launch_mode = Mode.FINISH;
+
   @Override
   protected void onCreate(Bundle savedInstanceState)
   {
-    Log.d("wsa-ng", "Launcher:onCreate()");
+    final Intent intent;
 
+    Log.d("wsa-ng", "Launcher:onCreate()");
     super.onCreate(savedInstanceState);
 
-    Intent intent = new Intent(this, StartActivity.class);
+    switch( launch_mode ) {
+    case START:
+      intent = new Intent(this, StartActivity.class);
+      break;
+    case FINISH:
+      intent = new Intent(this, FinishActivity.class);
+      break;
+    default:
+      /* ??? */
+      return;
+    }
     startActivity(intent);
   }
 

@@ -16,7 +16,7 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.ThreadMode;
 import org.greenrobot.eventbus.Subscribe;
 
-public class StartActivity extends Activity
+public class StartActivity extends StartFinish
 {
   private class RowHelper {
     public int rowId;
@@ -55,10 +55,7 @@ public class StartActivity extends Activity
 
   private int lastCrewId;
   private int lastLapId;
-  private boolean countDownMode = false;
   private int countDownLap = -1;
-
-  private SharedPreferences settings;
 
   private RowHelper getHelper(int viewId)
   {
@@ -91,41 +88,16 @@ public class StartActivity extends Activity
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_start);
 
-    settings = getSharedPreferences("main", Context.MODE_PRIVATE);
-
     lapId2RowId = new ArrayList<RowHelper>();
   }
 
   @Override
   public void onStart()
   {
-    final Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
     Log.d("wsa-ng", "StartActivity:onStart()");
 
     super.onStart();
     EventBus.getDefault().register(this);
-    
-    Intent intent = new Intent(this, MainService.class);
-    startService(intent); /* boot data records */
-
-    /* chronometer */
-    final TextView tv = (TextView)findViewById(R.id.start_chrono);
-
-    Runnable cron = new Runnable() {
-      public void run() {
-        long offsetMIllis = settings.getLong("chrono_offset", 0);
-        cal.setTimeInMillis(System.currentTimeMillis() - offsetMIllis);
-        String time = String.format("%02d:%02d:%02d",
-                                    cal.get(Calendar.HOUR),
-                                    cal.get(Calendar.MINUTE),
-                                    cal.get(Calendar.SECOND));
-
-        tv.setText(time);
-        tv.postDelayed(this, 20);
-      }
-    };
-
-    tv.post(cron);
   }
 
   @Override
@@ -335,19 +307,6 @@ public class StartActivity extends Activity
           Integer.toString(seconds) + "s");
     EventMessage.CountDownMsg msg = new EventMessage.CountDownMsg(lapId, seconds * 1000, 0);
     EventBus.getDefault().post(new EventMessage(EventMessage.EventType.COUNTDOWN_START, msg));
-  }
-  
-  public void settingsOnClick(View v)
-  {
-    if( countDownMode ) {
-      Toast.makeText(StartActivity.this,
-                     "Дождитесь окончания отсчёта",
-                     Toast.LENGTH_SHORT).show();
-    }
-    else {
-      Intent intent = new Intent(this, SettingsActivity.class);
-      startActivity(intent);
-    }
   }
 
   public void cancelOnClick(View v)

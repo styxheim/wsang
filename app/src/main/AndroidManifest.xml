@@ -34,6 +34,11 @@
             android:screenOrientation="unspecified" />
 
         <activity
+            android:name=".FinishActivity"
+            android:theme="@style/AppTheme.NoActionBar"
+            android:screenOrientation="unspecified" />
+
+        <activity
             android:name=".SettingsActivity"
             android:theme="@style/AppTheme.NoActionBar"
             android:screenOrientation="unspecified" />
