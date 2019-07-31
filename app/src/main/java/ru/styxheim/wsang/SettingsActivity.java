@@ -11,11 +11,11 @@ import android.util.Log;
 import java.util.TimeZone;
 import java.util.Calendar;
 
+import java.io.*;
+
 public class SettingsActivity extends Activity
 {
   private SharedPreferences settings;
-
-  private AlertDialog dialog = null;
 
   @Override
   public boolean onKeyDown(int keyCode, KeyEvent event) {
@@ -211,5 +211,42 @@ public class SettingsActivity extends Activity
       }
     });
     builder.create().show();
+  }
+
+  public void exportOnClick(View v)
+  {
+    StartList starts = new StartList();
+
+    starts.Load(getApplicationContext());
+
+    File file = new File(Environment.getExternalStorageDirectory(), "starts.csv");
+    FileOutputStream fos;
+
+    try {
+      fos = new FileOutputStream(file);
+    } catch( FileNotFoundException e ) {
+     Toast.makeText(SettingsActivity.this,
+                   "Ошибка экспорта: " + e.getMessage(),
+                   Toast.LENGTH_SHORT).show();
+     return;
+    }
+
+    try {
+      for( StartRow row : starts ) {
+        String s = String.format("%d,%d,%s\n",
+                                 row.crewId, row.lapId, row.startAt);
+        fos.write(s.getBytes());
+      }
+      fos.close();
+    } catch( IOException e ) {
+     Toast.makeText(SettingsActivity.this,
+                   "Ошибка экспорта: " + e.getMessage(),
+                   Toast.LENGTH_SHORT).show();
+    }
+
+    Toast.makeText(SettingsActivity.this,
+                   "Сохранено в " + file.getAbsolutePath(),
+                   Toast.LENGTH_SHORT).show();
+
   }
 }
