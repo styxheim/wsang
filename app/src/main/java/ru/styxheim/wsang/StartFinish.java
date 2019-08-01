@@ -36,7 +36,7 @@ public class StartFinish extends Activity
 
     Runnable cron = new Runnable() {
       public void run() {
-        long offsetMIllis = settings.getLong("chrono_offset", 0);
+        long offsetMIllis = settings.getLong("chrono_offset", Default.chrono_offset);
         cal.setTimeInMillis(System.currentTimeMillis() - offsetMIllis);
         String time = String.format("%02d:%02d:%02d",
                                     cal.get(Calendar.HOUR),

@@ -66,5 +66,8 @@
 		android:layout_height="wrap_content"
 		android:id="@+id/start_progress"/>
 
+	<include
+		layout="@layout/finish"/>
+
 </LinearLayout>
 
