@@ -34,8 +34,9 @@ public class StartFinish extends Activity
     Runnable cron = new Runnable() {
       public void run() {
         long offsetMillis = settings.getLong("chrono_offset", Default.chrono_offset);
+        long millis = System.currentTimeMillis() - offsetMillis;
 
-        tv.setText(Default.millisecondsToString(System.currentTimeMillis() - offsetMillis));
+        tv.setText(Default.millisecondsToStringShort(millis));
         tv.postDelayed(this, 20);
       }
     };

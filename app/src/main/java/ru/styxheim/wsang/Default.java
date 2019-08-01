@@ -11,16 +11,26 @@ public class Default {
   final static public long chrono_offset = 0;
   final static public int chrono_key = KeyEvent.KEYCODE_VOLUME_UP;
 
+  final static Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+
   public static String millisecondsToString(long ms)
   {
-    Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
-
     cal.setTimeInMillis(ms);
     String time = String.format("%02d:%02d:%02d.%02d",
                                 ms / (60 * 60 * 1000),
                                 cal.get(Calendar.MINUTE),
                                 cal.get(Calendar.SECOND),
                                 (cal.get(Calendar.MILLISECOND) / 10));
+    return time;
+  }
+
+  public static String millisecondsToStringShort(long ms)
+  {
+    cal.setTimeInMillis(ms);
+    String time = String.format("%02d:%02d:%02d",
+                                ms / (60 * 60 * 1000),
+                                cal.get(Calendar.MINUTE),
+                                cal.get(Calendar.SECOND));
     return time;
   }
 };
