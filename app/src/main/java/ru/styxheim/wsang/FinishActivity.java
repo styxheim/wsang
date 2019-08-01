@@ -44,7 +44,9 @@ public class FinishActivity extends StartFinish
 
   @Override
   public boolean onKeyDown(int keyCode, KeyEvent event) {
-    long timeInMillis = System.currentTimeMillis();
+    long timeInMillis;
+    long off = System.currentTimeMillis() - SystemClock.uptimeMillis();
+    timeInMillis = event.getEventTime() + off;
 
     timeInMillis -= settings.getLong("chrono_offset", Default.chrono_offset);
 

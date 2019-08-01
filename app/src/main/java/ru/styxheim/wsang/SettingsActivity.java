@@ -19,7 +19,9 @@ public class SettingsActivity extends Activity
 
   @Override
   public boolean onKeyDown(int keyCode, KeyEvent event) {
-    long timeInMillis = System.currentTimeMillis();
+    long timeInMillis;
+    long off = System.currentTimeMillis() - SystemClock.uptimeMillis();
+    timeInMillis = event.getEventTime() + off;
 
     if (keyCode == settings.getInt("chrono_key", Default.chrono_key))
     {
