@@ -105,6 +105,28 @@
 
 		</LinearLayout>
 
+		<LinearLayout
+			android:orientation="vertical"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+      android:paddingBottom="20dp"
+      android:onClick="modeOnClick">
+
+			<TextView
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:textAppearance="?android:attr/textAppearanceMedium"
+				android:text="Режим работы"
+				android:textStyle="bold"/>
+
+      <TextView
+				android:id="@+id/settings_mode"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:text="- ??? -"
+				android:textAppearance="?android:attr/textAppearanceSmall"/>
+
+		</LinearLayout>
 
 		<LinearLayout
 			android:orientation="vertical"

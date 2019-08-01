@@ -21,7 +21,7 @@ public class SettingsActivity extends Activity
   public boolean onKeyDown(int keyCode, KeyEvent event) {
     long timeInMillis = System.currentTimeMillis();
 
-    if (keyCode == settings.getInt("chrono_key", KeyEvent.KEYCODE_VOLUME_UP))
+    if (keyCode == settings.getInt("chrono_key", Default.chrono_key))
     {
       SharedPreferences.Editor ed = settings.edit();
       ed.putLong("chrono_offset", timeInMillis);
@@ -58,7 +58,7 @@ public class SettingsActivity extends Activity
 
     cron = new Runnable() {
       public void run() {
-        long offsetMIllis = settings.getLong("chrono_offset", 0);
+        long offsetMIllis = settings.getLong("chrono_offset", Default.chrono_offset);
         cal.setTimeInMillis(System.currentTimeMillis() - offsetMIllis);
         String time = String.format("%02d:%02d:%02d.%03d",
                                     cal.get(Calendar.HOUR),
@@ -73,6 +73,7 @@ public class SettingsActivity extends Activity
 
     tv.post(cron);
 
+    _setup_mode();
     _setup_server_addr();
     _update_chrono_key_title();
     _update_chrono_offset_title();
@@ -91,12 +92,35 @@ public class SettingsActivity extends Activity
     finish();
   }
 
+  public void _setup_mode()
+  {
+    final TextView v = (TextView)findViewById(R.id.settings_mode);
+    final Launcher.Mode mode;
+
+    mode = Launcher.Mode.valueOf(settings.getString("mode", Default.mode));
+    v.post(new Runnable() {
+      public void run() {
+        switch( mode ) {
+        case START:
+          v.setText("Судья на старте");
+          break;
+        case FINISH:
+          v.setText("Судья на финише");
+          break;
+        default:
+          v.setText("Неизвестный");
+          break;
+        }
+      }
+    });
+  }
+
   public void _setup_server_addr()
   {
     final Button server_bt = (Button)findViewById(R.id.settings_server_addr_apply);
     final EditText server_ed = (EditText)findViewById(R.id.settings_server_edit);
     server_bt.setVisibility(server_bt.INVISIBLE);
-    server_ed.setText(settings.getString("server_addr", ""));
+    server_ed.setText(settings.getString("server_addr", Default.server_addr));
 
     server_ed.addTextChangedListener(new TextWatcher() {
       @Override
@@ -107,7 +131,7 @@ public class SettingsActivity extends Activity
       @Override
       public void afterTextChanged(Editable s)
       {
-        if( s.toString() != settings.getString("server_addr", "") )
+        if( s.toString() != settings.getString("server_addr", Default.server_addr) )
           server_bt.setVisibility(server_bt.VISIBLE);
         else
           server_bt.setVisibility(server_bt.INVISIBLE);
@@ -137,14 +161,14 @@ public class SettingsActivity extends Activity
   {
     final TextView tv = (TextView)findViewById(R.id.settings_chrono_offset);
 
-    tv.setText(Long.toString(settings.getLong("chrono_offset", 0)));
+    tv.setText(Long.toString(settings.getLong("chrono_offset", Default.chrono_offset)));
   }
 
   public void _update_chrono_key_title()
   {
     final TextView tv = (TextView)findViewById(R.id.settings_chrono_key);
     final String key;
-    switch( settings.getInt("chrono_key", KeyEvent.KEYCODE_VOLUME_UP) ) {
+    switch( settings.getInt("chrono_key", Default.chrono_key) ) {
     case KeyEvent.KEYCODE_VOLUME_UP:
       key = "VOLUME_UP";
       break;
@@ -208,6 +232,27 @@ public class SettingsActivity extends Activity
       @Override
       public void onClick(DialogInterface dialog, int id) {
         dialog.dismiss();
+      }
+    });
+    builder.create().show();
+  }
+
+  public void modeOnClick(View v)
+  {
+    AlertDialog.Builder builder = new AlertDialog.Builder(this);
+    final String[] keys = { "Судья на старте", "Судья на финише" };
+    final Launcher.Mode[] vals = { Launcher.Mode.START, Launcher.Mode.FINISH };
+
+    builder.setTitle("Выберите режим работы");
+    builder.setItems(keys, new DialogInterface.OnClickListener() {
+      @Override
+      public void onClick(DialogInterface dialog, int item) {
+        SharedPreferences.Editor ed = settings.edit();
+        ed.putString("mode", vals[item].name());
+        ed.apply();
+        /* switch to new mode throug Launcher */
+        Intent intent = new Intent(SettingsActivity.this, Launcher.class);
+        startActivity(intent);
       }
     });
     builder.create().show();

@@ -134,7 +134,7 @@ public class MainService extends Service
     }
 
 
-    url = String.format(LAPS_URL, settings.getString("server_addr", ""));
+    url = String.format(LAPS_URL, settings.getString("server_addr", Default.server_addr));
     /* TODO: send query in another Thread */
     HttpPost rq = new HttpPost(LAPS_URL);
     rq.setHeader("User-Agent", "wsa-ng/1.0");
@@ -280,7 +280,7 @@ public class MainService extends Service
         Log.d("wsa-ng", _("MediaPlayer: end at " + Long.toString(millis)));
         mTimer.cancel();
 
-        long endAt = startCountDownAt - settings.getLong("chrono_offset", 0) + signal_offset;
+        long endAt = startCountDownAt - settings.getLong("chrono_offset", Default.chrono_offset) + signal_offset;
         EventMessage.CountDownMsg smsg = new EventMessage.CountDownMsg(lapId, 0, endAt);
         EventBus.getDefault().post(new EventMessage(EventMessage.EventType.COUNTDOWN_END, smsg));
 
