@@ -27,13 +27,14 @@ public class StartList implements Iterable<StartRow>
 
   /* Add new record to list
    */
-  public StartRow addRecord(int crewId, int lapId, String startAt)
+  public StartRow addRecord(int crewId, int lapId)
   {
     StartRow row = new StartRow(genId);
     genId++;
     row.crewId = crewId;
     row.lapId = lapId;
-    row.startAt = startAt;
+    row.startAt = "00:00:00.00";
+    row.finishAt = "00:00:00.00";
     Rows.add(row);
     return row;
   }

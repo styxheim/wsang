@@ -44,6 +44,21 @@ public class StartFinish extends Activity
 
     Intent intent = new Intent(this, MainService.class);
     startService(intent); /* boot data records */
+
+    /* set spacer size in 1/4 height of screen */
+    final LinearLayout spacer = (LinearLayout)findViewById(R.id.end_spacer);
+    if( spacer != null ) {
+      final int height = getWindowManager().getDefaultDisplay().getHeight() / 4;
+      spacer.post(new Runnable() {
+        public void run() {
+          ViewGroup.LayoutParams lparams;
+          lparams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                                                  height);
+          spacer.setLayoutParams(lparams);
+        }
+      });
+    }
+
   }
 
   @Override

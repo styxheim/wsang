@@ -9,14 +9,15 @@ public class StartRow
 
   public int crewId;
   public int lapId;
-  public String startAt;
+  public String startAt = "";
+  public String finishAt = "";
 
   public static enum SyncState {
     NONE,
     ERROR,
     SYNCED
   };
-  
+
   public SyncState state = SyncState.NONE;
 
   public StartRow(int rowId)
@@ -36,6 +37,7 @@ public class StartRow
            " lapId='" + Integer.toString(this.lapId) + "'" +
            " crewId='" + Integer.toString(this.crewId) + "'" +
            " startTime='" + this.startAt + "'" +
+           " finishTime='" + this.finishAt + "'" +
            ">";
   }
 
@@ -47,6 +49,7 @@ public class StartRow
     w.name("raceNumber").value(this.lapId);
     w.name("crewNumber").value(this.crewId);
     w.name("startTime").value(this.startAt);
+    w.name("finishTime").value(this.finishAt);
     w.name("isStarted").value(true);
     if( system ) {
       w.name("_state").value(this.state.ordinal());
@@ -70,6 +73,9 @@ public class StartRow
         break;
       case "startTime":
         this.startAt = r.nextString();
+        break;
+      case "finishTime":
+        this.finishAt = r.nextString();
         break;
       case "_state":
         if( system ) {

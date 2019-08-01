@@ -20,14 +20,31 @@ public class EventMessage
 
   public static class ProposeMsg
   {
-    public int crewId;
+    /* look to MainService._event_propose */
+    public long finishTime; /* finish time.  */
+    public int crewId; /* crewId and lapId used together */
     public int lapId;
     public int rowId = -1;
+
+    public enum Type {
+      UNK,
+      IDENTIFY,
+      FINISH
+    };
+
+    Type type = Type.UNK;
 
     public ProposeMsg(int crewId, int lapId)
     {
       this.crewId = crewId;
       this.lapId = lapId;
+      this.type = Type.IDENTIFY;
+    }
+
+    public ProposeMsg(long finishTime)
+    {
+      this.finishTime = finishTime;
+      this.type = Type.FINISH;
     }
 
     public void setRowId(int rowId)

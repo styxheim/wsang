@@ -330,7 +330,6 @@ public class StartActivity extends StartFinish
       }
     });
     sled.show(getFragmentManager(), "StartLineEditDialog");
-
   }
 
   private void _event_countdown_start(EventMessage.CountDownMsg msg)

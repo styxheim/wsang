@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TableRow
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	android:id="@+id/finish_row"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content">
+
+	<TextView
+		android:id="@+id/row_synced"
+		android:padding="3dp"
+		android:textSize="20sp"/>
+
+	<TextView
+		android:id="@+id/row_lap_id"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:text="Lap_"
+		android:padding="5dp"
+		android:textSize="20sp"/>
+
+	<TextView
+		android:id="@+id/row_crew_id"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:text="Crew_"
+		android:padding="5dp"
+    android:textSize="20sp"/>
+
+	<TextView
+		android:id="@+id/row_time"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:text="00:00:00"
+    android:padding="5dp"
+    android:textSize="20sp"
+    android:onClick="selectFinishTimeOnClick"/>
+
+</TableRow>
+

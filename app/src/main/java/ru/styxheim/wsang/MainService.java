@@ -307,20 +307,39 @@ public class MainService extends Service
   private void _event_propose(EventMessage.ProposeMsg msg)
   {
     StartRow row;
+
     if( msg.rowId == -1 ) {
       /* new record */
-      row = starts.addRecord(msg.crewId, msg.lapId, "00:00:00");
+      Log.d("wsa-ng", _("Add new StartRow record"));
+
+      row = starts.addRecord(msg.crewId, msg.lapId);
     }
     else {
       row = starts.getRecord(msg.rowId);
       if( row == null ) {
-        Log.e("wsa-ng", "StartList does not have rowId #" +
-                        Integer.toString(msg.rowId));
+        Log.e("wsa-ng", _("StartList does not have rowId #" +
+                          Integer.toString(msg.rowId)));
         return;
       }
-      row.crewId = msg.crewId;
-      row.lapId = msg.lapId;
-      row.state = StartRow.SyncState.NONE;
+
+      Log.d("wsa-ng", _("Got message " + msg.type.name() + " for rowId #" +
+                        Integer.toString(msg.rowId)));
+
+      switch( msg.type ){
+      case FINISH:
+        row.finishAt = Default.millisecondsToString(msg.finishTime);
+        row.state = StartRow.SyncState.NONE;
+        break;
+      case IDENTIFY:
+        row.crewId = msg.crewId;
+        row.lapId = msg.lapId;
+        row.state = StartRow.SyncState.NONE;
+        break;
+      default:
+        Log.e("wsa-ng", _("Unknown msg type for rowId #" +
+                          Integer.toString(msg.rowId) + ": " + msg.type.name()));
+        return;
+      }
     }
     EventBus.getDefault().post(new EventMessage(EventMessage.EventType.UPDATE, row));
     starts.Save(getApplicationContext());

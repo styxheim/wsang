@@ -16,5 +16,7 @@
   <string name="crew_title">Команда</string>
   <string name="lap_title">Заезд</string>
 
+  <string name="finish_time">Время финиша</string>
+
   <string name="start_cancel_stop">Отменить отсчёт</string>
 </resources>

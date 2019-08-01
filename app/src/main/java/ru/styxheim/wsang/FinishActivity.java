@@ -8,12 +8,44 @@ import android.view.*;
 import android.util.Log;
 import java.util.ArrayList;
 
+import android.graphics.drawable.Drawable;
+
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.ThreadMode;
+import org.greenrobot.eventbus.Subscribe;
+
 public class FinishActivity extends StartFinish
 {
+  protected final int times_max = 40;
   protected ArrayList<Long> times = new ArrayList<Long>();
+  protected SharedPreferences chrono_cfg;
+
+  /* TOREMOVE */
+  protected int lastCrewId = 0;
+  protected int lastLapId = 0;
+  /* */
 
   public FinishActivity() {
 
+  }
+
+  protected void _save_chrono()
+  {
+    SharedPreferences.Editor ed = chrono_cfg.edit();
+    for( int i = 0; i < times.size(); i++ ) {
+      ed.putLong(Integer.toString(i), times.get(i));
+    }
+    ed.apply();
+  }
+
+  protected void _load_chrono()
+  {
+    times.clear();
+    for( int i = 0; i < times_max; i++ ) {
+      if( !chrono_cfg.contains(Integer.toString(i)) )
+        break;
+      times.add(chrono_cfg.getLong(Integer.toString(i), 0));
+    }
   }
 
   @Override
@@ -22,6 +54,7 @@ public class FinishActivity extends StartFinish
     Log.d("wsa-ng", "Launcher:onCreate()");
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_finish);
+    chrono_cfg = getSharedPreferences("chrono", Context.MODE_PRIVATE);
   }
 
   @Override
@@ -29,7 +62,10 @@ public class FinishActivity extends StartFinish
   {
     Log.d("wsa-ng", "Launcher:onStart()");
 
+    _load_chrono();
+
     super.onStart();
+    EventBus.getDefault().register(this);
   }
 
   @Override
@@ -37,6 +73,7 @@ public class FinishActivity extends StartFinish
   {
     Log.d("wsa-ng", "Launcher:onStop()");
 
+    EventBus.getDefault().unregister(this);
     super.onStop();
   }
 
@@ -51,16 +88,37 @@ public class FinishActivity extends StartFinish
     if (keyCode == settings.getInt("chrono_key", Default.chrono_key))
     {
       times.add(0, timeInMillis);
-      if( times.size() > 40 )
+      if( times.size() > times_max )
         times.remove(times.size() - 1);
+      _save_chrono();
       return true;
     }
     return super.onKeyDown(keyCode, event);
   }
 
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  public void onServiceMessageUpdate(EventMessage ev)
+  {
+    switch( ev.type ) {
+    case UPDATE:
+      publishFinishRow((StartRow)ev.obj);
+      break;
+    }
+  }
+
+  protected void _startRowSetTime(int rowId, long time)
+  {
+    EventMessage.ProposeMsg req;
+
+    req = new EventMessage.ProposeMsg(time);
+    req.setRowId(rowId);
+    EventBus.getDefault().post(new EventMessage(EventMessage.EventType.PROPOSE, req));
+  }
+
   public void selectFinishTimeOnClick(View v)
   {
-    AlertDialog.Builder builder = new AlertDialog.Builder(this);
+    final Drawable row_drw;
+    final TableRow row;
 
     if( times.size() == 0 ) {
       Toast.makeText(FinishActivity.this,
@@ -70,31 +128,127 @@ public class FinishActivity extends StartFinish
       return;
     }
 
-    String[] Stimes = new String[times.size()];
+    row = (TableRow)v.getParent();
+    row_drw = row.getBackground();
+    row.setBackgroundResource(R.color.selected_row);
 
-    for( int i = 0; i < times.size(); i++ ) {
-      Stimes[i] = String.format("%2d. %s",
-                                i,
-                                Default.millisecondsToString(times.get(i)));
+    PopupMenu pmenu = new PopupMenu(this, v);
+
+    for( int i = 0; i < times.size() && i < 5; i++ ) {
+      pmenu.getMenu().add(1, i, i, Default.millisecondsToString(times.get(i)));
     }
 
-    builder.setItems(Stimes, new DialogInterface.OnClickListener() {
+    pmenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
       @Override
-      public void onClick(DialogInterface dialog, int item)
+      public boolean onMenuItemClick(MenuItem item)
       {
-        Long time = times.get(item);
-
-        Toast.makeText(FinishActivity.this,
-                       "Выбрано: " + Long.toString(time),
-                       Toast.LENGTH_SHORT).show();
-
+        try {
+          _startRowSetTime(row.getTag(), times.get(item.getItemId()));
+          return true;
+        }
+        finally {
+          row.setBackground(row_drw);
+        }
       }
     });
-    builder.create().show();
+
+    pmenu.setOnDismissListener(new PopupMenu.OnDismissListener() {
+      @Override
+      public void onDismiss(PopupMenu menu) {
+        row.setBackground(row_drw);
+      }
+    });
+
+    pmenu.show();
   }
 
+  private void publishFinishRow(StartRow startRow)
+  {
+    final ScrollView sv = findViewById(R.id.finish_scroll);
+    LayoutInflater inflater;
+    TableLayout table;
+    TableRow row;
+
+    TextView vlap;
+    TextView vcrew;
+    TextView vtime;
+    TextView syncer;
+
+    boolean visible = false;
+
+    if( startRow.crewId > this.lastCrewId )
+      this.lastCrewId = startRow.crewId;
+
+    if( startRow.lapId > this.lastLapId )
+      this.lastLapId = startRow.lapId;
+
+
+    table = (TableLayout)findViewById(R.id.finish_table);
+    row = (TableRow)table.findViewWithTag(startRow.getRowId());
+    if( row != null ) {
+      visible = true;
+    }
+    else {
+      inflater = getLayoutInflater();
+      row = (TableRow)inflater.inflate(R.layout.finish_row, null);
+      row.setTag(startRow.getRowId());
+    }
+
+    vlap = (TextView)row.findViewById(R.id.row_lap_id);
+    vcrew = (TextView)row.findViewById(R.id.row_crew_id);
+    vtime = (TextView)row.findViewById(R.id.row_time);
+    syncer = (TextView)row.findViewById(R.id.row_synced);
+
+    vcrew.setText("C" + Integer.toString(startRow.crewId));
+    vlap.setText("L" + Integer.toString(startRow.lapId));
+    vtime.setText(startRow.finishAt);
+
+    switch( startRow.state ) {
+    case SYNCED:
+      syncer.setBackgroundResource(R.color.Synced);
+      break;
+    case ERROR:
+      syncer.setBackgroundResource(R.color.errSync);
+      break;
+    default:
+      syncer.setBackgroundResource(R.color.notSynced);
+      break;
+    }
+
+    table.addView(row);
+
+    if( table.getChildCount() % 2 == 0 ) {
+      row.setBackgroundResource(R.color.rowEven);
+    }
+
+    if( !visible ) {
+      row.post(new Runnable() {
+        @Override
+        public void run()
+        {
+          sv.scrollTo(0, sv.getBottom());
+        }
+      });
+    }
+  }
+
+  /* TOREMOVE */
   public void startOnClick(View v)
   {
+    StartLineEditDialog sled = new StartLineEditDialog(this.lastCrewId + 1, this.lastLapId + 1);
+    sled.setStartLineEditDialogListener(new StartLineEditDialog.StartLineEditDialogListener() {
+      @Override
+      public void onStartLineEditDialogResult(StartLineEditDialog sled, int crewId, int lapId) {
+        EventMessage.ProposeMsg req;
+        lastCrewId = crewId;
+        lastLapId = lapId;
+
+        req = new EventMessage.ProposeMsg(crewId, lapId);
+
+        EventBus.getDefault().post(new EventMessage(EventMessage.EventType.PROPOSE, req));
+      }
+    });
+    sled.show(getFragmentManager(), "StartLineEditDialog");
   }
 }
 
