@@ -33,8 +33,6 @@ public class StartList implements Iterable<StartRow>
     genId++;
     row.crewId = crewId;
     row.lapId = lapId;
-    row.startAt = "00:00:00.00";
-    row.finishAt = "00:00:00.00";
     Rows.add(row);
     return row;
   }

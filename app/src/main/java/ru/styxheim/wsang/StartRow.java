@@ -9,8 +9,8 @@ public class StartRow
 
   public int crewId;
   public int lapId;
-  public String startAt = "";
-  public String finishAt = "";
+  public String startAt = Default.time_empty;
+  public String finishAt = Default.time_empty;
 
   public static enum SyncState {
     NONE,

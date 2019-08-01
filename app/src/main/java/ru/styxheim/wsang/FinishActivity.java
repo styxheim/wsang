@@ -106,16 +106,35 @@ public class FinishActivity extends StartFinish
     }
   }
 
-  protected void _startRowSetTime(int rowId, long time)
+  protected void _startRowSetTime(final int rowId, final long time, boolean askForReplace)
   {
-    EventMessage.ProposeMsg req;
+    if( !askForReplace ) {
+      EventMessage.ProposeMsg req;
 
-    req = new EventMessage.ProposeMsg(time);
-    req.setRowId(rowId);
-    EventBus.getDefault().post(new EventMessage(EventMessage.EventType.PROPOSE, req));
+      req = new EventMessage.ProposeMsg(time);
+      req.setRowId(rowId);
+      EventBus.getDefault().post(new EventMessage(EventMessage.EventType.PROPOSE, req));
+    }
+    else {
+      AlertDialog.Builder builder = new AlertDialog.Builder(this);
+      builder.setMessage("Заменить финишное время?");
+      builder.setPositiveButton("Да", new DialogInterface.OnClickListener() {
+        @Override
+        public void onClick(DialogInterface dialog, int id) {
+          _startRowSetTime(rowId, time, false);
+        }
+      });
+      builder.setNegativeButton("Нет", new DialogInterface.OnClickListener() {
+        @Override
+        public void onClick(DialogInterface dialog, int id) {
+        }
+      });
+      builder.create().show();
+
+    }
   }
 
-  public void selectFinishTimeOnClick(View v)
+  public void selectFinishTimeOnClick(final View v)
   {
     final Drawable row_drw;
     final TableRow row;
@@ -142,8 +161,15 @@ public class FinishActivity extends StartFinish
       @Override
       public boolean onMenuItemClick(MenuItem item)
       {
+        boolean askForReplace = true;
+
+        if( Default.time_empty.compareTo(((TextView)v).getText().toString()) == 0 )
+          askForReplace = false;
+
         try {
-          _startRowSetTime(row.getTag(), times.get(item.getItemId()));
+          _startRowSetTime(row.getTag(),
+                           times.get(item.getItemId()),
+                           askForReplace);
           return true;
         }
         finally {
@@ -202,6 +228,7 @@ public class FinishActivity extends StartFinish
     vcrew.setText("C" + Integer.toString(startRow.crewId));
     vlap.setText("L" + Integer.toString(startRow.lapId));
     vtime.setText(startRow.finishAt);
+    /* setup specific flag (ask for replace) */
 
     switch( startRow.state ) {
     case SYNCED:
