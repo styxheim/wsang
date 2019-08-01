@@ -2,9 +2,25 @@ package ru.styxheim.wsang;
 
 import android.view.KeyEvent;
 
+import java.util.Calendar;
+import java.util.TimeZone;
+
 public class Default {
   final static public String mode = Launcher.Mode.START.name();
   final static public String server_addr = "127.0.0.1";
   final static public long chrono_offset = 0;
   final static public int chrono_key = KeyEvent.KEYCODE_VOLUME_UP;
+
+  public static String millisecondsToString(long ms)
+  {
+    Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+
+    cal.setTimeInMillis(ms);
+    String time = String.format("%02d:%02d:%02d.%02d",
+                                ms / (60 * 60 * 1000),
+                                cal.get(Calendar.MINUTE),
+                                cal.get(Calendar.SECOND),
+                                (cal.get(Calendar.MILLISECOND) / 10));
+    return time;
+  }
 };

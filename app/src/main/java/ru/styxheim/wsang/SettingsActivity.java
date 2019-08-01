@@ -8,8 +8,6 @@ import android.content.*;
 import android.text.TextWatcher;
 import android.text.Editable;
 import android.util.Log;
-import java.util.TimeZone;
-import java.util.Calendar;
 
 import java.io.*;
 
@@ -49,7 +47,6 @@ public class SettingsActivity extends Activity
   public void onStart()
   {
     final Runnable cron;
-    final Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
 
     Log.d("wsa-ng", "SettingsActivity:onStart()");
 
@@ -60,15 +57,9 @@ public class SettingsActivity extends Activity
 
     cron = new Runnable() {
       public void run() {
-        long offsetMIllis = settings.getLong("chrono_offset", Default.chrono_offset);
-        cal.setTimeInMillis(System.currentTimeMillis() - offsetMIllis);
-        String time = String.format("%02d:%02d:%02d.%03d",
-                                    cal.get(Calendar.HOUR),
-                                    cal.get(Calendar.MINUTE),
-                                    cal.get(Calendar.SECOND),
-                                    cal.get(Calendar.MILLISECOND));
+        long offsetMillis = settings.getLong("chrono_offset", Default.chrono_offset);
 
-        tv.setText(time);
+        tv.setText(Default.millisecondsToString(System.currentTimeMillis() - offsetMillis));
         tv.postDelayed(this, 20);
       }
     };

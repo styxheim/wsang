@@ -7,8 +7,6 @@ import android.content.*;
 import android.view.*;
 import android.util.Log;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.TimeZone;
 
 public class FinishActivity extends StartFinish
 {
@@ -62,7 +60,6 @@ public class FinishActivity extends StartFinish
 
   public void selectFinishTimeOnClick(View v)
   {
-    Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
     AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
     if( times.size() == 0 ) {
@@ -76,15 +73,9 @@ public class FinishActivity extends StartFinish
     String[] Stimes = new String[times.size()];
 
     for( int i = 0; i < times.size(); i++ ) {
-      cal.setTimeInMillis(times.get(i));
-      String time = String.format("%2d) %02d:%02d:%02d.%02d",
-                                  i + 1,
-                                  cal.get(Calendar.HOUR),
-                                  cal.get(Calendar.MINUTE),
-                                  cal.get(Calendar.SECOND),
-                                  (cal.get(Calendar.MILLISECOND) / 10));
-
-      Stimes[i] = time;
+      Stimes[i] = String.format("%2d. %s",
+                                i,
+                                Default.millisecondsToString(times.get(i)));
     }
 
     builder.setItems(Stimes, new DialogInterface.OnClickListener() {

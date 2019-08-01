@@ -21,8 +21,6 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 import android.widget.*;
-import java.util.Calendar;
-import java.util.TimeZone;
 
 /* TODO:
  *  Receive message from MainActivity
@@ -291,16 +289,10 @@ public class MainService extends Service
 
   private void _event_countdown_end(EventMessage.CountDownMsg msg)
   {
-    Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
     String time;
 
-    cal.setTimeInMillis(msg.endAtMs);
-    time = String.format("%02d:%02d:%02d.%02d",
-                         cal.get(Calendar.HOUR),
-                         cal.get(Calendar.MINUTE),
-                         cal.get(Calendar.SECOND),
-                         (int)(cal.get(Calendar.MILLISECOND) / 10));
-    
+    time = Default.millisecondsToString(msg.endAtMs);
+
     for( StartRow row : starts ) {
       if( row.lapId != msg.lapId )
         continue;

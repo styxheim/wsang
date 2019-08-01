@@ -6,8 +6,6 @@ import android.widget.*;
 import android.content.*;
 import android.view.*;
 import android.util.Log;
-import java.util.Calendar;
-import java.util.TimeZone;
 
 public class StartFinish extends Activity
 {
@@ -31,19 +29,13 @@ public class StartFinish extends Activity
     super.onStart();
 
     /* chronometer */
-    final Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
     final TextView tv = (TextView)findViewById(R.id.start_chrono);
 
     Runnable cron = new Runnable() {
       public void run() {
-        long offsetMIllis = settings.getLong("chrono_offset", Default.chrono_offset);
-        cal.setTimeInMillis(System.currentTimeMillis() - offsetMIllis);
-        String time = String.format("%02d:%02d:%02d",
-                                    cal.get(Calendar.HOUR),
-                                    cal.get(Calendar.MINUTE),
-                                    cal.get(Calendar.SECOND));
+        long offsetMillis = settings.getLong("chrono_offset", Default.chrono_offset);
 
-        tv.setText(time);
+        tv.setText(Default.millisecondsToString(System.currentTimeMillis() - offsetMillis));
         tv.postDelayed(this, 20);
       }
     };
