@@ -1,81 +1,87 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView
-  android:id="@+id/start_scroll"
-  xmlns:android="http://schemas.android.com/apk/res/android"
-  android:layout_width="wrap_content"
-  android:layout_height="wrap_content">
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	android:id="@+id/start_scroll"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content">
 
-  <LinearLayout
-    android:orientation="vertical"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content">
+	<LinearLayout
+		android:orientation="vertical"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content">
 
-    <LinearLayout
-      android:orientation="horizontal"
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content">
+		<LinearLayout
+			android:orientation="horizontal"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content">
 
-      <TableLayout
-        android:id="@+id/start_table_crew"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content">
+			<TableLayout
+				android:id="@+id/start_table_crew"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content">
 
-        <TableRow
-          android:layout_width="wrap_content"
-          android:layout_height="wrap_content">
+				<TableRow
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content">
 
-          <TextView
-            android:padding="3dp"/>
+					<TextView
+						android:padding="3dp"/>
 
-          <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/lap_title"
-            android:padding="5dp"/>
+					<TextView
+						android:layout_width="wrap_content"
+						android:layout_height="wrap_content"
+						android:text="@string/lap_title"
+						android:padding="5dp"
+						android:textStyle="bold"
+						android:textSize="20sp"/>
 
-          <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/crew_title"
-            android:padding="5dp"/>
+					<TextView
+						android:layout_width="wrap_content"
+						android:layout_height="wrap_content"
+						android:text="@string/crew_title"
+						android:padding="5dp"
+						android:textSize="20sp"
+						android:textStyle="bold"/>
 
-        </TableRow>
+				</TableRow>
 
-      </TableLayout>
+			</TableLayout>
 
-      <HorizontalScrollView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content">
+			<HorizontalScrollView
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content">
 
-        <TableLayout
-          android:id="@+id/start_table_time"
-          android:layout_width="wrap_content"
-          android:layout_height="wrap_content">
+				<TableLayout
+					android:id="@+id/start_table_time"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content">
 
-          <TableRow
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content">
+					<TableRow
+						android:layout_width="wrap_content"
+						android:layout_height="wrap_content">
 
-            <TextView
-              android:layout_width="wrap_content"
-              android:layout_height="wrap_content"
-              android:text="Start Time"
-              android:padding="5dp"/>
+						<TextView
+							android:layout_width="wrap_content"
+							android:layout_height="wrap_content"
+							android:text="Время старта"
+							android:padding="5dp"
+							android:textSize="20sp"
+							android:textStyle="bold"/>
 
-            <TextView
-              android:layout_width="wrap_content"
-              android:layout_height="wrap_content"
-              android:text="Info"
-              android:padding="5dp"/>
+						<TextView
+							android:layout_width="wrap_content"
+							android:layout_height="wrap_content"
+							android:padding="5dp"/>
 
-          </TableRow>
+					</TableRow>
 
-        </TableLayout>
+				</TableLayout>
 
-      </HorizontalScrollView>
+			</HorizontalScrollView>
 
-    </LinearLayout>
+		</LinearLayout>
 
-  </LinearLayout>
+	</LinearLayout>
 
 </ScrollView>
+
