@@ -233,20 +233,14 @@ public class StartActivity extends StartFinish
     sv.setBackgroundResource(R.color.selected_row);
 
     if( countDownMode ) {
-      popup.inflate(R.menu.start_cancel);
+      popup.getMenu().add(1, 1, 1, R.string.start_cancel_stop);
       popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
         @Override
         public boolean onMenuItemClick(MenuItem item)
         {
           try {
-            switch( item.getItemId() ) {
-            case R.id.start_cancel_stop:
-              /* stop countdown */
-              EventBus.getDefault().post(new EventMessage(EventMessage.EventType.COUNTDOWN_STOP, null));
-              break;
-            default:
-              return false;
-            }
+            /* stop countdown */
+            EventBus.getDefault().post(new EventMessage(EventMessage.EventType.COUNTDOWN_STOP, null));
             return true;
           }
           finally {
@@ -257,26 +251,15 @@ public class StartActivity extends StartFinish
       });
     } else {
       final int lapId = helper.lapId;
-      final String title = "Старт заезда №" + Integer.toString(lapId) + " через";
-      popup.inflate(R.menu.start_time);
+      popup.getMenu().add(1, 10, 10, R.string.ten_seconds_button);
+      popup.getMenu().add(1, 30, 30, R.string.thirty_seconds_button);
+      popup.getMenu().add(1, 60, 60, R.string.sixty_seconds_button);
       popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
         @Override
         public boolean onMenuItemClick(MenuItem item)
         {
           try {
-            switch( item.getItemId() ) {
-            case R.id.start_time_menu_ten:
-              startCountDown(lapId, 10);
-              break;
-            case R.id.start_time_menu_thiry:
-              startCountDown(lapId, 30);
-              break;
-            case R.id.start_time_menu_sixty:
-              startCountDown(lapId, 60);
-              break;
-            default:
-              return false;
-            }
+            startCountDown(lapId, item.getItemId());
             return true;
           }
           finally {
@@ -285,8 +268,6 @@ public class StartActivity extends StartFinish
           }
         }
       });
-      MenuItem titleItem = popup.getMenu().findItem(R.id.start_time_menu_title);
-      titleItem.setTitle(title);
     }
 
     popup.setOnDismissListener(new PopupMenu.OnDismissListener() {
