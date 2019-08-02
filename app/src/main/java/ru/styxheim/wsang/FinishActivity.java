@@ -193,7 +193,8 @@ public class FinishActivity extends StartFinish
 
     for( int i = 0; i < times.size() && i < 5; i++, _c++) {
       String title;
-      title = String.format("%s %s%s",
+      title = String.format("%2d. %s %s%s",
+                            i + 1,
                             Default.millisecondsToString(times.get(i)),
                             offset >= times.get(i) ? "+" : "-",
                             Default.millisecondsToString(offset - times.get(i))
@@ -202,7 +203,7 @@ public class FinishActivity extends StartFinish
     }
 
     if( times.size() > _c ) {
-      pmenu.getMenu().add(1, _c, _c, "... ещё ... ");
+      pmenu.getMenu().add(1, _c, _c, "  ... ещё ... ");
     }
 
     final int c = _c;
