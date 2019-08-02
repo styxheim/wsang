@@ -2,12 +2,12 @@
 <ScrollView
 	xmlns:android="http://schemas.android.com/apk/res/android"
 	android:id="@+id/start_scroll"
-	android:layout_width="wrap_content"
+	android:layout_width="match_parent"
 	android:layout_height="wrap_content">
 
 	<LinearLayout
 		android:orientation="vertical"
-		android:layout_width="wrap_content"
+		android:layout_width="match_parent"
 		android:layout_height="wrap_content">
 
 		<LinearLayout
@@ -80,6 +80,11 @@
 			</HorizontalScrollView>
 
 		</LinearLayout>
+
+		<LinearLayout
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:id="@+id/end_spacer"/>
 
 	</LinearLayout>
 
