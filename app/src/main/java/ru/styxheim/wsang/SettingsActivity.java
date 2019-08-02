@@ -273,7 +273,7 @@ public class SettingsActivity extends Activity
 
     starts.Load(getApplicationContext());
 
-    File file = new File(Environment.getExternalStorageDirectory(), "starts.csv");
+    File file = new File(Environment.getExternalStorageDirectory(), "funny_starts.csv");
     FileOutputStream fos;
 
     try {
@@ -286,22 +286,29 @@ public class SettingsActivity extends Activity
     }
 
     try {
-      fos.write(String.format("lap%screw%sstart_time%sfinish_time\n",
-                              separator, separator, separator).getBytes());
+      fos.write(String.format("lap%screw%s\"start time\"%s\"finish time\"%sdelta\n",
+                              separator, separator, separator, separator).getBytes());
       for( StartRow row : starts ) {
         String finishAt = Default.millisecondsToString(row.finishAt);
         String startAt = Default.millisecondsToString(row.startAt);
+        String timeDelta = "";
+
+        if( row.finishAt != 0 && row.startAt != 0 ) {
+          timeDelta = Default.millisecondsToString(row.finishAt - row.startAt);
+        }
 
         if( separator.compareTo(";") == 0 ) {
           finishAt = finishAt.replace('.', ',');
           startAt = startAt.replace('.', ',');
+          timeDelta = timeDelta.replace('.', ',');
         }
 
-        String s = String.format("%d%s%d%s\"%s\"%s\"%s\"\n",
+        String s = String.format("%d%s%d%s\"%s\"%s\"%s\"%s\"%s\"\n",
                                  row.lapId, separator,
                                  row.crewId, separator,
                                  startAt, separator,
-                                 finishAt);
+                                 finishAt, separator,
+                                 timeDelta);
         fos.write(s.getBytes());
       }
       fos.close();
