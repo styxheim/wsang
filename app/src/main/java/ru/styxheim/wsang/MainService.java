@@ -327,19 +327,21 @@ public class MainService extends Service
 
       switch( msg.type ){
       case FINISH:
-        row.finishAt = msg.finishTime;
-        row.state = StartRow.SyncState.NONE;
+        row.finishAt = msg.time;
         break;
       case IDENTIFY:
         row.crewId = msg.crewId;
         row.lapId = msg.lapId;
-        row.state = StartRow.SyncState.NONE;
+        break;
+      case START:
+        row.startAt = msg.time;
         break;
       default:
         Log.e("wsa-ng", _("Unknown msg type for rowId #" +
                           Integer.toString(msg.rowId) + ": " + msg.type.name()));
         return;
       }
+      row.state = StartRow.SyncState.NONE;
     }
     EventBus.getDefault().post(new EventMessage(EventMessage.EventType.UPDATE, row));
     starts.Save(getApplicationContext());

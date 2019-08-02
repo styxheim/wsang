@@ -214,9 +214,26 @@ public class StartActivity extends StartFinish
     }
   }
 
+  protected void _cancel_start_time_for_lap(int lapId)
+  {
+    EventMessage.ProposeMsg req;
+    TextView tv;
+
+    for( RowHelper helper : lapId2RowId ) {
+      if( helper.lapId == lapId ) {
+        req = new EventMessage.ProposeMsg(0L, EventMessage.ProposeMsg.Type.START);
+        req.setRowId(helper.rowId);
+        EventBus.getDefault().post(new EventMessage(EventMessage.EventType.PROPOSE, req));
+        tv = (TextView)findViewById(helper.rowInfoId);
+        tv.setText("фальшстарт");
+      }
+    }
+  }
+
   public void showTimeCounterPopup(View v, RowHelper helper)
   {
     PopupMenu popup = new PopupMenu(this, v);
+    final TextView tv;
     final Drawable fv_normal;
     final Drawable sv_normal;
     final View fv;
@@ -224,6 +241,8 @@ public class StartActivity extends StartFinish
 
     fv = (View)findViewById(helper.rowCrewId);
     sv = (View)findViewById(helper.rowTimeId);
+
+    tv = (TextView)sv.findViewById(R.id.start_row_time_view);
 
     fv_normal = fv.getBackground();
     sv_normal = fv.getBackground();
@@ -236,36 +255,63 @@ public class StartActivity extends StartFinish
         @Override
         public boolean onMenuItemClick(MenuItem item)
         {
-          try {
-            /* stop countdown */
-            EventBus.getDefault().post(new EventMessage(EventMessage.EventType.COUNTDOWN_STOP, null));
-            return true;
-          }
-          finally {
-            fv.setBackground(fv_normal);
-            sv.setBackground(sv_normal);
-          }
+          fv.setBackground(fv_normal);
+          sv.setBackground(sv_normal);
+          /* stop countdown */
+          EventBus.getDefault().post(new EventMessage(EventMessage.EventType.COUNTDOWN_STOP, null));
+          return true;
         }
       });
     } else {
       final int lapId = helper.lapId;
-      popup.getMenu().add(1, 10, 10, R.string.ten_seconds_button);
-      popup.getMenu().add(1, 30, 30, R.string.thirty_seconds_button);
-      popup.getMenu().add(1, 60, 60, R.string.sixty_seconds_button);
-      popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-        @Override
-        public boolean onMenuItemClick(MenuItem item)
-        {
-          try {
+
+      if( Default.time_empty.compareTo(tv.getText().toString()) != 0 ) {
+        popup.getMenu().add(1, 1, 1, R.string.false_start);
+        popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+          @Override
+          public boolean onMenuItemClick(MenuItem item) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(StartActivity.this);
+
+            fv.setBackground(fv_normal);
+            sv.setBackground(sv_normal);
+
+            builder.setTitle("Фальшстарт");
+            builder.setMessage("Отменить результаты заезда " + Integer.toString(lapId) + "?");
+            builder.setPositiveButton("Отменить", new DialogInterface.OnClickListener() {
+              @Override
+              public void onClick(DialogInterface dialog, int id) {
+                tv.post(new Runnable() {
+                  public void run() {
+                    _cancel_start_time_for_lap(lapId);
+                  }
+                });
+              }
+            });
+            builder.setNegativeButton("Нет", new DialogInterface.OnClickListener() {
+              @Override
+              public void onClick(DialogInterface dialog, int id) {
+              }
+            });
+            builder.create().show();
+            return true;
+          }
+        });
+      }
+      else {
+        popup.getMenu().add(1, 10, 10, R.string.ten_seconds_button);
+        popup.getMenu().add(1, 30, 30, R.string.thirty_seconds_button);
+        popup.getMenu().add(1, 60, 60, R.string.sixty_seconds_button);
+        popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+          @Override
+          public boolean onMenuItemClick(MenuItem item)
+          {
+            fv.setBackground(fv_normal);
+            sv.setBackground(sv_normal);
             startCountDown(lapId, item.getItemId());
             return true;
           }
-          finally {
-            fv.setBackground(fv_normal);
-            sv.setBackground(sv_normal);
-          }
-        }
-      });
+        });
+      }
     }
 
     popup.setOnDismissListener(new PopupMenu.OnDismissListener() {

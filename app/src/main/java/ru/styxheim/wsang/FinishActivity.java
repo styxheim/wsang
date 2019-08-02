@@ -111,7 +111,7 @@ public class FinishActivity extends StartFinish
     if( !askForReplace ) {
       EventMessage.ProposeMsg req;
 
-      req = new EventMessage.ProposeMsg(time);
+      req = new EventMessage.ProposeMsg(time, EventMessage.ProposeMsg.Type.FINISH);
       req.setRowId(rowId);
       EventBus.getDefault().post(new EventMessage(EventMessage.EventType.PROPOSE, req));
     }
