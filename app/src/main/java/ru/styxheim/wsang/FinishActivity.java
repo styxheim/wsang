@@ -139,11 +139,14 @@ public class FinishActivity extends StartFinish
     AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
     String[] Stimes = new String[times.size()];
+    long offset = times.get(0);
 
     for( int i = 0; i < times.size(); i++ ) {
-      Stimes[i] = String.format("%2d. %s",
+      Stimes[i] = String.format("%2d. %s +%s",
                                 i,
-                                Default.millisecondsToString(times.get(i)));
+                                Default.millisecondsToString(times.get(i)),
+                                Default.millisecondsToString(offset - times.get(i))
+                                );
     }
 
     builder.setItems(Stimes, new DialogInterface.OnClickListener() {
@@ -185,8 +188,13 @@ public class FinishActivity extends StartFinish
 
     /* bottom magic */
     int _c = 0;
+    long offset = times.get(0);
+
     for( int i = 0; i < times.size() && i < 5; i++, _c++) {
-      pmenu.getMenu().add(1, i, i, Default.millisecondsToString(times.get(i)));
+      String title = Default.millisecondsToString(times.get(i)) +
+                     " +" +
+                     Default.millisecondsToString(offset - times.get(i));
+      pmenu.getMenu().add(1, i, i, title);
     }
 
     if( times.size() > _c ) {
