@@ -421,10 +421,7 @@ public class StartActivity extends StartFinish
     for( RowHelper helper : lapId2RowId ) {
       if( helper.lapId == lapId ) {
         tv = findViewById(helper.rowInfoId);
-        if( msg == null )
-          tv.setText("отменён");
-        else
-          tv.setText("стартовал");
+          tv.setText("");
       }
     }
 
