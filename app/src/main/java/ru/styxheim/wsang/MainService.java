@@ -297,7 +297,7 @@ public class MainService extends Service
       if( row.lapId != msg.lapId )
         continue;
       Log.d("wsa-ng", _("Set time to " + time + " (" + msg.endAtMs + ") for row #" + row.getRowId()));
-      row.startAt = time;
+      row.startAt = msg.endAtMs;
       row.state = StartRow.SyncState.NONE;
       EventBus.getDefault().post(new EventMessage(EventMessage.EventType.UPDATE, row));
     }
@@ -327,7 +327,7 @@ public class MainService extends Service
 
       switch( msg.type ){
       case FINISH:
-        row.finishAt = Default.millisecondsToString(msg.finishTime);
+        row.finishAt = msg.finishTime;
         row.state = StartRow.SyncState.NONE;
         break;
       case IDENTIFY:

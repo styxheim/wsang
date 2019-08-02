@@ -289,8 +289,8 @@ public class SettingsActivity extends Activity
       fos.write(String.format("lap%screw%sstart_time%sfinish_time\n",
                               separator, separator, separator).getBytes());
       for( StartRow row : starts ) {
-        String finishAt = row.finishAt;
-        String startAt = row.startAt;
+        String finishAt = Default.millisecondsToString(row.finishAt);
+        String startAt = Default.millisecondsToString(row.startAt);
 
         if( separator.compareTo(";") == 0 ) {
           finishAt = finishAt.replace('.', ',');

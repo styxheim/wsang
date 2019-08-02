@@ -187,7 +187,7 @@ public class StartActivity extends StartFinish
       }
 
       v = tr_time.findViewById(R.id.start_row_time_view);
-      v.setText(row.startAt);
+      v.setText(Default.millisecondsToString(row.startAt));
 
       /* FIXME: rowId not trustable */
       if( row.getRowId() % 2 == 0 ) {

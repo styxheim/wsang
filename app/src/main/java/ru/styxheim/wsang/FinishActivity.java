@@ -277,7 +277,7 @@ public class FinishActivity extends StartFinish
 
     vcrew.setText("C" + Integer.toString(startRow.crewId));
     vlap.setText("L" + Integer.toString(startRow.lapId));
-    vtime.setText(startRow.finishAt);
+    vtime.setText(Default.millisecondsToString(startRow.finishAt));
     /* setup specific flag (ask for replace) */
 
     switch( startRow.state ) {
