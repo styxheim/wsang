@@ -339,16 +339,24 @@ public class StartActivity extends StartFinish
           "COUNTDOWN: lapId=" + Integer.toString(msg.lapId) +
           " left=" + Long.toString(msg.leftMs));
 
+
+    long time = 0;
+
+    if( msg.leftMs != 0 ) {
+      time = msg.leftMs / 1000 + 1;
+    }
+
+    Toast.makeText(StartActivity.this,
+                   "Старт через " + Long.toString(time),
+                   Toast.LENGTH_SHORT).show();
+
     for( RowHelper helper : lapId2RowId ) {
       if( helper.lapId == msg.lapId ) {
-        long time = 0;
         tv = findViewById(helper.rowInfoId);
-        if( msg.leftMs != 0 ) {
-          time = msg.leftMs / 1000 + 1;
-        }
-        tv.setText("Старт через " + Long.toString(time));
+        tv.setText("");
       }
     }
+
   }
 
   private void _event_countdown_end(EventMessage.CountDownMsg msg)
@@ -361,13 +369,16 @@ public class StartActivity extends StartFinish
 
     _set_countdown_mode(false);
 
-    if( msg == null )
+    if( lapId == -1 )
       return;
 
     for( RowHelper helper : lapId2RowId ) {
       if( helper.lapId == lapId ) {
         tv = findViewById(helper.rowInfoId);
-        tv.setText("Старт выполнен");
+        if( msg == null )
+          tv.setText("отменён");
+        else
+          tv.setText("стартовал");
       }
     }
 
@@ -396,6 +407,8 @@ public class StartActivity extends StartFinish
       settings_bt.setVisibility(settings_bt.VISIBLE);
       cancel_bt.setVisibility(settings_bt.GONE);
     }
+
+    countDownLap = -1;
   }
 
   @Subscribe(threadMode = ThreadMode.MAIN)
