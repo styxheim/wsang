@@ -286,13 +286,21 @@ public class SettingsActivity extends Activity
     }
 
     try {
-      fos.write(String.format("lap%screw%stime\n",
-                              separator, separator).getBytes());
+      fos.write(String.format("lap%screw%sstart_time%sfinish_time\n",
+                              separator, separator, separator).getBytes());
       for( StartRow row : starts ) {
-        String s = String.format("%d%s%d%s\"%s\"\n",
+        String finishAt = row.finishAt;
+        String startAt = row.startAt;
+
+        if( separator.compareTo(";") == 0 ) {
+          finishAt = finishAt.replace('.', ',');
+          startAt = startAt.replace('.', ',');
+        }
+
+        String s = String.format("%d%s%d%s\"%s\",\"%s\"\n",
                                  row.lapId, separator,
                                  row.crewId, separator,
-                                 row.startAt);
+                                 startAt, finishAt);
         fos.write(s.getBytes());
       }
       fos.close();
