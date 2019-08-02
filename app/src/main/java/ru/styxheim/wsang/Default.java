@@ -16,7 +16,7 @@ public class Default {
 
   public static String millisecondsToString(long ms)
   {
-    cal.setTimeInMillis(ms);
+    cal.setTimeInMillis(Math.abs(ms));
     String time = String.format("%02d:%02d:%02d.%02d",
                                 ms / (60 * 60 * 1000),
                                 cal.get(Calendar.MINUTE),
@@ -27,7 +27,7 @@ public class Default {
 
   public static String millisecondsToStringShort(long ms)
   {
-    cal.setTimeInMillis(ms);
+    cal.setTimeInMillis(Math.abs(ms));
     String time = String.format("%02d:%02d:%02d",
                                 ms / (60 * 60 * 1000),
                                 cal.get(Calendar.MINUTE),
