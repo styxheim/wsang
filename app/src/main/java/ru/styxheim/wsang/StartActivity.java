@@ -206,8 +206,6 @@ public class StartActivity extends StartFinish
             sv.scrollTo(0, sv.getBottom());
           }
         });
-
-        registerForContextMenu(tr_time);
       }
 
       helper.setIds(row.lapId);
