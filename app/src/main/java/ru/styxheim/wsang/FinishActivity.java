@@ -16,7 +16,7 @@ import org.greenrobot.eventbus.Subscribe;
 
 public class FinishActivity extends StartFinish
 {
-  protected final int times_max = 40;
+  protected final int times_max = 1000;
   protected ArrayList<Long> times = new ArrayList<Long>();
   protected SharedPreferences chrono_cfg;
 
@@ -143,7 +143,7 @@ public class FinishActivity extends StartFinish
 
     for( int i = 0; i < times.size(); i++ ) {
       Stimes[i] = String.format("%3d. %s %s%s",
-                                i + 1,
+                                times.size() - i,
                                 Default.millisecondsToString(times.get(i)),
                                 offset >= times.get(i) ? "+" : "-",
                                 Default.millisecondsToString(offset - times.get(i))
@@ -194,7 +194,7 @@ public class FinishActivity extends StartFinish
     for( int i = 0; i < times.size() && i < 5; i++, _c++) {
       String title;
       title = String.format("%2d. %s %s%s",
-                            i + 1,
+                            times.size() - i,
                             Default.millisecondsToString(times.get(i)),
                             offset >= times.get(i) ? "+" : "-",
                             Default.millisecondsToString(offset - times.get(i))
