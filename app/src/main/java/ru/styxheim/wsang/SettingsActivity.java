@@ -202,6 +202,52 @@ public class SettingsActivity extends Activity
     });
     builder.create().show();
   }
+  
+  public void importOnClick(View v) {
+    String jsonf;
+    final Launcher.Mode mode = Launcher.Mode.valueOf(settings.getString("mode", Default.mode));
+
+    switch( mode ) {
+      case FINISH:
+        jsonf = "START";
+        break;
+      case START:
+        jsonf = "FINISH";
+        break;
+      default:
+        jsonf = "UNK";
+    }
+
+    jsonf = "funny_starts." + jsonf + ".json";
+    final File file_starts = new File(Environment.getExternalStorageDirectory(), jsonf);
+    
+    if( !file_starts.canRead() ) {
+      Toast.makeText(SettingsActivity.this,
+                     "Невозможно прочесть " + file_starts.getAbsolutePath(),
+                     Toast.LENGTH_SHORT).show();
+      return;
+    }
+    
+    AlertDialog.Builder builder = new AlertDialog.Builder(this);
+    builder.setTitle("Импорт");
+    builder.setMessage("Попытаться импортировать данные? В случае ошибки всё потерять всё. После импорта приложение остановится.");
+    builder.setPositiveButton("Выполнить", new DialogInterface.OnClickListener() {
+        @Override
+        public void onClick(DialogInterface dialog, int id) {
+          _import(mode, file_starts);
+
+          moveTaskToBack(true);
+          android.os.Process.killProcess(android.os.Process.myPid());
+          System.exit(1);
+        }
+      });
+    builder.setNegativeButton("Одуматься", new DialogInterface.OnClickListener() {
+        @Override
+        public void onClick(DialogInterface dialog, int id) {
+        }
+      });
+    builder.create().show();
+  }
 
   public void resetOnClick(View v) {
     AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -271,6 +317,36 @@ public class SettingsActivity extends Activity
     });
     builder.create().show();
   }
+  
+  public void _import(Launcher.Mode mode, File file_starts)
+  {
+     StartList lstarts = new StartList();
+     StartList rstarts = new StartList();
+     StartRow lrow;
+     
+     lstarts.Load(getApplicationContext());
+     rstarts.setOutput(file_starts.getAbsolutePath());
+     rstarts.Load(getApplicationContext());
+     
+     for( StartRow rrow : rstarts ) {
+       lrow = lstarts.getRecord(rrow.getRowId());
+       if( lrow == null ) {
+         if( mode == Launcher.Mode.FINISH )
+           rrow.finishAt = 0;
+         else
+           rrow.startAt = 0;
+           
+         lstarts.addRecord(rrow);
+       }
+       else {
+         if( mode == Launcher.Mode.FINISH )
+           lrow.startAt = rrow.startAt;
+         else
+           lrow.finishAt = rrow.finishAt;
+       }
+     }
+     lstarts.Save(getApplicationContext());
+  }
 
   public void _export(String separator)
   {
@@ -322,6 +398,12 @@ public class SettingsActivity extends Activity
                    "Ошибка экспорта: " + e.getMessage(),
                    Toast.LENGTH_SHORT).show();
     }
+   
+    String jsonf = "funny_starts." + settings.getString("mode", Default.mode) + ".json";
+    
+    File file_starts = new File(Environment.getExternalStorageDirectory(), jsonf);
+    starts.setOutput(file_starts.getAbsolutePath());
+    starts.Save(getApplicationContext());
 
     Toast.makeText(SettingsActivity.this,
                    "Сохранено в " + file.getAbsolutePath(),

@@ -172,9 +172,16 @@
 					android:layout_width="match_parent"
 					style="?android:attr/buttonBarButtonStyle"
 					android:layout_height="wrap_content"
-					android:text="Экспорт в CSV"
+					android:text="Экспорт в CSV и JSON"
 					android:onClick="exportOnClick"/>
 
+        <Button
+          android:layout_width="match_parent"
+          style="?android:attr/buttonBarButtonStyle"
+          android:layout_height="wrap_content"
+          android:text="Импорт из JSON"
+					android:onClick="importOnClick"/>
+        
 				<Button
 					android:layout_width="match_parent"
 					style="?android:attr/buttonBarButtonStyle"

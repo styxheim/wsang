@@ -8,18 +8,37 @@ import java.io.*;
 
 public class StartList implements Iterable<StartRow>
 {
-  private ArrayList<StartRow> Rows;
+  private ArrayList<StartRow> Rows = new ArrayList<StartRow>();
   private int genId = 0;
-  final private String FILE_NAME = "_list_start.txt";
+  private String _FILE_NAME = "_list_start.txt";
   /* for safe write: write to this file and rename to FILE_NAME */
-  final private String FILE_NAME_NEW = "_list_start_write.txt";
-  final private String FILE_NAME_OLD = "_list_start_old.txt";
+  private String _FILE_NAME_NEW = "_list_start_write.txt";
+  private String _FILE_NAME_OLD = "_list_start_old.txt";
+  
+  private String FILE_NAME;
+  private String FILE_NAME_NEW;
+  private String FILE_NAME_OLD;
 
   public StartList()
   {
-    Rows = new ArrayList<StartRow>();
+    setOutput(null);
   }
-
+  
+  public void setOutput(String file)
+  {
+    if( file != null ) {
+      FILE_NAME = file;
+      FILE_NAME_NEW = file + ".new";
+      FILE_NAME_OLD = file + ".old";
+    }
+    else {
+      FILE_NAME = _FILE_NAME;
+      FILE_NAME_OLD = _FILE_NAME_OLD;
+      FILE_NAME_NEW = _FILE_NAME_NEW;
+    }
+  }
+  
+  
   @Override
   public Iterator<StartRow> iterator() {
     return Rows.iterator();
@@ -39,7 +58,7 @@ public class StartList implements Iterable<StartRow>
 
   /* Add parsed record to array
    */
-  private StartRow addRecord(StartRow row)
+  public StartRow addRecord(StartRow row)
   {
     if( row.getRowId() >= genId ) {
       genId = row.getRowId() + 1;
@@ -77,6 +96,7 @@ public class StartList implements Iterable<StartRow>
     Log.d("wsa-ng", "save to " + FILE_NAME);
 
     try {
+      jw.setIndent("  ");
       jw.beginArray();
       for( StartRow row: Rows ) {
         row.saveJSON(jw, true /* system save */);
@@ -90,36 +110,62 @@ public class StartList implements Iterable<StartRow>
 
     String json = sw.toString();
 
+    Log.d("wsa-ng", "save to " + FILE_NAME_NEW);
+    
     try {
-      FileOutputStream fos = ctx.openFileOutput(FILE_NAME_NEW, Context.MODE_PRIVATE);
+      FileOutputStream fos;
+      
+      if( FILE_NAME_NEW.startsWith("/") ) {
+        fos = new FileOutputStream(new File(FILE_NAME_NEW));
+      }
+      else {
+        fos = ctx.openFileOutput(FILE_NAME_NEW, Context.MODE_PRIVATE);
+      }
 
       OutputStreamWriter ow = new OutputStreamWriter(fos);
       ow.write(json);
       ow.close();
     } catch( Exception e ) {
-      e.printStackTrace();
+      Log.e("wsa-ng", "write failed: " + e.getMessage());
       /* TODO: print exception to UI */
       return;
     }
-
-    ctx.deleteFile(FILE_NAME_OLD);
+    
+    Log.d("wsa-ng", "delete " + FILE_NAME_OLD);
+    
+    if( FILE_NAME_OLD.startsWith("/") ) {
+      (new File(FILE_NAME_OLD)).delete();
+    }
+    else {
+      ctx.deleteFile(FILE_NAME_OLD);
+    }
 
     File f;
     File p = ctx.getFilesDir();
 
+    Log.d("wsa-ng", "Rename " + FILE_NAME + " to " + FILE_NAME_OLD);
+    
     try {
       f = ctx.getFileStreamPath(FILE_NAME);
       if( f != null )
         f.renameTo(new File(p, FILE_NAME_OLD));
     } catch( Exception e ) {
-      Log.e("wsa-ng", "Cannot rename " + FILE_NAME + " to " + FILE_NAME_OLD);
+      Log.e("wsa-ng", "Cannot rename " + FILE_NAME + " to " + FILE_NAME_OLD + ": " + e.getMessage());
     }
 
+    Log.d("wsa-ng", "Rename " + FILE_NAME_NEW + " to " + FILE_NAME);
+    
     try {
-      f = ctx.getFileStreamPath(FILE_NAME_NEW);
-      f.renameTo(new File(p, FILE_NAME));
+      if( FILE_NAME_NEW.startsWith("/") ) {
+        f = new File(FILE_NAME_NEW);
+        f.renameTo(new File(FILE_NAME));
+      }
+      else {
+        f = ctx.getFileStreamPath(FILE_NAME_NEW);
+        f.renameTo(new File(p, FILE_NAME));
+      }
     } catch( Exception e ) {
-      e.printStackTrace();
+      Log.e("wsa-ng", "rename failed: " + e.getMessage());
       /* TODO: print exception to UI */
       return;
     }
@@ -131,7 +177,14 @@ public class StartList implements Iterable<StartRow>
     Log.d("wsa-ng", "load from " + FILE_NAME);
     this.Flush();
     try {
-      FileInputStream fos = ctx.openFileInput(FILE_NAME);
+      FileInputStream fos;
+      
+      if( FILE_NAME.startsWith("/") ) {
+        fos = new FileInputStream(new File(FILE_NAME));
+      }
+      else {
+        fos = ctx.openFileInput(FILE_NAME);
+      }
       InputStreamReader ir = new InputStreamReader(fos);
       JsonReader jr = new JsonReader(ir);
 
@@ -146,7 +199,7 @@ public class StartList implements Iterable<StartRow>
       jr.endArray();
     } catch( Exception e ) {
       this.Flush();
-      e.printStackTrace();
+      Log.e("wsa-ng", "load from " + FILE_NAME + " failed: " + e.getMessage());
     }
     Log.d("wsa-ng", "load from " + FILE_NAME + " is ok");
   }
