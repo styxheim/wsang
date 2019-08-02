@@ -16,9 +16,11 @@ public class Default {
 
   public static String millisecondsToString(long ms)
   {
-    cal.setTimeInMillis(Math.abs(ms));
+    long millis = Math.abs(ms);
+
+    cal.setTimeInMillis(millis);
     String time = String.format("%02d:%02d:%02d.%02d",
-                                ms / (60 * 60 * 1000),
+                                millis / (60 * 60 * 1000),
                                 cal.get(Calendar.MINUTE),
                                 cal.get(Calendar.SECOND),
                                 (cal.get(Calendar.MILLISECOND) / 10));
@@ -27,9 +29,11 @@ public class Default {
 
   public static String millisecondsToStringShort(long ms)
   {
-    cal.setTimeInMillis(Math.abs(ms));
+    long millis = Math.abs(ms);
+
+    cal.setTimeInMillis(millis);
     String time = String.format("%02d:%02d:%02d",
-                                ms / (60 * 60 * 1000),
+                                millis / (60 * 60 * 1000),
                                 cal.get(Calendar.MINUTE),
                                 cal.get(Calendar.SECOND));
     return time;
