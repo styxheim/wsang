@@ -134,6 +134,28 @@ public class FinishActivity extends StartFinish
     }
   }
 
+  protected void _showMoreItems(final int rowId, final boolean askForReplace)
+  {
+    AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+    String[] Stimes = new String[times.size()];
+
+    for( int i = 0; i < times.size(); i++ ) {
+      Stimes[i] = String.format("%2d. %s",
+                                i,
+                                Default.millisecondsToString(times.get(i)));
+    }
+
+    builder.setItems(Stimes, new DialogInterface.OnClickListener() {
+      @Override
+      public void onClick(DialogInterface dialog, int item)
+      {
+        _startRowSetTime(rowId, times.get(item), askForReplace);
+      }
+    });
+    builder.create().show();
+  }
+
   public void selectFinishTimeOnClick(final View v)
   {
     final Drawable row_drw;
@@ -151,25 +173,41 @@ public class FinishActivity extends StartFinish
     row_drw = row.getBackground();
     row.setBackgroundResource(R.color.selected_row);
 
+    final boolean askForReplace;
+
+    if( Default.time_empty.compareTo(((TextView)v).getText().toString()) == 0 )
+      askForReplace = false;
+    else
+      askForReplace = true;
+
+
     PopupMenu pmenu = new PopupMenu(this, v);
 
-    for( int i = 0; i < times.size() && i < 5; i++ ) {
+    /* bottom magic */
+    int _c = 0;
+    for( int i = 0; i < times.size() && i < 5; i++, _c++) {
       pmenu.getMenu().add(1, i, i, Default.millisecondsToString(times.get(i)));
     }
+
+    if( times.size() > _c ) {
+      pmenu.getMenu().add(1, _c, _c, "... ещё ... ");
+    }
+
+    final int c = _c;
 
     pmenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
       @Override
       public boolean onMenuItemClick(MenuItem item)
       {
-        boolean askForReplace = true;
-
-        if( Default.time_empty.compareTo(((TextView)v).getText().toString()) == 0 )
-          askForReplace = false;
-
         try {
-          _startRowSetTime(row.getTag(),
-                           times.get(item.getItemId()),
-                           askForReplace);
+          if( item.getItemId() == c ) {
+            _showMoreItems(row.getTag(), askForReplace);
+          }
+          else {
+            _startRowSetTime(row.getTag(),
+                             times.get(item.getItemId()),
+                             askForReplace);
+          }
           return true;
         }
         finally {
