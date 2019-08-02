@@ -216,6 +216,11 @@ public class SettingsActivity extends Activity
         StartList starts = new StartList();
         starts.Save(getApplicationContext());
 
+        SharedPreferences.Editor ed;
+        ed = getSharedPreferences("chrono", Context.MODE_PRIVATE).edit();
+        ed.clear();
+        ed.commit();
+
         moveTaskToBack(true);
         android.os.Process.killProcess(android.os.Process.myPid());
         System.exit(1);
