@@ -297,10 +297,11 @@ public class SettingsActivity extends Activity
           startAt = startAt.replace('.', ',');
         }
 
-        String s = String.format("%d%s%d%s\"%s\",\"%s\"\n",
+        String s = String.format("%d%s%d%s\"%s\"%s\"%s\"\n",
                                  row.lapId, separator,
                                  row.crewId, separator,
-                                 startAt, finishAt);
+                                 startAt, separator,
+                                 finishAt);
         fos.write(s.getBytes());
       }
       fos.close();
