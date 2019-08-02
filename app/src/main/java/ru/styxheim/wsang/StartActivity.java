@@ -390,14 +390,16 @@ public class StartActivity extends StartFinish
       time = msg.leftMs / 1000 + 1;
     }
 
+    /*
     Toast.makeText(StartActivity.this,
                    "Старт через " + Long.toString(time),
                    Toast.LENGTH_SHORT).show();
+    */
 
     for( RowHelper helper : lapId2RowId ) {
       if( helper.lapId == msg.lapId ) {
         tv = findViewById(helper.rowInfoId);
-        tv.setText("");
+        tv.setText("Старт через " + Long.toString(time));
       }
     }
 
