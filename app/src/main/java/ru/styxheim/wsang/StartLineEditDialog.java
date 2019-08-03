@@ -23,11 +23,20 @@ public class StartLineEditDialog extends DialogFragment
 
   private int crew_min = 1;
   private int crew_max = 999;
+  
+  boolean editMode = false;
 
   public StartLineEditDialog(int crew_no, int lap_no)
   {
     this.crew_chosen = crew_no;
     this.lap_chosen = lap_no;
+  }
+  
+  public StartLineEditDialog(int crew_no, int lap_no, boolean is_edit)
+  {
+    this.crew_chosen = crew_no;
+    this.lap_chosen = lap_no;
+    this.editMode = is_edit;
   }
 
   public void setStartLineEditDialogListener(StartLineEditDialogListener listener)
@@ -89,6 +98,8 @@ public class StartLineEditDialog extends DialogFragment
 
     b = (Button)v.findViewById(R.id.start_line_edit_dialog_save);
     b.setOnClickListener(this);
+    if( editMode )
+      b.setText(R.string.edit_crew_save_title);
 
     b = (Button)v.findViewById(R.id.start_line_edit_dialog_cancel);
     b.setOnClickListener(this);

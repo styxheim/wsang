@@ -21,6 +21,7 @@ public class StartActivity extends StartFinish
   private class RowHelper {
     public int rowId;
     public int lapId;
+    public int crewId;
 
     public int rowCrewId;
     public int rowTimeId;
@@ -45,9 +46,10 @@ public class StartActivity extends StartFinish
                id == this.rowInfoId );
     }
 
-    public void setIds(int lapId)
+    public void setIds(int lapId, int crewId)
     {
       this.lapId = lapId;
+      this.crewId = crewId;
     }
   };
 
@@ -208,7 +210,7 @@ public class StartActivity extends StartFinish
         });
       }
 
-      helper.setIds(row.lapId);
+      helper.setIds(row.lapId, row.crewId);
     } catch( Exception e ) {
       e.printStackTrace();
     }
@@ -485,11 +487,31 @@ public class StartActivity extends StartFinish
 
   public void startCrewOnClick(View v)
   {
-    RowHelper helper = getHelper(v.getId());
+    final RowHelper helper = getHelper(v.getId());
 
     if( helper == null )
       return;
 
-    Log.i("wsa-ng", "clicked: " + Integer.toString(helper.rowId));
+    if( helper.lapId == countDownLap ) {
+      Toast.makeText(this,
+                     "Дождитеь окончания отсчёта",
+                     Toast.LENGTH_SHORT).show();
+      return;
+    }
+
+    StartLineEditDialog sled = new StartLineEditDialog(helper.crewId, helper.lapId, true);
+    sled.setStartLineEditDialogListener(new StartLineEditDialog.StartLineEditDialogListener() {
+        @Override
+        public void onStartLineEditDialogResult(StartLineEditDialog sled, int crewId, int lapId) {
+          EventMessage.ProposeMsg req;
+
+          Log.i("wsa-ng", "Set new lap/crew for row #" + helper.rowId);
+          req = new EventMessage.ProposeMsg(crewId, lapId);
+          req.setRowId(helper.rowId);
+
+          EventBus.getDefault().post(new EventMessage(EventMessage.EventType.PROPOSE, req));
+        }
+      });
+    sled.show(getFragmentManager(), "StartLineEditDialog");
   }
 }
