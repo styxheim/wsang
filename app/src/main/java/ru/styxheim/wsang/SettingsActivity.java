@@ -368,7 +368,7 @@ public class SettingsActivity extends Activity
         String timeDelta = "";
 
         if( row.finishAt != 0 && row.startAt != 0 ) {
-          timeDelta = Default.millisecondsToString(row.finishAt - row.startAt);
+          timeDelta = Default.millisecondsToString((row.finishAt / 10 - row.startAt / 10) * 10);
         }
 
         if( separator.compareTo(";") == 0 ) {
