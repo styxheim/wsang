@@ -78,7 +78,8 @@ public class FinishActivity extends StartFinish
   }
 
   @Override
-  public boolean onKeyDown(int keyCode, KeyEvent event) {
+  public boolean onKeyDown(int keyCode, KeyEvent event)
+  {
     long timeInMillis;
     long off = System.currentTimeMillis() - SystemClock.uptimeMillis();
     timeInMillis = event.getEventTime() + off;
@@ -90,6 +91,12 @@ public class FinishActivity extends StartFinish
       times.add(0, timeInMillis);
       if( times.size() > times_max )
         times.remove(times.size() - 1);
+
+      int vtime = settings.getInt("chrono_vibro", Default.chrono_vibro);
+      if( vtime > 0 ) {
+        Vibrator v = (Vibrator)getSystemService(Context.VIBRATOR_SERVICE);
+        v.vibrate(VibrationEffect.createOneShot(vtime, VibrationEffect.DEFAULT_AMPLITUDE));
+      }
       _save_chrono();
       return true;
     }

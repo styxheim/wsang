@@ -26,6 +26,12 @@ public class SettingsActivity extends Activity
       SharedPreferences.Editor ed = settings.edit();
       ed.putLong("chrono_offset", timeInMillis);
       ed.apply();
+
+      int vtime = settings.getInt("chrono_vibro", Default.chrono_vibro);
+      if( vtime > 0 ) {
+        Vibrator v = (Vibrator)getSystemService(Context.VIBRATOR_SERVICE);
+        v.vibrate(VibrationEffect.createOneShot(vtime, VibrationEffect.DEFAULT_AMPLITUDE));
+      }
       _update_chrono_offset_title();
       return true;
     }

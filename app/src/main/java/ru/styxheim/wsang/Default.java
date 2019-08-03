@@ -11,6 +11,7 @@ public class Default {
   final static public long chrono_offset = 0;
   final static public int chrono_key = KeyEvent.KEYCODE_VOLUME_UP;
   final static public String time_empty = "00:00:00.00";
+  final static public int chrono_vibro = 100;
 
   final static Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
 
