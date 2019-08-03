@@ -18,7 +18,10 @@ import org.greenrobot.eventbus.Subscribe;
 public class FinishActivity extends StartFinish
 {
   protected final int times_max = 1000;
+  /* list of all chronometer results */
   protected ArrayList<Long> times = new ArrayList<Long>();
+  /* list of selected chrono results (used in finish list) */
+  protected ArrayList<Long> sel_times = new ArrayList<Long>();
   protected SharedPreferences chrono_cfg;
 
   /* TOREMOVE */
@@ -148,23 +151,33 @@ public class FinishActivity extends StartFinish
   {
     AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
-    String[] Stimes = new String[times.size()];
+    String[] Stimes = new String[times.size() + 1];
     long offset = times.get(0);
 
     for( int i = 0; i < times.size(); i++ ) {
-      Stimes[i] = String.format("%3d. %s %s%s",
+      Stimes[i] = String.format("%3d. %s %s%s%s",
                                 times.size() - i,
                                 Default.millisecondsToString(times.get(i)),
                                 offset >= times.get(i) ? "+" : "-",
-                                Default.millisecondsToString(offset - times.get(i))
+                                Default.millisecondsToString(offset - times.get(i)),
+                                ((sel_times.indexOf(times.get(i)) == -1) ? "" :
+                                 " *")
                                 );
     }
+    Stimes[times.size()] = String.format("%3d. %s (сбросить)",
+                                         0,
+                                         Default.time_empty);
 
     builder.setItems(Stimes, new DialogInterface.OnClickListener() {
       @Override
       public void onClick(DialogInterface dialog, int item)
       {
-        _startRowSetTime(rowId, times.get(item), askForReplace);
+        if( item == times.size() ) {
+          _startRowSetTime(rowId, 0, askForReplace);
+        }
+        else {
+          _startRowSetTime(rowId, times.get(item), askForReplace);
+        }
       }
     });
     builder.create().show();
@@ -210,11 +223,13 @@ public class FinishActivity extends StartFinish
                             Default.millisecondsToString(offset - times.get(i))
                             );
       pmenu.getMenu().add(1, i, i, title);
+      if( sel_times.indexOf(times.get(i)) != -1 ) {
+        /* disable already selected values */
+        pmenu.getMenu().getItem(i).setEnabled(false);
+      }
     }
 
-    if( times.size() > _c ) {
-      pmenu.getMenu().add(1, _c, _c, "  ... ещё ... ");
-    }
+    pmenu.getMenu().add(1, _c, _c, "  ... ещё ... ");
 
     final int c = _c;
 
@@ -288,14 +303,41 @@ public class FinishActivity extends StartFinish
 
     vcrew.setText("C" + Integer.toString(startRow.crewId));
     vlap.setText("L" + Integer.toString(startRow.lapId));
+
+    if( visible ) {
+      /* remove old chrono value when it different */
+      Long prev_time = (Long)vtime.getTag(R.id.tag_milliseconds);
+      int index;
+      if( !prev_time.equals(startRow.finishAt) ) {
+        index = sel_times.indexOf(prev_time);
+        if( index != -1 ) {
+          if( startRow.finishAt != 0 ) {
+            sel_times.set(index, startRow.finishAt);
+          }
+          else {
+            sel_times.remove(index);
+          }
+        }
+        else {
+          sel_times.add(startRow.finishAt);
+        }
+      }
+    }
+    else {
+      /* add new value */
+      if( startRow.finishAt != 0 )
+        sel_times.add(startRow.finishAt);
+    }
+
     if( startRow.finishAt == 0 ) {
       vtime.setTypeface(null, Typeface.BOLD);
     }
     else {
       vtime.setTypeface(null, Typeface.NORMAL);
     }
+
     vtime.setText(Default.millisecondsToString(startRow.finishAt));
-    /* setup specific flag (ask for replace) */
+    vtime.setTag(R.id.tag_milliseconds, new Long(startRow.finishAt));
 
     switch( startRow.state ) {
     case SYNCED:
