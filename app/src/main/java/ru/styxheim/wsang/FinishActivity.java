@@ -86,7 +86,9 @@ public class FinishActivity extends StartFinish
 
     timeInMillis -= settings.getLong("chrono_offset", Default.chrono_offset);
 
-    if (keyCode == settings.getInt("chrono_key", Default.chrono_key))
+    /*if (keyCode == settings.getInt("chrono_key", Default.chrono_key))*/
+    if( keyCode == KeyEvent.KEYCODE_VOLUME_DOWN ||
+        keyCode == KeyEvent.KEYCODE_VOLUME_UP )
     {
       times.add(0, timeInMillis);
       if( times.size() > times_max )

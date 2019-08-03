@@ -21,7 +21,8 @@ public class SettingsActivity extends Activity
     long off = System.currentTimeMillis() - SystemClock.uptimeMillis();
     timeInMillis = event.getEventTime() + off;
 
-    if (keyCode == settings.getInt("chrono_key", Default.chrono_key))
+    if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN ||
+        keyCode == KeyEvent.KEYCODE_VOLUME_UP )
     {
       SharedPreferences.Editor ed = settings.edit();
       ed.putLong("chrono_offset", timeInMillis);
@@ -166,18 +167,7 @@ public class SettingsActivity extends Activity
   public void _update_chrono_key_title()
   {
     final TextView tv = (TextView)findViewById(R.id.settings_chrono_key);
-    final String key;
-    switch( settings.getInt("chrono_key", Default.chrono_key) ) {
-    case KeyEvent.KEYCODE_VOLUME_UP:
-      key = "VOLUME_UP";
-      break;
-    case KeyEvent.KEYCODE_VOLUME_DOWN:
-      key = "VOLUME_DOWN";
-      break;
-    default:
-      key = "???";
-      break;
-    }
+    final String key = "VOLUME UP/DOWN";
 
     tv.post(new Runnable() {
       @Override
@@ -190,10 +180,7 @@ public class SettingsActivity extends Activity
   public void changeChronoKeyOnClick(View v)
   {
     AlertDialog.Builder builder = new AlertDialog.Builder(this);
-    final String[] keys = {"VOLUME_UP", "VOLUME_DOWN"};
-    final int[] keys_no = {KeyEvent.KEYCODE_VOLUME_UP,
-                           KeyEvent.KEYCODE_VOLUME_DOWN};
-
+    final String[] keys = {"VOLUME UP/DOWN"};
 
     builder.setTitle("Key choose");
     builder.setItems(keys, new DialogInterface.OnClickListener() {
@@ -201,12 +188,12 @@ public class SettingsActivity extends Activity
       public void onClick(DialogInterface dialog, int item)
       {
         SharedPreferences.Editor ed = settings.edit();
-        ed.putInt("chrono_key", keys_no[item]);
+        ed.putInt("chrono_key", item);
         ed.apply();
         _update_chrono_key_title();
       }
     });
-    builder.create().show();
+    //builder.create().show();
   }
   
   public void importOnClick(View v) {
