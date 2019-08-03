@@ -8,6 +8,7 @@ import android.view.*;
 import android.util.Log;
 import java.util.ArrayList;
 
+import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 
 import org.greenrobot.eventbus.EventBus;
@@ -287,6 +288,12 @@ public class FinishActivity extends StartFinish
 
     vcrew.setText("C" + Integer.toString(startRow.crewId));
     vlap.setText("L" + Integer.toString(startRow.lapId));
+    if( startRow.finishAt == 0 ) {
+      vtime.setTypeface(null, Typeface.BOLD);
+    }
+    else {
+      vtime.setTypeface(null, Typeface.NORMAL);
+    }
     vtime.setText(Default.millisecondsToString(startRow.finishAt));
     /* setup specific flag (ask for replace) */
 
