@@ -28,9 +28,10 @@ public class EventMessage
 
     public enum Type {
       UNK,
-      IDENTIFY,
-      START,
-      FINISH
+      IDENTIFY, /* update identify */
+      START,    /* update start time */
+      FINISH,   /* update finish time */
+      CONFIRM   /* send data to server */
     };
 
     Type type = Type.UNK;

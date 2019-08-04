@@ -326,6 +326,8 @@ public class MainService extends Service
                         Integer.toString(msg.rowId)));
 
       switch( msg.type ){
+      case CONFIRM:
+        break;
       case FINISH:
         row.finishAt = msg.time;
         break;
@@ -341,7 +343,21 @@ public class MainService extends Service
                           Integer.toString(msg.rowId) + ": " + msg.type.name()));
         return;
       }
-      row.state = StartRow.SyncState.NONE;
+
+      if( msg.type == EventMessage.ProposeMsg.Type.CONFIRM ) {
+        Launcher.Mode mode;
+
+        mode = Launcher.Mode.valueOf(settings.getString("mode", Default.mode));
+        switch( mode ) {
+        case START:
+          row.state_start = StartRow.SyncState.PENDING;
+          break;
+        default:
+          row.state = StartRow.SyncState.PENDING;
+        }
+      }
+      else
+        row.state = StartRow.SyncState.NONE;
     }
     EventBus.getDefault().post(new EventMessage(EventMessage.EventType.UPDATE, row));
     starts.Save(getApplicationContext());

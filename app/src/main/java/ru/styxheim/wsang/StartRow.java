@@ -14,11 +14,14 @@ public class StartRow
 
   public static enum SyncState {
     NONE,
+    PENDING,
     ERROR,
-    SYNCED
+    SYNCED,
   };
 
   public SyncState state = SyncState.NONE;
+  /* hack for old-style server expectation (`start` mode without lapId)  */
+  public SyncState state_start = SyncState.NONE;
 
   public StartRow(int rowId)
   {
@@ -52,7 +55,8 @@ public class StartRow
     w.name("finishTimeMs").value(this.finishAt);
     w.name("isStarted").value(true);
     if( system ) {
-      w.name("_state").value(this.state.ordinal());
+      w.name("_state_name").value(this.state.name());
+      w.name("_state_name_start").value(this.state_start.name());
     }
     w.endObject();
   }
@@ -77,14 +81,23 @@ public class StartRow
       case "finishTimeMs":
         this.finishAt = r.nextLong();
         break;
-      case "_state":
+      case "_state_name":
         if( system ) {
-          this.state = SyncState.values()[r.nextInt()];
+          this.state = SyncState.valueOf(r.nextString());
         }
         else {
           r.skipValue();
         }
         break;
+      case "_state_name_start":
+        if( system ) {
+          this.state_start = SyncState.valueOf(r.nextString());
+        }
+        else {
+          r.skipValue();
+        }
+        break;
+
       default:
         r.skipValue();
       }

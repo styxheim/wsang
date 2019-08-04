@@ -340,6 +340,9 @@ public class FinishActivity extends StartFinish
     vtime.setTag(R.id.tag_milliseconds, new Long(startRow.finishAt));
 
     switch( startRow.state ) {
+    case PENDING:
+      syncer.setBackgroundResource(R.color.Pending);
+      break;
     case SYNCED:
       syncer.setBackgroundResource(R.color.Synced);
       break;

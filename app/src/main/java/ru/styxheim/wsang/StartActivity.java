@@ -27,6 +27,8 @@ public class StartActivity extends StartFinish
     public int rowTimeId;
     public int rowInfoId;
 
+    public boolean blocked = false;
+
     public RowHelper(int rowId)
     {
       this.rowId = rowId;
@@ -176,9 +178,14 @@ public class StartActivity extends StartFinish
       v.setText("L" + Integer.toString(row.lapId));
 
       v = tr_crew.findViewById(R.id.start_row_synced);
-      switch( row.state ) {
+      switch( row.state_start ) {
+      case PENDING:
+        v.setBackgroundResource(R.color.Pending);
+        helper.blocked = true;
+        break;
       case SYNCED:
         v.setBackgroundResource(R.color.Synced);
+        helper.blocked = true;
         break;
       case ERROR:
         v.setBackgroundResource(R.color.errSync);
@@ -216,18 +223,30 @@ public class StartActivity extends StartFinish
     }
   }
 
-  protected void _cancel_start_time_for_lap(int lapId)
+  protected void _update_start_time_for_lap(int lapId, boolean commit)
   {
     EventMessage.ProposeMsg req;
     TextView tv;
 
+    EventMessage.ProposeMsg.Type type;
+
+    if( commit ) {
+      type = EventMessage.ProposeMsg.Type.CONFIRM;
+    }
+    else {
+      type = EventMessage.ProposeMsg.Type.START;
+    }
+
     for( RowHelper helper : lapId2RowId ) {
       if( helper.lapId == lapId ) {
-        req = new EventMessage.ProposeMsg(0L, EventMessage.ProposeMsg.Type.START);
+        req =  new EventMessage.ProposeMsg(0L, type);
         req.setRowId(helper.rowId);
         EventBus.getDefault().post(new EventMessage(EventMessage.EventType.PROPOSE, req));
-        tv = (TextView)findViewById(helper.rowInfoId);
-        tv.setText("фальшстарт");
+
+        if( !commit ) {
+          tv = (TextView)findViewById(helper.rowInfoId);
+          tv.setText("фальшстарт");
+        }
       }
     }
   }
@@ -268,7 +287,8 @@ public class StartActivity extends StartFinish
       final int lapId = helper.lapId;
 
       if( Default.time_empty.compareTo(tv.getText().toString()) != 0 ) {
-        popup.getMenu().add(1, 1, 1, R.string.false_start);
+        popup.getMenu().add(1, 1, 1, R.string.true_start);
+        popup.getMenu().add(1, 2, 2, R.string.false_start);
         popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
           @Override
           public boolean onMenuItemClick(MenuItem item) {
@@ -276,19 +296,28 @@ public class StartActivity extends StartFinish
 
             fv.setBackground(fv_normal);
             sv.setBackground(sv_normal);
-
-            builder.setTitle("Фальшстарт");
-            builder.setMessage("Отменить результаты заезда " + Integer.toString(lapId) + "?");
-            builder.setPositiveButton("Отменить", new DialogInterface.OnClickListener() {
-              @Override
-              public void onClick(DialogInterface dialog, int id) {
-                tv.post(new Runnable() {
-                  public void run() {
-                    _cancel_start_time_for_lap(lapId);
-                  }
-                });
-              }
-            });
+            switch( item.getItemId() ) {
+            case 2:
+              builder.setTitle(R.string.false_start);
+              builder.setMessage("Отменить результаты заезда " + Integer.toString(lapId) + "?");
+              builder.setPositiveButton("Отменить", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int id) {
+                  _update_start_time_for_lap(lapId, false);
+                }
+              });
+              break;
+            case 1:
+              builder.setTitle(R.string.true_start);
+              builder.setMessage("Отправить на сервер заезд " + Integer.toString(lapId) + "?");
+              builder.setPositiveButton("Отправить", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int id) {
+                  _update_start_time_for_lap(lapId, true);
+                }
+              });
+              break;
+            }
             builder.setNegativeButton("Нет", new DialogInterface.OnClickListener() {
               @Override
               public void onClick(DialogInterface dialog, int id) {
@@ -482,6 +511,13 @@ public class StartActivity extends StartFinish
     if( helper == null )
       return;
 
+    if( helper.blocked ) {
+      Toast.makeText(StartActivity.this,
+                     "Нельзя изменять синхронизированные записи",
+                     Toast.LENGTH_SHORT).show();
+      return;
+    }
+
     showTimeCounterPopup(v, helper);
   }
 
@@ -491,6 +527,13 @@ public class StartActivity extends StartFinish
 
     if( helper == null )
       return;
+
+    if( helper.blocked ) {
+      Toast.makeText(StartActivity.this,
+                     "Нельзя изменять синхронизированные записи",
+                     Toast.LENGTH_SHORT).show();
+      return;
+    }
 
     if( helper.lapId == countDownLap ) {
       Toast.makeText(this,

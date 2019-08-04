@@ -8,6 +8,7 @@
   <color name="notSynced">#E0C351</color>
   <color name="Synced">#51E064</color>
   <color name="errSync">#FF0000</color>
+  <color name="Pending">#0000FF</color>
 
   <color name="selected_row">#FF0000</color>
 </resources>
