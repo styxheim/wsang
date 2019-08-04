@@ -15,6 +15,7 @@ public class StartRow
   public static enum SyncState {
     NONE,
     PENDING,
+    SYNCING,
     ERROR,
     SYNCED,
   };
@@ -44,8 +45,36 @@ public class StartRow
            ">";
   }
 
+  public void saveJSONStart(JsonWriter w) throws IOException
+  {
+    w.beginObject();
+    w.name("LapNumber").value(this.lapId);
+    w.name("CrewNumber").value(this.crewId);
+    w.name("StartTime").value(Default.millisecondsToString(this.startAt));
+    w.name("isStarted").value(true);
+    w.endObject();
+  }
+
+  public void saveJSONFinish(JsonWriter w) throws IOException
+  {
+    w.beginObject();
+    w.name("LapId").value(this.rowId);
+    w.name("FinishTime").value(Default.millisecondsToString(this.finishAt));
+    w.name("isFinished").value(true);
+    w.endObject();
+  }
+
   public void saveJSON(JsonWriter w, boolean system) throws IOException
   {
+    SyncState state = this.state;
+    SyncState state_start = this.state_start;
+
+    if( state == SyncState.SYNCING )
+      state = SyncState.PENDING;
+
+    if( state_start == SyncState.SYNCING )
+      state = SyncState.PENDING;
+
     w.beginObject();
     /* confusing names: for compatable with old WSA application */
     w.name("lapId").value(this.rowId);
@@ -53,10 +82,9 @@ public class StartRow
     w.name("crewNumber").value(this.crewId);
     w.name("startTimeMs").value(this.startAt);
     w.name("finishTimeMs").value(this.finishAt);
-    w.name("isStarted").value(true);
     if( system ) {
-      w.name("_state_name").value(this.state.name());
-      w.name("_state_name_start").value(this.state_start.name());
+      w.name("_state_name").value(state.name());
+      w.name("_state_name_start").value(state_start.name());
     }
     w.endObject();
   }

@@ -14,6 +14,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.config.RequestConfig;
 
 import android.media.MediaPlayer;
 
@@ -32,7 +33,6 @@ public class MainService extends Service
 {
   private StartList starts;
   private static final String LAPS_URL = "http://%s/api/laps/updatelaps";
-  private HttpClient client;
 
   private enum CountDownMode {
     NONE,
@@ -60,9 +60,26 @@ public class MainService extends Service
     Log.i("wsa-ng", _("service created"));
     EventBus.getDefault().register(this);
     starts = new StartList();
-    client = HttpClientBuilder.create().build();
     /* Load data */
     starts.Load(getApplicationContext());
+
+    _sync_handler.post(new Runnable() {
+      public void run() {
+        boolean isStartMode = Launcher.Mode.valueOf(settings.getString("mode", Default.mode)) == Launcher.Mode.START;
+
+        /* sync unsynced */
+        for( StartRow row : starts ) {
+          if( (isStartMode && (row.state_start == StartRow.SyncState.PENDING ||
+                               row.state_start == StartRow.SyncState.ERROR)) ||
+              (row.state == StartRow.SyncState.PENDING ||
+               row.state == StartRow.SyncState.ERROR)
+              )
+            _sync_row(row);
+        }
+
+        _sync_handler.postDelayed(this, 10000);
+      }
+    });
   }
 
   @Override
@@ -106,10 +123,50 @@ public class MainService extends Service
     Log.i("wsa-ng", _("Boot End"));
   }
 
+  private Handler _sync_handler = new Handler() {
+    @Override
+    public void handleMessage(Message msg) {
+      Bundle data = msg.getData();
+      int rowId = data.getInt("rowId");
+      boolean is_start = data.getBoolean("isStartMode");
+      StartRow row = starts.getRecord(rowId);
+      StartRow.SyncState state = StartRow.SyncState.values()[data.getInt("state")];
+
+      if( row == null ) {
+        Log.e("wsa-ng", _("unknown rowId #" + rowId + " from sync service"));
+        return;
+      }
+
+      if( is_start )
+        row.state_start = state;
+      else
+        row.state = state;
+
+      Log.d("wsa-ng", _("publish sync result for rowId #" + rowId + " new state: " + state.name()));
+      EventBus.getDefault().post(new EventMessage(EventMessage.EventType.UPDATE, row));
+      starts.Save(getApplicationContext());
+    }
+  };
+
   private void _sync_row(StartRow row)
   {
+    final Launcher.Mode mode;
     final byte[] body;
-    String url;
+    final String url;
+    final int rowId = row.getRowId();
+    final boolean isStartMode;
+
+    mode = Launcher.Mode.valueOf(settings.getString("mode", Default.mode));
+    switch( mode ) {
+    case START:
+      isStartMode = true;
+      row.state_start = StartRow.SyncState.PENDING;
+      break;
+    default:
+      isStartMode = false;
+      row.state = StartRow.SyncState.PENDING;
+      break;
+    }
 
     if( !settings.contains("server_addr") ) {
       Log.d("wsa-ng", _("`server_addr` is not defined: row not synced"));
@@ -118,42 +175,100 @@ public class MainService extends Service
 
     StringWriter sw = new StringWriter();
     JsonWriter jw = new JsonWriter(sw);
+    url = String.format(LAPS_URL, settings.getString("server_addr", Default.server_addr));
 
     try {
       jw.beginArray();
-      row.saveJSON(jw, false /* not a system json */);
+      switch( mode ) {
+      case START:
+        row.saveJSONStart(jw);
+        break;
+      case FINISH:
+        row.saveJSONFinish(jw);
+        break;
+      default:
+        Log.e("wsa-ng", _("sync rowId #" + Integer.toString(rowId) + " error: unknown row mode " + mode.name()));
+        row.state = StartRow.SyncState.ERROR;
+        return;
+      }
       jw.endArray();
 
       body = sw.toString().getBytes("utf-8");
     } catch( Exception e ) {
-      e.printStackTrace();
+      Log.e("wsa-ng", _("sync rowId #" + Integer.toString(rowId) + " error: " + e.getMessage()));
       row.state = StartRow.SyncState.ERROR;
       return;
     }
 
+    Log.d("wsa-ng", _("sync rowId #" + Integer.toString(rowId) + " going to new thread"));
 
-    url = String.format(LAPS_URL, settings.getString("server_addr", Default.server_addr));
-    /* TODO: send query in another Thread */
-    HttpPost rq = new HttpPost(LAPS_URL);
-    rq.setHeader("User-Agent", "wsa-ng/1.0");
-    rq.setEntity(new ByteArrayEntity(body));
 
-    HttpResponse rs;
-    Log.i("wsa-ng", "sync url: " + LAPS_URL);
-    try {
-      rs = client.execute(rq);
-    } catch( ClientProtocolException e ) {
-      row.state = StartRow.SyncState.ERROR;
-      Log.e("wsa-ng", "sync " + row.toString() + " client errored: " + e.getMessage());
-      return;
-    } catch( IOException e ) {
-      row.state = StartRow.SyncState.ERROR;
-      Log.e("wsa-ng", "sync " + row.toString() + " io errored: " + e.getMessage());
-      return;
-    }
-    int rs_code = rs.getStatusLine().getStatusCode();
+    Thread thread = new Thread(new Runnable() {
+      public void run() {
 
-    Log.i("wsa-ng", "sync " + row.toString() + "code: " + Integer.toString(rs_code));
+        /* set 6 seconds timeout for all */
+        RequestConfig config = RequestConfig.custom()
+                               .setConnectTimeout(3000)
+                               .setConnectionRequestTimeout(3000)
+                               .setSocketTimeout(3000)
+                               .build();
+        HttpClient client = HttpClientBuilder.create()
+                            .setDefaultRequestConfig(config)
+                            .build();
+
+        Message msg;
+        Bundle data;
+        StartRow.SyncState state = StartRow.SyncState.ERROR;
+        HttpPost rq = new HttpPost(url);
+
+        data = new Bundle();
+        data.putInt("rowId", rowId);
+        data.putBoolean("isStartMode", isStartMode);
+        data.putInt("state", StartRow.SyncState.SYNCING.ordinal());
+
+        msg = _sync_handler.obtainMessage();
+        msg.setData(data);
+        _sync_handler.sendMessage(msg);
+
+        rq.setHeader("User-Agent", "wsa-ng/1.0");
+        rq.setEntity(new ByteArrayEntity(body));
+
+        HttpResponse rs;
+        do {
+          Log.i("wsa-ng", _("sync rowId #" + Integer.toString(rowId) + " url: " + url));
+          try {
+            rs = client.execute(rq);
+          } catch( ClientProtocolException e ) {
+            Log.e("wsa-ng", _("sync rowId #" + Integer.toString(rowId) + " error: " + e.getMessage()));
+            break;
+          } catch( IOException e ) {
+            Log.e("wsa-ng", _("sync rowId #" + Integer.toString(rowId) + " error: " + e.getMessage()));
+            break;
+          }
+          int rs_code = rs.getStatusLine().getStatusCode();
+
+          if( rs_code == 200 ) {
+            state = StartRow.SyncState.SYNCED;
+            Log.d("wsa-ng", _("sync rowId #" + Integer.toString(rowId) + " code: " + Integer.toString(rs_code)));
+          }
+          else {
+            Log.d("wsa-ng", _("sync rowId #" + Integer.toString(rowId) + " invalid code: " + Integer.toString(rs_code)));
+          }
+        } while( false );
+
+        data = new Bundle();
+        data.putInt("rowId", rowId);
+        data.putBoolean("isStartMode", isStartMode);
+        data.putInt("state", state.ordinal());
+
+        msg = _sync_handler.obtainMessage();
+        msg.setData(data);
+        _sync_handler.sendMessage(msg);
+      }
+    });
+
+    thread.setDaemon(true);
+    thread.start();
   }
 
   private void _countdown_cleanup()
@@ -303,7 +418,7 @@ public class MainService extends Service
     }
     starts.Save(getApplicationContext());
   }
-  
+
   private void _event_propose(EventMessage.ProposeMsg msg)
   {
     StartRow row;
@@ -327,6 +442,7 @@ public class MainService extends Service
 
       switch( msg.type ){
       case CONFIRM:
+        _sync_row(row);
         break;
       case FINISH:
         row.finishAt = msg.time;
@@ -344,20 +460,9 @@ public class MainService extends Service
         return;
       }
 
-      if( msg.type == EventMessage.ProposeMsg.Type.CONFIRM ) {
-        Launcher.Mode mode;
-
-        mode = Launcher.Mode.valueOf(settings.getString("mode", Default.mode));
-        switch( mode ) {
-        case START:
-          row.state_start = StartRow.SyncState.PENDING;
-          break;
-        default:
-          row.state = StartRow.SyncState.PENDING;
-        }
-      }
-      else
+      if( msg.type != EventMessage.ProposeMsg.Type.CONFIRM ) {
         row.state = StartRow.SyncState.NONE;
+      }
     }
     EventBus.getDefault().post(new EventMessage(EventMessage.EventType.UPDATE, row));
     starts.Save(getApplicationContext());

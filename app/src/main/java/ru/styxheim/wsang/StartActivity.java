@@ -178,6 +178,7 @@ public class StartActivity extends StartFinish
       v.setText("L" + Integer.toString(row.lapId));
 
       v = tr_crew.findViewById(R.id.start_row_synced);
+      helper.blocked = false;
       switch( row.state_start ) {
       case PENDING:
         v.setBackgroundResource(R.color.Pending);
@@ -187,12 +188,16 @@ public class StartActivity extends StartFinish
         v.setBackgroundResource(R.color.Synced);
         helper.blocked = true;
         break;
+      case SYNCING:
+        v.setBackgroundResource(R.color.Syncing);
+        helper.blocked = true;
+        break;
       case ERROR:
         v.setBackgroundResource(R.color.errSync);
         break;
       default:
-          v.setBackgroundResource(R.color.notSynced);
-          break;
+        v.setBackgroundResource(R.color.notSynced);
+        break;
       }
 
       v = tr_time.findViewById(R.id.start_row_time_view);

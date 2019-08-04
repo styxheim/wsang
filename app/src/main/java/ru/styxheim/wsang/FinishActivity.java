@@ -346,6 +346,9 @@ public class FinishActivity extends StartFinish
     case SYNCED:
       syncer.setBackgroundResource(R.color.Synced);
       break;
+    case SYNCING:
+      syncer.setBackgroundResource(R.color.Syncing);
+      break;
     case ERROR:
       syncer.setBackgroundResource(R.color.errSync);
       break;
