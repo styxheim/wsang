@@ -259,6 +259,7 @@ public class StartActivity extends StartFinish
   public void showTimeCounterPopup(View v, RowHelper helper)
   {
     PopupMenu popup = new PopupMenu(this, v);
+    final int lapId = helper.lapId;
     final TextView tv;
     final Drawable fv_normal;
     final Drawable sv_normal;
@@ -272,83 +273,89 @@ public class StartActivity extends StartFinish
 
     fv_normal = fv.getBackground();
     sv_normal = fv.getBackground();
-    fv.setBackgroundResource(R.color.selected_row);
-    sv.setBackgroundResource(R.color.selected_row);
 
-    if( countDownMode ) {
-      popup.getMenu().add(1, 1, 1, R.string.start_cancel_stop);
-      popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-        @Override
-        public boolean onMenuItemClick(MenuItem item)
-        {
-          fv.setBackground(fv_normal);
-          sv.setBackground(sv_normal);
-          /* stop countdown */
-          EventBus.getDefault().post(new EventMessage(EventMessage.EventType.COUNTDOWN_STOP, null));
-          return true;
-        }
-      });
-    } else {
-      final int lapId = helper.lapId;
-
+    if( !helper.blocked ) {
       if( Default.time_empty.compareTo(tv.getText().toString()) != 0 ) {
-        popup.getMenu().add(1, 1, 1, R.string.true_start);
-        popup.getMenu().add(1, 2, 2, R.string.false_start);
-        popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-          @Override
-          public boolean onMenuItemClick(MenuItem item) {
-            AlertDialog.Builder builder = new AlertDialog.Builder(StartActivity.this);
-
-            fv.setBackground(fv_normal);
-            sv.setBackground(sv_normal);
-            switch( item.getItemId() ) {
-            case 2:
-              builder.setTitle(R.string.false_start);
-              builder.setMessage("Отменить результаты заезда " + Integer.toString(lapId) + "?");
-              builder.setPositiveButton("Отменить", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int id) {
-                  _update_start_time_for_lap(lapId, false);
-                }
-              });
-              break;
-            case 1:
-              builder.setTitle(R.string.true_start);
-              builder.setMessage("Отправить на сервер заезд " + Integer.toString(lapId) + "?");
-              builder.setPositiveButton("Отправить", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int id) {
-                  _update_start_time_for_lap(lapId, true);
-                }
-              });
-              break;
-            }
-            builder.setNegativeButton("Нет", new DialogInterface.OnClickListener() {
-              @Override
-              public void onClick(DialogInterface dialog, int id) {
-              }
-            });
-            builder.create().show();
-            return true;
-          }
-        });
+        popup.getMenu().add(1, 2, 2, R.string.true_start);
+        popup.getMenu().add(1, 3, 3, R.string.false_start);
       }
-      else {
+      else if( !countDownMode ) {
         popup.getMenu().add(1, 10, 10, R.string.ten_seconds_button);
         popup.getMenu().add(1, 30, 30, R.string.thirty_seconds_button);
         popup.getMenu().add(1, 60, 60, R.string.sixty_seconds_button);
-        popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-          @Override
-          public boolean onMenuItemClick(MenuItem item)
-          {
-            fv.setBackground(fv_normal);
-            sv.setBackground(sv_normal);
-            startCountDown(lapId, item.getItemId());
-            return true;
-          }
-        });
       }
     }
+
+    if( countDownMode ) {
+      popup.getMenu().add(1, 1, 1, R.string.start_cancel_stop);
+    }
+    else if( helper.blocked ) {
+      Toast.makeText(StartActivity.this,
+                     "Нельзя изменять синхронизированные записи",
+                     Toast.LENGTH_SHORT).show();
+      return;
+    }
+
+    fv.setBackgroundResource(R.color.selected_row);
+    sv.setBackgroundResource(R.color.selected_row);
+
+    popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+      @Override
+      public boolean onMenuItemClick(MenuItem item)
+      {
+        AlertDialog.Builder builder = new AlertDialog.Builder(StartActivity.this);
+
+        fv.setBackground(fv_normal);
+        sv.setBackground(sv_normal);
+
+        switch( item.getItemId() ) {
+        case 1:
+          /* stop countdown */
+          EventBus.getDefault().post(new EventMessage(EventMessage.EventType.COUNTDOWN_STOP, null));
+          return true;
+        case 2:
+          builder.setTitle(R.string.true_start);
+          builder.setMessage("Отправить на сервер заезд " + Integer.toString(lapId) + "?");
+          builder.setPositiveButton("Отправить", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int id) {
+              _update_start_time_for_lap(lapId, true);
+            }
+          });
+          builder.setNegativeButton("Нет", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int id) {
+            }
+          });
+          builder.create().show();
+          break;
+        case 3:
+          builder.setTitle(R.string.false_start);
+          builder.setMessage("Отменить результаты заезда " + Integer.toString(lapId) + "?");
+          builder.setPositiveButton("Отменить", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int id) {
+              _update_start_time_for_lap(lapId, false);
+            }
+          });
+          builder.setNegativeButton("Нет", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int id) {
+            }
+          });
+          builder.create().show();
+          break;
+        case 10:
+        case 30:
+        case 60:
+          startCountDown(lapId, item.getItemId());
+          break;
+        default:
+          return false;
+        }
+        return true;
+      }
+    });
 
     popup.setOnDismissListener(new PopupMenu.OnDismissListener() {
       @Override
@@ -515,13 +522,6 @@ public class StartActivity extends StartFinish
 
     if( helper == null )
       return;
-
-    if( helper.blocked ) {
-      Toast.makeText(StartActivity.this,
-                     "Нельзя изменять синхронизированные записи",
-                     Toast.LENGTH_SHORT).show();
-      return;
-    }
 
     showTimeCounterPopup(v, helper);
   }
