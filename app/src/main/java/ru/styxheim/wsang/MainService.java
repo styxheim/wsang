@@ -3,6 +3,7 @@ package ru.styxheim.wsang;
 import android.app.*;
 import android.os.*;
 import android.content.*;
+import android.util.JsonReader;
 import android.util.Log;
 import android.util.JsonWriter;
 import java.io.*;
@@ -12,9 +13,11 @@ import org.apache.http.HttpResponse;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.config.RequestConfig;
+import org.apache.http.util.EntityUtils;
 
 import android.media.MediaPlayer;
 
@@ -32,7 +35,9 @@ import android.widget.*;
 public class MainService extends Service
 {
   private StartList starts;
-  private static final String LAPS_URL = "http://%s/api/laps/updatelaps";
+  private static final String SET_START_URL = "http://%s/api/laps/updatelaps";
+  private static final String SET_FINISH_URL = "http://%s/api/laps/updatefinish";
+  private static final String GET_URL = "http://%s/api/laps";
 
   private enum CountDownMode {
     NONE,
@@ -75,6 +80,10 @@ public class MainService extends Service
                row.state == StartRow.SyncState.ERROR)
               )
             _sync_row(row);
+        }
+
+        if( !isSyncNow ) {
+          _sync_receive();
         }
 
         _sync_handler.postDelayed(this, 10000);
@@ -123,6 +132,19 @@ public class MainService extends Service
     Log.i("wsa-ng", _("Boot End"));
   }
 
+  private HttpClient _build_client()
+  {
+    /* set 18 seconds timeout for all */
+    RequestConfig config = RequestConfig.custom()
+                           .setConnectTimeout(10000)
+                           .setConnectionRequestTimeout(5000)
+                           .setSocketTimeout(3000)
+                           .build();
+    return HttpClientBuilder.create()
+                            .setDefaultRequestConfig(config)
+                            .build();
+  }
+
   private Handler _sync_handler = new Handler() {
     @Override
     public void handleMessage(Message msg) {
@@ -148,6 +170,7 @@ public class MainService extends Service
     }
   };
 
+  /* send row to server */
   private void _sync_row(StartRow row)
   {
     final Launcher.Mode mode;
@@ -161,10 +184,16 @@ public class MainService extends Service
     case START:
       isStartMode = true;
       row.state_start = StartRow.SyncState.SYNCING;
+      url = String.format(SET_START_URL, settings.getString("server_addr", Default.server_addr));
+      break;
+    case FINISH:
+      url = String.format(SET_FINISH_URL, settings.getString("server_addr", Default.server_addr));
+      isStartMode = false;
+      row.state = StartRow.SyncState.SYNCING;
       break;
     default:
       isStartMode = false;
-      row.state = StartRow.SyncState.SYNCING;
+      url = "";
       break;
     }
 
@@ -175,7 +204,6 @@ public class MainService extends Service
 
     StringWriter sw = new StringWriter();
     JsonWriter jw = new JsonWriter(sw);
-    url = String.format(LAPS_URL, settings.getString("server_addr", Default.server_addr));
 
     try {
       jw.beginArray();
@@ -205,17 +233,7 @@ public class MainService extends Service
 
     Thread thread = new Thread(new Runnable() {
       public void run() {
-
-        /* set 18 seconds timeout for all */
-        RequestConfig config = RequestConfig.custom()
-                               .setConnectTimeout(10000)
-                               .setConnectionRequestTimeout(5000)
-                               .setSocketTimeout(3000)
-                               .build();
-        HttpClient client = HttpClientBuilder.create()
-                            .setDefaultRequestConfig(config)
-                            .build();
-
+        HttpClient client = _build_client();
         Message msg;
         Bundle data;
         StartRow.SyncState state = StartRow.SyncState.ERROR;
@@ -255,6 +273,125 @@ public class MainService extends Service
         msg = _sync_handler.obtainMessage();
         msg.setData(data);
         _sync_handler.sendMessage(msg);
+      }
+    });
+
+    thread.setDaemon(true);
+    thread.start();
+  }
+
+  private boolean isSyncNow = false;
+
+  private Handler _sync_receive_handler = new Handler() {
+    @Override
+    public void handleMessage(Message msg) {
+      Bundle data = msg.getData();
+      boolean syncingComplete = data.getBoolean("syncingComplete");
+      int rowId = data.getInt("rowId");
+      int lapId = data.getInt("lapId");
+      int crewId = data.getInt("crewId");
+
+      if( syncingComplete ) {
+        isSyncNow = false;
+        return;
+      }
+
+      if( starts.getRecord(rowId) == null ) {
+        StartRow row = new StartRow(rowId);
+        starts.addRecord(row);
+
+        Log.d("wsa-ng", _("rsync emit PROPOSE: " +
+                          "rowId=" + Integer.toString(rowId) + " " +
+                          "crewId=" + Integer.toString(crewId) + " " +
+                          "lapId=" + Integer.toString(lapId)));
+
+        /* default interface */
+        EventMessage.ProposeMsg req = new EventMessage.ProposeMsg(crewId, lapId);
+        req.setRowId(rowId);
+        EventBus.getDefault().post(new EventMessage(EventMessage.EventType.PROPOSE, req));
+      }
+    }
+  };
+
+  /* receive and sync data from server */
+  private void _sync_receive()
+  {
+    final Launcher.Mode mode;
+    final String url;
+
+    mode = Launcher.Mode.valueOf(settings.getString("mode", Default.mode));
+
+    switch( mode ) {
+    case START:
+      /* start mode does not need syncing */
+      return;
+    default:
+      break;
+    }
+
+    isSyncNow = true;
+    url = String.format(GET_URL, settings.getString("server_addr", Default.server_addr));
+
+    Thread thread = new Thread(new Runnable() {
+      public void run() {
+        Bundle data;
+        Message msg;
+        HttpClient client = _build_client();
+        HttpGet rq = new HttpGet(url);
+
+        rq.setHeader("User-Agent", "wsa-ng/1.0");
+
+        HttpResponse rs;
+        try {
+          try {
+            rs = client.execute(rq);
+          } catch( ClientProtocolException|IOException e) {
+            Log.e("wsa-ng", _("rsync failed: " + e.getMessage()));
+            return;
+          }
+          int rs_code = rs.getStatusLine().getStatusCode();
+
+          if( rs_code == 200 ) {
+            String result;
+            try {
+              result = EntityUtils.toString(rs.getEntity());
+              Log.d("wsa-ng", _("rsync response: " + result));
+
+              JsonReader jr = new JsonReader(new StringReader(result));
+
+              jr.beginArray();
+              while( jr.hasNext() ) {
+                StartRow row = new StartRow(-1);
+                row.loadJSONServer(jr);
+
+                data = new Bundle();
+                data.putInt("rowId", row.getRowId());
+                data.putInt("lapId", row.lapId);
+                data.putInt("crewId", row.crewId);
+
+                msg = _sync_receive_handler.obtainMessage();
+                msg.setData(data);
+                _sync_receive_handler.sendMessage(msg);
+              }
+              jr.endArray();
+            }
+            catch( IOException e ) {
+              Log.e("wsa-ng", _("rsync decoding exception: " + e.getMessage()));
+              return;
+            }
+          }
+          else {
+            Log.e("wsa-ng", _("rsync code: " + Integer.toString(rs_code)));
+          }
+        }
+        finally {
+          data = new Bundle();
+          data.putBoolean("syncingComplete", true);
+
+          msg = _sync_receive_handler.obtainMessage();
+          msg.setData(data);
+          _sync_receive_handler.sendMessage(msg);
+        }
       }
     });
 

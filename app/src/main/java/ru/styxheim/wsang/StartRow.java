@@ -93,11 +93,35 @@ public class StartRow
     w.endObject();
   }
 
+  public void loadJSONServer(JsonReader r) throws IOException
+  {
+    r.beginObject();
+    while( r.hasNext() ) {
+      String name = r.nextName();
+      switch( name ) {
+      case "LapId":
+        this.rowId = r.nextInt();
+        break;
+      case "RaceNumber":
+        this.lapId = r.nextInt();
+        break;
+      case "CrewNumber":
+        this.crewId = r.nextInt();
+        break;
+      default:
+        Log.d("wsa-ng", "StartRow: Unknown field '" + name + "'");
+        r.skipValue();
+      }
+    }
+    r.endObject();
+  }
+
   public void loadJSON(JsonReader r, boolean system) throws IOException
   {
     r.beginObject();
     while( r.hasNext() ) {
-      switch( r.nextName() ) {
+      String name = r.nextName();
+      switch( name ) {
       case "lapId":
         this.rowId = r.nextInt();
         break;
@@ -106,6 +130,12 @@ public class StartRow
         break;
       case "crewNumber":
         this.crewId = r.nextInt();
+        break;
+      case "startTime":
+        /* TODO: convert from String to ms */
+        break;
+      case "finishTime":
+        /* TODO: convert from String to ms */
         break;
       case "startTimeMs":
         this.startAt = r.nextLong();
@@ -131,6 +161,7 @@ public class StartRow
         break;
 
       default:
+        Log.d("wsa-ng", "StartRow: Unknown field '" + name + "'");
         r.skipValue();
       }
     }
