@@ -134,11 +134,10 @@ public class MainService extends Service
 
   private HttpClient _build_client()
   {
-    /* set 18 seconds timeout for all */
     RequestConfig config = RequestConfig.custom()
-                           .setConnectTimeout(10000)
-                           .setConnectionRequestTimeout(5000)
-                           .setSocketTimeout(3000)
+                           .setConnectTimeout(30000)
+                           .setConnectionRequestTimeout(30000)
+                           .setSocketTimeout(30000)
                            .build();
     return HttpClientBuilder.create()
                             .setDefaultRequestConfig(config)
