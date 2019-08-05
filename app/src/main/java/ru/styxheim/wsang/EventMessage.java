@@ -49,6 +49,11 @@ public class EventMessage
       this.type = type;
     }
 
+    public ProposeMsg(Type type)
+    {
+      this.type = type;
+    }
+
     public void setRowId(int rowId)
     {
       this.rowId = rowId;

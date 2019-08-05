@@ -127,6 +127,10 @@ public class FinishActivity extends StartFinish
       req = new EventMessage.ProposeMsg(time, EventMessage.ProposeMsg.Type.FINISH);
       req.setRowId(rowId);
       EventBus.getDefault().post(new EventMessage(EventMessage.EventType.PROPOSE, req));
+
+      req = new EventMessage.ProposeMsg(EventMessage.ProposeMsg.Type.CONFIRM);
+      req.setRowId(rowId);
+      EventBus.getDefault().post(new EventMessage(EventMessage.EventType.PROPOSE, req));
     }
     else {
       AlertDialog.Builder builder = new AlertDialog.Builder(this);

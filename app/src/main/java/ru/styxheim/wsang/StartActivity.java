@@ -244,7 +244,7 @@ public class StartActivity extends StartFinish
 
     for( RowHelper helper : lapId2RowId ) {
       if( helper.lapId == lapId ) {
-        req =  new EventMessage.ProposeMsg(0L, type);
+        req =  new EventMessage.ProposeMsg(type);
         req.setRowId(helper.rowId);
         EventBus.getDefault().post(new EventMessage(EventMessage.EventType.PROPOSE, req));
 
