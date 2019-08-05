@@ -69,6 +69,10 @@ public class StartRow
     SyncState state = this.state;
     SyncState state_start = this.state_start;
 
+    /* SYNCING and PENDING state is equal:
+     *  SYNCING for UI
+     *  PENDING for configs
+     */
     if( state == SyncState.SYNCING )
       state = SyncState.PENDING;
 

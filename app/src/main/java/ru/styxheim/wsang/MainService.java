@@ -160,11 +160,11 @@ public class MainService extends Service
     switch( mode ) {
     case START:
       isStartMode = true;
-      row.state_start = StartRow.SyncState.PENDING;
+      row.state_start = StartRow.SyncState.SYNCING;
       break;
     default:
       isStartMode = false;
-      row.state = StartRow.SyncState.PENDING;
+      row.state = StartRow.SyncState.SYNCING;
       break;
     }
 
@@ -206,10 +206,10 @@ public class MainService extends Service
     Thread thread = new Thread(new Runnable() {
       public void run() {
 
-        /* set 6 seconds timeout for all */
+        /* set 18 seconds timeout for all */
         RequestConfig config = RequestConfig.custom()
-                               .setConnectTimeout(3000)
-                               .setConnectionRequestTimeout(3000)
+                               .setConnectTimeout(10000)
+                               .setConnectionRequestTimeout(5000)
                                .setSocketTimeout(3000)
                                .build();
         HttpClient client = HttpClientBuilder.create()
@@ -220,15 +220,6 @@ public class MainService extends Service
         Bundle data;
         StartRow.SyncState state = StartRow.SyncState.ERROR;
         HttpPost rq = new HttpPost(url);
-
-        data = new Bundle();
-        data.putInt("rowId", rowId);
-        data.putBoolean("isStartMode", isStartMode);
-        data.putInt("state", StartRow.SyncState.SYNCING.ordinal());
-
-        msg = _sync_handler.obtainMessage();
-        msg.setData(data);
-        _sync_handler.sendMessage(msg);
 
         rq.setHeader("User-Agent", "wsa-ng/1.0");
         rq.setEntity(new ByteArrayEntity(body));
