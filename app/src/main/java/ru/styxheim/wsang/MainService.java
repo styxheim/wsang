@@ -58,6 +58,26 @@ public class MainService extends Service
     return "[" + android.os.Process.myTid() + "] " + in;
   }
 
+  private void _sync_next_row() {
+    boolean isStartMode = Launcher.Mode.valueOf(settings.getString("mode", Default.mode)) == Launcher.Mode.START;
+
+    /* sync next row in queue */
+    for( StartRow row : starts ) {
+      if( (isStartMode && (row.state_start == StartRow.SyncState.PENDING ||
+                           row.state_start == StartRow.SyncState.ERROR)) ||
+          (row.state == StartRow.SyncState.PENDING ||
+           row.state == StartRow.SyncState.ERROR)
+          ) {
+        _sync_row(row);
+
+        /* allow only one sync thread at time
+           note: for disable find all usages `isSyncNow`
+        */
+        break;
+      }
+    }
+  }
+
   @Override
   public void onCreate() {
     settings = getSharedPreferences("main", Context.MODE_PRIVATE);
@@ -70,23 +90,10 @@ public class MainService extends Service
 
     _sync_handler.post(new Runnable() {
       public void run() {
-        boolean isStartMode = Launcher.Mode.valueOf(settings.getString("mode", Default.mode)) == Launcher.Mode.START;
+        _sync_next_row();
+        _sync_receive();
 
-        /* sync unsynced */
-        for( StartRow row : starts ) {
-          if( (isStartMode && (row.state_start == StartRow.SyncState.PENDING ||
-                               row.state_start == StartRow.SyncState.ERROR)) ||
-              (row.state == StartRow.SyncState.PENDING ||
-               row.state == StartRow.SyncState.ERROR)
-              )
-            _sync_row(row);
-        }
-
-        if( !isSyncNow ) {
-          _sync_receive();
-        }
-
-        _sync_handler.postDelayed(this, 10000);
+        _sync_handler.postDelayed(this, 3000);
       }
     });
   }
@@ -166,6 +173,9 @@ public class MainService extends Service
       Log.d("wsa-ng", _("publish sync result for rowId #" + rowId + " new state: " + state.name()));
       EventBus.getDefault().post(new EventMessage(EventMessage.EventType.UPDATE, row));
       starts.Save(getApplicationContext());
+
+      isSyncNow = false;
+      _sync_next_row();
     }
   };
 
@@ -177,6 +187,9 @@ public class MainService extends Service
     final String url;
     final int rowId = row.getRowId();
     final boolean isStartMode;
+
+    if( isSyncNow )
+      return;
 
     mode = Launcher.Mode.valueOf(settings.getString("mode", Default.mode));
     switch( mode ) {
@@ -229,7 +242,12 @@ public class MainService extends Service
 
     Log.d("wsa-ng", _("sync rowId #" + Integer.toString(rowId) + " going to new thread"));
 
+    isSyncNow = true;
 
+    /* publish status */
+    EventBus.getDefault().post(new EventMessage(EventMessage.EventType.UPDATE, row));
+
+    /* run sync */
     Thread thread = new Thread(new Runnable() {
       public void run() {
         HttpClient client = _build_client();
@@ -327,6 +345,9 @@ public class MainService extends Service
     default:
       break;
     }
+
+    if( isSyncNow )
+      return;
 
     isSyncNow = true;
     url = String.format(GET_URL, settings.getString("server_addr", Default.server_addr));
@@ -569,7 +590,9 @@ public class MainService extends Service
 
       switch( msg.type ){
       case CONFIRM:
-        _sync_row(row);
+        /* instant update */
+        /* FIXME: not possible until messages send without LapId in server mode */
+        /*_sync_row(row);*/
         break;
       case FINISH:
         row.finishAt = msg.time;
@@ -587,7 +610,16 @@ public class MainService extends Service
         return;
       }
 
-      if( msg.type != EventMessage.ProposeMsg.Type.CONFIRM ) {
+      if( msg.type == EventMessage.ProposeMsg.Type.CONFIRM ) {
+        if( Launcher.Mode.valueOf(settings.getString("mode", Default.mode)) ==
+            Launcher.Mode.START ) {
+          row.state_start = StartRow.SyncState.PENDING;
+        }
+        else {
+          row.state = StartRow.SyncState.PENDING;
+        }
+      }
+      else {
         row.state = StartRow.SyncState.NONE;
       }
     }
