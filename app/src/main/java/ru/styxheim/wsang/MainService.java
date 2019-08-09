@@ -65,8 +65,7 @@ public class MainService extends Service
     for( StartRow row : starts ) {
       if( (isStartMode && (row.state_start == StartRow.SyncState.PENDING ||
                            row.state_start == StartRow.SyncState.ERROR)) ||
-          (row.state == StartRow.SyncState.PENDING ||
-           row.state == StartRow.SyncState.ERROR)
+          (!isStartMode && (row.state == StartRow.SyncState.PENDING))
           ) {
         _sync_row(row);
 
@@ -253,7 +252,7 @@ public class MainService extends Service
         HttpClient client = _build_client();
         Message msg;
         Bundle data;
-        StartRow.SyncState state = StartRow.SyncState.ERROR;
+        StartRow.SyncState state = StartRow.SyncState.PENDING;
         HttpPost rq = new HttpPost(url);
 
         rq.setHeader("User-Agent", "wsa-ng/1.0");
@@ -274,8 +273,21 @@ public class MainService extends Service
           int rs_code = rs.getStatusLine().getStatusCode();
 
           if( rs_code == 200 ) {
-            state = StartRow.SyncState.SYNCED;
-            Log.d("wsa-ng", _("sync rowId #" + Integer.toString(rowId) + " code: " + Integer.toString(rs_code)));
+            String result;
+            try {
+              result = EntityUtils.toString(rs.getEntity());
+              if( result.compareTo("true") == 0 ) {
+                state = StartRow.SyncState.SYNCED;
+                Log.d("wsa-ng", _("sync rowId #" + Integer.toString(rowId) + " complete"));
+              }
+              else {
+                state = StartRow.SyncState.ERROR;
+                Log.d("wsa-ng", _("sync rowId #" + Integer.toString(rowId) + " server not return 'true': " + result));
+              }
+            }
+            catch( IOException e ) {
+              Log.e("wsa-ng", _("sync rowId #" + Integer.toString(rowId) + " unpack result from server failed: " + e.getMessage()));
+            }
           }
           else {
             Log.d("wsa-ng", _("sync rowId #" + Integer.toString(rowId) + " invalid code: " + Integer.toString(rs_code)));
