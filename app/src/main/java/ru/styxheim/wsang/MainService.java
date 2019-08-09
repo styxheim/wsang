@@ -625,10 +625,16 @@ public class MainService extends Service
       if( msg.type == EventMessage.ProposeMsg.Type.CONFIRM ) {
         if( Launcher.Mode.valueOf(settings.getString("mode", Default.mode)) ==
             Launcher.Mode.START ) {
-          row.state_start = StartRow.SyncState.PENDING;
+          if( row.state_start != StartRow.SyncState.SYNCED &&
+              row.state_start != StartRow.SyncState.SYNCING ) {
+            row.state_start = StartRow.SyncState.PENDING;
+          }
         }
         else {
-          row.state = StartRow.SyncState.PENDING;
+          if( row.state != StartRow.SyncState.SYNCED &&
+              row.state != StartRow.SyncState.SYNCING ) {
+            row.state = StartRow.SyncState.PENDING;
+          }
         }
       }
       else {
