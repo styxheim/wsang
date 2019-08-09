@@ -12,6 +12,9 @@ public class StartRow
   public long startAt = 0;
   public long finishAt = 0;
 
+  protected boolean finishChanged = false;
+  protected boolean startChanged = false;
+
   public static enum SyncState {
     NONE,
     PENDING,
@@ -21,8 +24,6 @@ public class StartRow
   };
 
   public SyncState state = SyncState.NONE;
-  /* hack for old-style server expectation (`start` mode without lapId)  */
-  public SyncState state_start = SyncState.NONE;
 
   public StartRow(int rowId)
   {
@@ -32,6 +33,46 @@ public class StartRow
   public int getRowId()
   {
     return rowId;
+  }
+
+  public boolean changePossible()
+  {
+    return this.state != StartRow.SyncState.SYNCING;
+  }
+
+  public void setStartData(long startAt)
+  {
+    if( this.state != SyncState.SYNCING ) {
+      this.startAt = startAt;
+      this.state = SyncState.NONE;
+      this.startChanged = true;
+    }
+  }
+
+  public void setFinishData(long finishAt)
+  {
+    if( this.state != SyncState.SYNCING ) {
+      this.finishAt = finishAt;
+      this.state = SyncState.NONE;
+      this.finishChanged = true;
+    }
+  }
+
+  public void setIdentify(int crewId, int lapId)
+  {
+    this.crewId = crewId;
+    this.lapId = lapId;
+    this.state = SyncState.NONE;
+  }
+
+  public void setState(SyncState state)
+  {
+    if( state == SyncState.SYNCED ) {
+      this.finishChanged = false;
+      this.startChanged = false;
+    }
+
+    this.state = state;
   }
 
   public String toString()
@@ -45,38 +86,33 @@ public class StartRow
            ">";
   }
 
-  public void saveJSONStart(JsonWriter w) throws IOException
-  {
-    w.beginObject();
-    w.name("LapNumber").value(this.lapId);
-    w.name("CrewNumber").value(this.crewId);
-    w.name("StartTime").value(Default.millisecondsToString(this.startAt));
-    w.name("isStarted").value(true);
-    w.endObject();
-  }
-
-  public void saveJSONFinish(JsonWriter w) throws IOException
+  public void prepareJSON(JsonWriter w) throws IOException
   {
     w.beginObject();
     w.name("LapId").value(this.rowId);
-    w.name("FinishTime").value(Default.millisecondsToString(this.finishAt));
-    w.name("isFinished").value(true);
+    /* identify data always send to server */
+    w.name("LapNumber").value(this.lapId);
+    w.name("CrewNumber").value(this.crewId);
+
+    if( this.startChanged ) {
+      w.name("StartTime").value(this.startAt);
+    }
+
+    if( this.finishChanged ) {
+      w.name("FinishTime").value(this.finishAt);
+    }
     w.endObject();
   }
 
-  public void saveJSON(JsonWriter w, boolean system) throws IOException
+  public void saveJSON(JsonWriter w) throws IOException
   {
     SyncState state = this.state;
-    SyncState state_start = this.state_start;
 
     /* SYNCING and PENDING state is equal:
      *  SYNCING for UI
      *  PENDING for configs
      */
     if( state == SyncState.SYNCING )
-      state = SyncState.PENDING;
-
-    if( state_start == SyncState.SYNCING )
       state = SyncState.PENDING;
 
     w.beginObject();
@@ -86,10 +122,9 @@ public class StartRow
     w.name("crewNumber").value(this.crewId);
     w.name("startTimeMs").value(this.startAt);
     w.name("finishTimeMs").value(this.finishAt);
-    if( system ) {
-      w.name("_state_name").value(state.name());
-      w.name("_state_name_start").value(state_start.name());
-    }
+    w.name("_state_name").value(this.state.name());
+    w.name("_upd_finish").value(this.finishChanged);
+    w.name("_upd_start").value(this.startChanged);
     w.endObject();
   }
 
@@ -116,7 +151,7 @@ public class StartRow
     r.endObject();
   }
 
-  public void loadJSON(JsonReader r, boolean system) throws IOException
+  public void loadJSON(JsonReader r) throws IOException
   {
     r.beginObject();
     while( r.hasNext() ) {
@@ -144,22 +179,14 @@ public class StartRow
         this.finishAt = r.nextLong();
         break;
       case "_state_name":
-        if( system ) {
-          this.state = SyncState.valueOf(r.nextString());
-        }
-        else {
-          r.skipValue();
-        }
+        this.state = SyncState.valueOf(r.nextString());
         break;
-      case "_state_name_start":
-        if( system ) {
-          this.state_start = SyncState.valueOf(r.nextString());
-        }
-        else {
-          r.skipValue();
-        }
+      case "_upd_finish":
+        this.finishChanged = r.nextBoolean();
         break;
-
+      case "_upd_start":
+        this.startChanged = r.nextBoolean();
+        break;
       default:
         Log.d("wsa-ng", "StartRow: Unknown field '" + name + "'");
         r.skipValue();

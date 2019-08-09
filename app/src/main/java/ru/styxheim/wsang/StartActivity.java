@@ -179,7 +179,7 @@ public class StartActivity extends StartFinish
 
       v = tr_crew.findViewById(R.id.start_row_synced);
       helper.blocked = false;
-      switch( row.state_start ) {
+      switch( row.state ) {
       case PENDING:
         v.setBackgroundResource(R.color.Pending);
         helper.blocked = true;
@@ -542,7 +542,7 @@ public class StartActivity extends StartFinish
 
     if( helper.lapId == countDownLap ) {
       Toast.makeText(this,
-                     "Дождитеь окончания отсчёта",
+                     "Дождитесь окончания отсчёта",
                      Toast.LENGTH_SHORT).show();
       return;
     }

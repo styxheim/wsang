@@ -288,44 +288,18 @@ public class SettingsActivity extends Activity
       @Override
       public void onClick(DialogInterface dialog, final int item) {
         if( vals[item] != mode ) {
-          AlertDialog.Builder builder = new AlertDialog.Builder(SettingsActivity.this);
-          builder.setTitle("Смена режима работы");
-          builder.setMessage("В настоящее время нельзя сменить режим работы без отчистки данных.");
-          builder.setPositiveButton("Сменить режим и отчистить данные", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int id) {
-              SharedPreferences.Editor ed;
+          SharedPreferences.Editor ed;
 
-              StartList starts = new StartList();
-              starts.Save(getApplicationContext());
+          ed = settings.edit();
+          ed.putString("mode", vals[item].name());
+          ed.commit();
 
-              ed = getSharedPreferences("chrono", Context.MODE_PRIVATE).edit();
-              ed.clear();
-              ed.commit();
-
-              ed = settings.edit();
-              ed.putString("mode", vals[item].name());
-              ed.commit();
-
-              /* switch to new mode throug Launcher */
-              Intent intent = new Intent(SettingsActivity.this, Launcher.class);
-              startActivity(intent);
-
-              moveTaskToBack(true);
-              android.os.Process.killProcess(android.os.Process.myPid());
-              System.exit(1);
-            }
-          });
-          builder.setNegativeButton("Ничего не менять", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int id) {
-            }
-          });
-          builder.create().show();
+          /* switch to new mode throug Launcher */
+          Intent intent = new Intent(SettingsActivity.this, Launcher.class);
+          startActivity(intent);
         }
       }
     });
-
     builder.create().show();
   }
 

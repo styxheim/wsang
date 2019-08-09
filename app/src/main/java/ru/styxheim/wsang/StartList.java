@@ -99,7 +99,7 @@ public class StartList implements Iterable<StartRow>
       jw.setIndent("  ");
       jw.beginArray();
       for( StartRow row: Rows ) {
-        row.saveJSON(jw, true /* system save */);
+        row.saveJSON(jw);
       }
       jw.endArray();
     } catch( Exception e ) {
@@ -192,7 +192,7 @@ public class StartList implements Iterable<StartRow>
 
       while( jr.hasNext() ) {
         StartRow row = new StartRow(-1);
-        row.loadJSON(jr, true /* system */);
+        row.loadJSON(jr);
         addRecord(row);
       }
 

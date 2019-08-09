@@ -35,8 +35,7 @@ import android.widget.*;
 public class MainService extends Service
 {
   private StartList starts;
-  private static final String SET_START_URL = "http://%s/api/laps/updatelaps";
-  private static final String SET_FINISH_URL = "http://%s/api/laps/updatefinish";
+  private static final String SET_URL = "http://%s/api/update";
   private static final String GET_URL = "http://%s/api/laps";
 
   private enum CountDownMode {
@@ -59,14 +58,9 @@ public class MainService extends Service
   }
 
   private void _sync_next_row() {
-    boolean isStartMode = Launcher.Mode.valueOf(settings.getString("mode", Default.mode)) == Launcher.Mode.START;
-
     /* sync next row in queue */
     for( StartRow row : starts ) {
-      if( (isStartMode && (row.state_start == StartRow.SyncState.PENDING ||
-                           row.state_start == StartRow.SyncState.ERROR)) ||
-          (!isStartMode && (row.state == StartRow.SyncState.PENDING))
-          ) {
+      if( row.state == StartRow.SyncState.PENDING ) {
         _sync_row(row);
 
         /* allow only one sync thread at time
@@ -155,7 +149,6 @@ public class MainService extends Service
     public void handleMessage(Message msg) {
       Bundle data = msg.getData();
       int rowId = data.getInt("rowId");
-      boolean is_start = data.getBoolean("isStartMode");
       StartRow row = starts.getRecord(rowId);
       StartRow.SyncState state = StartRow.SyncState.values()[data.getInt("state")];
 
@@ -164,17 +157,16 @@ public class MainService extends Service
         return;
       }
 
-      if( is_start )
-        row.state_start = state;
-      else
-        row.state = state;
+      row.setState(state);
 
       Log.d("wsa-ng", _("publish sync result for rowId #" + rowId + " new state: " + state.name()));
       EventBus.getDefault().post(new EventMessage(EventMessage.EventType.UPDATE, row));
       starts.Save(getApplicationContext());
 
       isSyncNow = false;
-      _sync_next_row();
+      if( state == StartRow.SyncState.SYNCED ) {
+        _sync_next_row();
+      }
     }
   };
 
@@ -185,28 +177,9 @@ public class MainService extends Service
     final byte[] body;
     final String url;
     final int rowId = row.getRowId();
-    final boolean isStartMode;
 
     if( isSyncNow )
       return;
-
-    mode = Launcher.Mode.valueOf(settings.getString("mode", Default.mode));
-    switch( mode ) {
-    case START:
-      isStartMode = true;
-      row.state_start = StartRow.SyncState.SYNCING;
-      url = String.format(SET_START_URL, settings.getString("server_addr", Default.server_addr));
-      break;
-    case FINISH:
-      url = String.format(SET_FINISH_URL, settings.getString("server_addr", Default.server_addr));
-      isStartMode = false;
-      row.state = StartRow.SyncState.SYNCING;
-      break;
-    default:
-      isStartMode = false;
-      url = "";
-      break;
-    }
 
     if( !settings.contains("server_addr") ) {
       Log.d("wsa-ng", _("`server_addr` is not defined: row not synced"));
@@ -218,24 +191,13 @@ public class MainService extends Service
 
     try {
       jw.beginArray();
-      switch( mode ) {
-      case START:
-        row.saveJSONStart(jw);
-        break;
-      case FINISH:
-        row.saveJSONFinish(jw);
-        break;
-      default:
-        Log.e("wsa-ng", _("sync rowId #" + Integer.toString(rowId) + " error: unknown row mode " + mode.name()));
-        row.state = StartRow.SyncState.ERROR;
-        return;
-      }
+      url = String.format(SET_URL, settings.getString("server_addr", Default.server_addr));
+      row.prepareJSON(jw);
       jw.endArray();
-
       body = sw.toString().getBytes("utf-8");
     } catch( Exception e ) {
       Log.e("wsa-ng", _("sync rowId #" + Integer.toString(rowId) + " error: " + e.getMessage()));
-      row.state = StartRow.SyncState.ERROR;
+      row.setState(StartRow.SyncState.ERROR);
       return;
     }
 
@@ -243,6 +205,7 @@ public class MainService extends Service
 
     isSyncNow = true;
 
+    row.setState(StartRow.SyncState.SYNCING);
     /* publish status */
     EventBus.getDefault().post(new EventMessage(EventMessage.EventType.UPDATE, row));
 
@@ -296,7 +259,6 @@ public class MainService extends Service
 
         data = new Bundle();
         data.putInt("rowId", rowId);
-        data.putBoolean("isStartMode", isStartMode);
         data.putInt("state", state.ordinal());
 
         msg = _sync_handler.obtainMessage();
@@ -349,14 +311,6 @@ public class MainService extends Service
     final String url;
 
     mode = Launcher.Mode.valueOf(settings.getString("mode", Default.mode));
-
-    switch( mode ) {
-    case START:
-      /* start mode does not need syncing */
-      return;
-    default:
-      break;
-    }
 
     if( isSyncNow )
       return;
@@ -572,8 +526,7 @@ public class MainService extends Service
       if( row.lapId != msg.lapId )
         continue;
       Log.d("wsa-ng", _("Set time to " + time + " (" + msg.endAtMs + ") for row #" + row.getRowId()));
-      row.startAt = msg.endAtMs;
-      row.state = StartRow.SyncState.NONE;
+      row.setStartData(msg.endAtMs);
       EventBus.getDefault().post(new EventMessage(EventMessage.EventType.UPDATE, row));
     }
     starts.Save(getApplicationContext());
@@ -600,45 +553,33 @@ public class MainService extends Service
       Log.d("wsa-ng", _("Got message " + msg.type.name() + " for rowId #" +
                         Integer.toString(msg.rowId)));
 
+      if( !row.changePossible() ) {
+        Log.e("wsa-ng", _("update rowId #" +
+                          Integer.toString(msg.rowId) + ": msg " + msg.type.name() +
+                          " -> update not possible: row in SYNCING"));
+        return;
+      }
+
       switch( msg.type ){
       case CONFIRM:
         /* instant update */
         /* FIXME: not possible until messages send without LapId in server mode */
         /*_sync_row(row);*/
+        row.setState(StartRow.SyncState.PENDING);
         break;
       case FINISH:
-        row.finishAt = msg.time;
+        row.setFinishData(msg.time);
         break;
       case IDENTIFY:
-        row.crewId = msg.crewId;
-        row.lapId = msg.lapId;
+        row.setIdentify(msg.crewId, msg.lapId);
         break;
       case START:
-        row.startAt = msg.time;
+        row.setStartData(msg.time);
         break;
       default:
         Log.e("wsa-ng", _("Unknown msg type for rowId #" +
                           Integer.toString(msg.rowId) + ": " + msg.type.name()));
         return;
-      }
-
-      if( msg.type == EventMessage.ProposeMsg.Type.CONFIRM ) {
-        if( Launcher.Mode.valueOf(settings.getString("mode", Default.mode)) ==
-            Launcher.Mode.START ) {
-          if( row.state_start != StartRow.SyncState.SYNCED &&
-              row.state_start != StartRow.SyncState.SYNCING ) {
-            row.state_start = StartRow.SyncState.PENDING;
-          }
-        }
-        else {
-          if( row.state != StartRow.SyncState.SYNCED &&
-              row.state != StartRow.SyncState.SYNCING ) {
-            row.state = StartRow.SyncState.PENDING;
-          }
-        }
-      }
-      else {
-        row.state = StartRow.SyncState.NONE;
       }
     }
     EventBus.getDefault().post(new EventMessage(EventMessage.EventType.UPDATE, row));
