@@ -118,7 +118,7 @@ public class StartRow
     w.beginObject();
     /* confusing names: for compatable with old WSA application */
     w.name("lapId").value(this.rowId);
-    w.name("raceNumber").value(this.lapId);
+    w.name("lapNumber").value(this.lapId);
     w.name("crewNumber").value(this.crewId);
     w.name("startTimeMs").value(this.startAt);
     w.name("finishTimeMs").value(this.finishAt);
@@ -137,7 +137,7 @@ public class StartRow
       case "LapId":
         this.rowId = r.nextInt();
         break;
-      case "RaceNumber":
+      case "LapNumber":
         this.lapId = r.nextInt();
         break;
       case "CrewNumber":
@@ -160,7 +160,7 @@ public class StartRow
       case "lapId":
         this.rowId = r.nextInt();
         break;
-      case "raceNumber":
+      case "lapNumber":
         this.lapId = r.nextInt();
         break;
       case "crewNumber":
