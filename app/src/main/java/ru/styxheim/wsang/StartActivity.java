@@ -203,13 +203,12 @@ public class StartActivity extends StartFinish
       v = tr_time.findViewById(R.id.start_row_time_view);
       v.setText(Default.millisecondsToString(row.startAt));
 
-      /* FIXME: rowId not trustable */
-      if( row.getRowId() % 2 == 0 ) {
-        tr_crew.setBackgroundResource(R.color.rowEven);
-        tr_time.setBackgroundResource(R.color.rowEven);
-      }
-
       if( !visible ) {
+        if( tl_crew.getChildCount() % 2 == 0 ) {
+          tr_crew.setBackgroundResource(R.color.rowEven);
+          tr_time.setBackgroundResource(R.color.rowEven);
+        }
+
         tl_crew.addView(tr_crew);
         tl_time.addView(tr_time);
         /* tell to scrollview what need update position */
