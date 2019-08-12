@@ -149,6 +149,7 @@ public class MainService extends Service
     public void handleMessage(Message msg) {
       Bundle data = msg.getData();
       int rowId = data.getInt("rowId");
+      int inprintCount = data.get("inprintCount");
       StartRow row = starts.getRecord(rowId);
       StartRow.SyncState state = StartRow.SyncState.values()[data.getInt("state")];
 
@@ -157,7 +158,7 @@ public class MainService extends Service
         return;
       }
 
-      row.setState(state);
+      row.setState(state, inprintCount);
 
       Log.d("wsa-ng", _("publish sync result for rowId #" + rowId + " new state: " + state.name()));
       EventBus.getDefault().post(new EventMessage(EventMessage.EventType.UPDATE, row));
@@ -173,6 +174,7 @@ public class MainService extends Service
   /* send row to server */
   private void _sync_row(StartRow row)
   {
+    final int inprintCount;
     final Launcher.Mode mode;
     final byte[] body;
     final String url;
@@ -192,20 +194,20 @@ public class MainService extends Service
     try {
       jw.beginArray();
       url = String.format(SET_URL, settings.getString("server_addr", Default.server_addr));
-      row.prepareJSON(jw);
+      inprintCount = row.prepareJSON(jw);
       jw.endArray();
       body = sw.toString().getBytes("utf-8");
     } catch( Exception e ) {
       Log.e("wsa-ng", _("sync rowId #" + Integer.toString(rowId) + " error: " + e.getMessage()));
-      row.setState(StartRow.SyncState.ERROR);
+      row.setState(StartRow.SyncState.ERROR, 0);
       return;
     }
 
-    Log.d("wsa-ng", _("sync rowId #" + Integer.toString(rowId) + " going to new thread"));
+    Log.d("wsa-ng", _("sync rowId #" + Integer.toString(rowId) + " going to new thread: inprint=" + Integer.toString(inprintCount)));
 
     isSyncNow = true;
 
-    row.setState(StartRow.SyncState.SYNCING);
+    row.setState(StartRow.SyncState.SYNCING, 0);
     /* publish status */
     EventBus.getDefault().post(new EventMessage(EventMessage.EventType.UPDATE, row));
 
@@ -260,6 +262,7 @@ public class MainService extends Service
         data = new Bundle();
         data.putInt("rowId", rowId);
         data.putInt("state", state.ordinal());
+        data.putInt("inprintCount", inprintCount);
 
         msg = _sync_handler.obtainMessage();
         msg.setData(data);
@@ -565,7 +568,7 @@ public class MainService extends Service
         /* instant update */
         /* FIXME: not possible until messages send without LapId in server mode */
         /*_sync_row(row);*/
-        row.setState(StartRow.SyncState.PENDING);
+        row.setState(StartRow.SyncState.PENDING, 0);
         break;
       case FINISH:
         row.setFinishData(msg.time);

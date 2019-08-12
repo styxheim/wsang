@@ -27,8 +27,6 @@ public class StartActivity extends StartFinish
     public int rowTimeId;
     public int rowInfoId;
 
-    public boolean blocked = false;
-
     public RowHelper(int rowId)
     {
       this.rowId = rowId;
@@ -178,19 +176,15 @@ public class StartActivity extends StartFinish
       v.setText("L" + Integer.toString(row.lapId));
 
       v = tr_crew.findViewById(R.id.start_row_synced);
-      helper.blocked = false;
       switch( row.state ) {
       case PENDING:
         v.setBackgroundResource(R.color.Pending);
-        helper.blocked = true;
         break;
       case SYNCED:
         v.setBackgroundResource(R.color.Synced);
-        helper.blocked = true;
         break;
       case SYNCING:
         v.setBackgroundResource(R.color.Syncing);
-        helper.blocked = true;
         break;
       case ERROR:
         v.setBackgroundResource(R.color.errSync);
@@ -227,30 +221,20 @@ public class StartActivity extends StartFinish
     }
   }
 
-  protected void _update_start_time_for_lap(int lapId, boolean commit)
+  protected void _reset_start_time_for_lap(int lapId)
   {
     EventMessage.ProposeMsg req;
     TextView tv;
 
-    EventMessage.ProposeMsg.Type type;
-
-    if( commit ) {
-      type = EventMessage.ProposeMsg.Type.CONFIRM;
-    }
-    else {
-      type = EventMessage.ProposeMsg.Type.START;
-    }
+    req = new EventMessage.ProposeMsg(EventMessage.ProposeMsg.Type.START);
 
     for( RowHelper helper : lapId2RowId ) {
       if( helper.lapId == lapId ) {
-        req =  new EventMessage.ProposeMsg(type);
         req.setRowId(helper.rowId);
         EventBus.getDefault().post(new EventMessage(EventMessage.EventType.PROPOSE, req));
 
-        if( !commit ) {
-          tv = (TextView)findViewById(helper.rowInfoId);
-          tv.setText("фальшстарт");
-        }
+        tv = (TextView)findViewById(helper.rowInfoId);
+        tv.setText("фальшстарт");
       }
     }
   }
@@ -273,26 +257,17 @@ public class StartActivity extends StartFinish
     fv_normal = fv.getBackground();
     sv_normal = fv.getBackground();
 
-    if( !helper.blocked ) {
-      if( Default.time_empty.compareTo(tv.getText().toString()) != 0 ) {
-        popup.getMenu().add(1, 2, 2, R.string.true_start);
-        popup.getMenu().add(1, 3, 3, R.string.false_start);
-      }
-      else if( !countDownMode ) {
-        popup.getMenu().add(1, 10, 10, R.string.ten_seconds_button);
-        popup.getMenu().add(1, 30, 30, R.string.thirty_seconds_button);
-        popup.getMenu().add(1, 60, 60, R.string.sixty_seconds_button);
-      }
+    if( Default.time_empty.compareTo(tv.getText().toString()) != 0 ) {
+      popup.getMenu().add(1, 3, 3, R.string.false_start);
+    }
+    else if( !countDownMode ) {
+      popup.getMenu().add(1, 10, 10, R.string.ten_seconds_button);
+      popup.getMenu().add(1, 30, 30, R.string.thirty_seconds_button);
+      popup.getMenu().add(1, 60, 60, R.string.sixty_seconds_button);
     }
 
     if( countDownMode ) {
       popup.getMenu().add(1, 1, 1, R.string.start_cancel_stop);
-    }
-    else if( helper.blocked ) {
-      Toast.makeText(StartActivity.this,
-                     "Нельзя изменять синхронизированные записи",
-                     Toast.LENGTH_SHORT).show();
-      return;
     }
 
     fv.setBackgroundResource(R.color.selected_row);
@@ -312,29 +287,13 @@ public class StartActivity extends StartFinish
           /* stop countdown */
           EventBus.getDefault().post(new EventMessage(EventMessage.EventType.COUNTDOWN_STOP, null));
           return true;
-        case 2:
-          builder.setTitle(R.string.true_start);
-          builder.setMessage("Отправить на сервер заезд " + Integer.toString(lapId) + "?");
-          builder.setPositiveButton("Отправить", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int id) {
-              _update_start_time_for_lap(lapId, true);
-            }
-          });
-          builder.setNegativeButton("Нет", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int id) {
-            }
-          });
-          builder.create().show();
-          break;
         case 3:
           builder.setTitle(R.string.false_start);
           builder.setMessage("Отменить результаты заезда " + Integer.toString(lapId) + "?");
           builder.setPositiveButton("Отменить", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int id) {
-              _update_start_time_for_lap(lapId, false);
+              _reset_start_time_for_lap(lapId);
             }
           });
           builder.setNegativeButton("Нет", new DialogInterface.OnClickListener() {
@@ -388,6 +347,7 @@ public class StartActivity extends StartFinish
       @Override
       public void onStartLineEditDialogResult(StartLineEditDialog sled, int crewId, int lapId) {
         EventMessage.ProposeMsg req;
+
         lastCrewId = crewId;
         lastLapId = lapId;
 
@@ -496,12 +456,27 @@ public class StartActivity extends StartFinish
     countDownLap = -1;
   }
 
+  private void _event_update(StartRow row)
+  {
+    publishStartRow(row);
+
+    if( !row.isQueueEmpty() &&
+        row.state == StartRow.SyncState.NONE ||
+        row.state == StartRow.SyncState.ERROR ) {
+      EventMessage.ProposeMsg confirm;
+
+      confirm = new EventMessage.ProposeMsg(EventMessage.ProposeMsg.Type.CONFIRM);
+      confirm.setRowId(row.getRowId());
+      EventBus.getDefault().post(new EventMessage(EventMessage.EventType.PROPOSE, confirm));
+    }
+  }
+
   @Subscribe(threadMode = ThreadMode.MAIN)
   public void onServiceMessageUpdate(EventMessage ev)
   {
     switch( ev.type ) {
     case UPDATE:
-      publishStartRow((StartRow)ev.obj);
+      _event_update((StartRow)ev.obj);
       break;
     case COUNTDOWN_START:
       _event_countdown_start((EventMessage.CountDownMsg)ev.obj);
@@ -532,13 +507,6 @@ public class StartActivity extends StartFinish
     if( helper == null )
       return;
 
-    if( helper.blocked ) {
-      Toast.makeText(StartActivity.this,
-                     "Нельзя изменять синхронизированные записи",
-                     Toast.LENGTH_SHORT).show();
-      return;
-    }
-
     if( helper.lapId == countDownLap ) {
       Toast.makeText(this,
                      "Дождитесь окончания отсчёта",
@@ -554,6 +522,7 @@ public class StartActivity extends StartFinish
 
           Log.i("wsa-ng", "Set new lap/crew for row #" + helper.rowId);
           req = new EventMessage.ProposeMsg(crewId, lapId);
+
           req.setRowId(helper.rowId);
 
           EventBus.getDefault().post(new EventMessage(EventMessage.EventType.PROPOSE, req));

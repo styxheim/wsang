@@ -50,8 +50,7 @@ public class StartList implements Iterable<StartRow>
   {
     StartRow row = new StartRow(genId);
     genId++;
-    row.crewId = crewId;
-    row.lapId = lapId;
+    row.setIdentify(crewId, lapId);
     Rows.add(row);
     return row;
   }

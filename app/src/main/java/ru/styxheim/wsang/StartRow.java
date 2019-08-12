@@ -2,6 +2,7 @@ package ru.styxheim.wsang;
 
 import java.io.IOException;
 import android.util.*;
+import java.util.*;
 
 public class StartRow
 {
@@ -12,9 +13,6 @@ public class StartRow
   public long startAt = 0;
   public long finishAt = 0;
 
-  protected boolean finishChanged = false;
-  protected boolean startChanged = false;
-
   public static enum SyncState {
     NONE,
     PENDING,
@@ -22,6 +20,75 @@ public class StartRow
     ERROR,
     SYNCED,
   };
+
+  protected class SyncData {
+    public Integer crewId;
+    public Integer lapId;
+    public Long finishTime;
+    public Long startTime;
+
+    public SyncData(int crewId, int lapId)
+    {
+      this.crewId = new Integer(crewId);
+      this.lapId = new Integer(lapId);
+    }
+
+    public SyncData(long startTime, long finishTime)
+    {
+      if( startTime != -1 ) {
+        this.startTime = new Long(startTime);
+      }
+
+      if( finishTime != -1 ) {
+        this.finishTime = new Long(finishTime);
+      }
+    }
+
+    public SyncData(JsonReader jr) throws IOException
+    {
+      while( jr.hasNext() ) {
+        String name = jr.nextName();
+        switch( name ) {
+          case "LapNumber":
+            this.lapId = new Integer(jr.nextInt());
+            break;
+          case "CrewNumber":
+            this.crewId = new Integer(jr.nextInt());
+            break;
+          case "FinishTime":
+            this.finishTime = new Long(jr.nextLong());
+            break;
+          case "StartTime":
+            this.startTime = new Long(jr.nextLong());
+            break;
+          default:
+            Log.d("wsa-ng", "StartRow.SyncData: Unknown field '" + name + "'");
+            jr.skipValue();
+        }
+      }
+    }
+
+    public void inprintJSON(JsonWriter jw) throws IOException
+    {
+      if( this.crewId != null ) {
+        jw.name("CrewNumber").value(this.crewId);
+      }
+
+      if( this.lapId != null ) {
+        jw.name("LapNumber").value(this.lapId);
+      }
+
+      if( this.finishTime != null ) {
+        jw.name("FinishTime").value(this.finishTime);
+      }
+
+      if( this.startTime != null ) {
+        jw.name("StartTime").value(this.startTime);
+      }
+    }
+  };
+
+  protected ArrayList<SyncData> syncList = new ArrayList<SyncData>();
 
   public SyncState state = SyncState.NONE;
 
@@ -35,6 +102,11 @@ public class StartRow
     return rowId;
   }
 
+  public boolean isQueueEmpty()
+  {
+    return this.syncList.size() == 0;
+  }
+
   public boolean changePossible()
   {
     return this.state != StartRow.SyncState.SYNCING;
@@ -42,20 +114,16 @@ public class StartRow
 
   public void setStartData(long startAt)
   {
-    if( this.state != SyncState.SYNCING ) {
-      this.startAt = startAt;
-      this.state = SyncState.NONE;
-      this.startChanged = true;
-    }
+    this.startAt = startAt;
+    this.state = SyncState.NONE;
+    this.syncList.add(new SyncData(startAt, -1));
   }
 
   public void setFinishData(long finishAt)
   {
-    if( this.state != SyncState.SYNCING ) {
-      this.finishAt = finishAt;
-      this.state = SyncState.NONE;
-      this.finishChanged = true;
-    }
+    this.finishAt = finishAt;
+    this.state = SyncState.NONE;
+    this.syncList.add(new SyncData(-1, finishAt));
   }
 
   public void setIdentify(int crewId, int lapId)
@@ -63,13 +131,20 @@ public class StartRow
     this.crewId = crewId;
     this.lapId = lapId;
     this.state = SyncState.NONE;
+    this.syncList.add(new SyncData(crewId, lapId));
   }
 
-  public void setState(SyncState state)
+  public void setState(SyncState state, int inprintCount)
   {
     if( state == SyncState.SYNCED ) {
-      this.finishChanged = false;
-      this.startChanged = false;
+      for( int i = 0; i < inprintCount; i++ ) {
+        syncList.remove(0);
+      }
+
+      if( syncList.size() != 0 ) {
+        /* set state to pending when queue is not empty */
+        state = SyncState.PENDING;
+      }
     }
 
     this.state = state;
@@ -86,22 +161,20 @@ public class StartRow
            ">";
   }
 
-  public void prepareJSON(JsonWriter w) throws IOException
+  /* get JSON for server
+     return: inprintCount value for setState()
+     */
+  public int prepareJSON(JsonWriter w) throws IOException
   {
+    int i;
     w.beginObject();
     w.name("LapId").value(this.rowId);
-    /* identify data always send to server */
-    w.name("LapNumber").value(this.lapId);
-    w.name("CrewNumber").value(this.crewId);
 
-    if( this.startChanged ) {
-      w.name("StartTime").value(this.startAt);
-    }
-
-    if( this.finishChanged ) {
-      w.name("FinishTime").value(this.finishAt);
+    for( i = 0; i < syncList.size(); i++ ) {
+      syncList.get(i).inprintJSON(w);
     }
     w.endObject();
+    return i;
   }
 
   public void saveJSON(JsonWriter w) throws IOException
@@ -123,8 +196,14 @@ public class StartRow
     w.name("startTimeMs").value(this.startAt);
     w.name("finishTimeMs").value(this.finishAt);
     w.name("_state_name").value(this.state.name());
-    w.name("_upd_finish").value(this.finishChanged);
-    w.name("_upd_start").value(this.startChanged);
+    w.name("syncList");
+    w.beginArray();
+    for( SyncData sd : this.syncList ) {
+      w.beginObject();
+      sd.inprintJSON(w);
+      w.endObject();
+    }
+    w.endArray();
     w.endObject();
   }
 
@@ -153,6 +232,8 @@ public class StartRow
 
   public void loadJSON(JsonReader r) throws IOException
   {
+    this.syncList.clear();
+
     r.beginObject();
     while( r.hasNext() ) {
       String name = r.nextName();
@@ -181,11 +262,14 @@ public class StartRow
       case "_state_name":
         this.state = SyncState.valueOf(r.nextString());
         break;
-      case "_upd_finish":
-        this.finishChanged = r.nextBoolean();
-        break;
-      case "_upd_start":
-        this.startChanged = r.nextBoolean();
+      case "syncList":
+        r.beginArray();
+        while( r.hasNext() ) {
+          r.beginObject();
+          syncList.add(new SyncData(r));
+          r.endObject();
+        }
+        r.endArray();
         break;
       default:
         Log.d("wsa-ng", "StartRow: Unknown field '" + name + "'");
