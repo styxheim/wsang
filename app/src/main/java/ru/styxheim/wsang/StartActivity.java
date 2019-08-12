@@ -461,8 +461,7 @@ public class StartActivity extends StartFinish
     publishStartRow(row);
 
     if( !row.isQueueEmpty() &&
-        row.state == StartRow.SyncState.NONE ||
-        row.state == StartRow.SyncState.ERROR ) {
+        row.state == StartRow.SyncState.NONE ) {
       EventMessage.ProposeMsg confirm;
 
       confirm = new EventMessage.ProposeMsg(EventMessage.ProposeMsg.Type.CONFIRM);
