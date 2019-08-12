@@ -146,6 +146,10 @@ public class StartRow
         state = SyncState.PENDING;
       }
     }
+    else if( state == SyncState.ERROR && inprintCount != syncList.size() ) {
+      /* retry when not all changes applied */
+      state = SyncState.PENDING;
+    }
 
     this.state = state;
   }
