@@ -38,6 +38,8 @@ public class MainService extends Service
   private static final String SET_URL = "http://%s/api/update";
   private static final String GET_URL = "http://%s/api/laps";
 
+  private long TerminalId = 0;
+
   private enum CountDownMode {
     NONE,
     COUNTDOWN,
@@ -80,6 +82,19 @@ public class MainService extends Service
     starts = new StartList();
     /* Load data */
     starts.Load(getApplicationContext());
+
+    /* Load TerminalId */
+    if( settings.contains(TerminalStatus.TERMINAL_ID) ) {
+      this.TerminalId = settings.getLong(TerminalStatus.TERMINAL_ID, 0);
+    }
+    else {
+      this.TerminalId = java.util.concurrent.ThreadLocalRandom.current().nextLong();
+      SharedPreferences.Editor ed = settings.edit();
+      ed.putLong(TerminalStatus.TERMINAL_ID, this.TerminalId);
+      ed.commit();
+    }
+
+    Log.i("wsa-ng", _("TerminalId=" + Long.toHexString(this.TerminalId)));
 
     _sync_handler.post(new Runnable() {
       public void run() {

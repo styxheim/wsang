@@ -75,6 +75,7 @@ public class SettingsActivity extends Activity
 
     _setup_mode();
     _setup_server_addr();
+    _update_terminal_id();
     _update_chrono_key_title();
     _update_chrono_offset_title();
   }
@@ -155,6 +156,13 @@ public class SettingsActivity extends Activity
         v.setVisibility(v.INVISIBLE);
       }
     });
+  }
+
+  public void _update_terminal_id()
+  {
+    final TextView tv = findViewById(R.id.settings_terminal_id);
+
+    tv.setText(Long.toHexString(settings.getLong(TerminalStatus.TERMINAL_ID, 0)));
   }
 
   public void _update_chrono_offset_title()

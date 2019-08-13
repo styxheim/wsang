@@ -22,7 +22,9 @@ public class Launcher extends Activity
   protected void onCreate(Bundle savedInstanceState)
   {
     Log.d("wsa-ng", "Launcher:onCreate()");
+
     super.onCreate(savedInstanceState);
+    setContentView(R.layout.launcher);
 
     settings = getSharedPreferences("main", Context.MODE_PRIVATE);
 

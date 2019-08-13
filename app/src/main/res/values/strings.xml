@@ -23,4 +23,6 @@
   <string name="true_start">Подтвердить старт</string>
 
   <string name="start_cancel_stop">Отменить отсчёт</string>
+
+  <string name="apply_title">Применить</string>
 </resources>

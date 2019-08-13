@@ -51,7 +51,7 @@
 				<TextView
 					android:layout_width="wrap_content"
 					android:layout_height="wrap_content"
-					android:textAppearance="?android:attr/textAppearanceMedium"
+					android:textAppearance="?android:attr/textAppearanceSmall"
 					android:text="Время секундомера"
 					android:textStyle="bold"/>
 
@@ -60,7 +60,7 @@
 					android:layout_width="wrap_content"
 					android:layout_height="wrap_content"
 					android:text="- ??? -"
-					android:textAppearance="?android:attr/textAppearanceSmall"/>
+					android:textAppearance="?android:attr/textAppearanceMedium"/>
 
 			</LinearLayout>
 
@@ -74,7 +74,7 @@
 				<TextView
 					android:layout_width="wrap_content"
 					android:layout_height="wrap_content"
-					android:textAppearance="?android:attr/textAppearanceMedium"
+					android:textAppearance="?android:attr/textAppearanceSmall"
 					android:text="Кнопка секундомера"
 					android:textStyle="bold"/>
 
@@ -83,7 +83,7 @@
 					android:layout_width="wrap_content"
 					android:layout_height="wrap_content"
 					android:text="- ??? -"
-					android:textAppearance="?android:attr/textAppearanceSmall"/>
+					android:textAppearance="?android:attr/textAppearanceMedium"/>
 
 			</LinearLayout>
 
@@ -96,7 +96,7 @@
 				<TextView
 					android:layout_width="wrap_content"
 					android:layout_height="wrap_content"
-					android:textAppearance="?android:attr/textAppearanceMedium"
+					android:textAppearance="?android:attr/textAppearanceSmall"
 					android:text="Смещение секундомера"
 					android:textStyle="bold"/>
 
@@ -105,7 +105,7 @@
 					android:layout_width="wrap_content"
 					android:layout_height="wrap_content"
 					android:text=" "
-					android:textAppearance="?android:attr/textAppearanceSmall"/>
+					android:textAppearance="?android:attr/textAppearanceMedium"/>
 
 			</LinearLayout>
 
@@ -119,7 +119,7 @@
 				<TextView
 					android:layout_width="wrap_content"
 					android:layout_height="wrap_content"
-					android:textAppearance="?android:attr/textAppearanceMedium"
+					android:textAppearance="?android:attr/textAppearanceSmall"
 					android:text="Режим работы"
 					android:textStyle="bold"/>
 
@@ -128,7 +128,7 @@
 					android:layout_width="wrap_content"
 					android:layout_height="wrap_content"
 					android:text="- ??? -"
-					android:textAppearance="?android:attr/textAppearanceSmall"/>
+					android:textAppearance="?android:attr/textAppearanceMedium"/>
 
 			</LinearLayout>
 
@@ -141,14 +141,37 @@
 				<TextView
 					android:layout_width="wrap_content"
 					android:layout_height="wrap_content"
-					android:textAppearance="?android:attr/textAppearanceMedium"
-					android:text="Адрес сервера"
+					android:textAppearance="?android:attr/textAppearanceSmall"
+					android:text="Идентификатор"
+					android:textStyle="bold"/>
+
+        <TextView
+					android:id="@+id/settings_terminal_id"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:text="- ??? -"
+					android:textAppearance="?android:attr/textAppearanceMedium"/>
+
+			</LinearLayout>
+
+			<LinearLayout
+				android:orientation="vertical"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:paddingBottom="20dp">
+
+				<TextView
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:textAppearance="?android:attr/textAppearanceSmall"
+          android:text="Адрес сервера"
 					android:textStyle="bold"/>
 
 				<EditText
 					android:id="@+id/settings_server_edit"
 					android:layout_width="match_parent"
 					android:layout_height="wrap_content"
+          android:descendantFocusability="beforeDescendants"
 					android:ems="10"/>
 
 				<Button
@@ -157,7 +180,7 @@
 					android:layout_width="match_parent"
 					style="?android:attr/buttonBarButtonStyle"
 					android:layout_height="wrap_content"
-					android:text="Применить"/>
+          android:text="@string/apply_title"/>
 
 			</LinearLayout>
 
