@@ -9,10 +9,10 @@ import java.util.*;
 import java.io.IOException;
 import java.io.*;
 
-public class TerminalStatus
+public class RaceStatus
 {
   final static String SETTING_NAME = "competition";
-  
+
   final static String TIMECODE = "TimeCode";
   final static String CREWS = "Crews";
   final static String GATES = "Gates";
@@ -32,16 +32,6 @@ public class TerminalStatus
     public int id;
     public String name;
 
-    public Discipline(String serialized)
-    {
-      StringReader r = new StringReader(serialized);
-      JsonReader jr = new JsonReader(r);
-      try {
-        this.fromJSON(jr);
-      } catch( IOException e ) {
-      }
-    }
-    
     public Discipline(JsonReader jr) throws IOException
     {
       this.fromJSON(jr);
@@ -72,50 +62,19 @@ public class TerminalStatus
       jw.name(NAME).value(this.name);
       jw.endObject();
     }
-
-    public String toString()
-    {
-      StringWriter w = new StringWriter();
-      JsonWriter jw = new JsonWriter(w);
-      try {
-        this.toJSON(jw);
-      } catch( IOException e ) {
-      }
-      return w.toString();
-    }
   }
 
-  public TerminalStatus(SharedPreferences settings)
+  public RaceStatus(SharedPreferences settings)
   {
-    int c = 0;
- 
-    this.timeCode = settings.getLong("time_code", 0);
+    StringReader r = new StringReader(settings.getString("RaceStatus", ""));
+    JsonReader jr = new JsonReader(r);
 
-    c = settings.getInt("gates", 0);
-    for( int i = 0; i < c; i++ ) {
-      String name = "gate_" + Integer.toString(i);
-      this.gates.add(new Integer(settings.getInt(name, 0)));
-    }
-
-    c = settings.getInt("penalties", 0);
-    for( int i = 0; i < c; i++ ) {
-      String name = "penalty_" + Integer.toString(i);
-      this.penalties.add(new Integer(settings.getInt(name, 0)));
-    }
-
-    c = settings.getInt("crews", 0);
-    for( int i = 0; i < c; i++ ) {
-      String name = "crew_" + Integer.toString(i);
-      this.crews.add(new Integer(settings.getInt(name, 0)));
-    }
-
-    c = settings.getInt("disciplines", 0);
-    for( int i = 0; i < c; i++ ) {
-      String name = "discipline_" + Integer.toString(i);
-      this.disciplines.add(new Discipline(settings.getString(name, "")));
+    try {
+      loadJSON(jr);
+    } catch( IOException e ) {
     }
   }
-  
+
   private void _fillArrayList(ArrayList<Integer> ar, JsonReader jr) throws IOException
   {
     jr.beginArray();
@@ -125,13 +84,18 @@ public class TerminalStatus
     jr.endArray();
   }
 
-  public TerminalStatus(JsonReader jr) throws IOException
+  public RaceStatus(JsonReader jr) throws IOException
+  {
+    loadJSON(jr);
+  }
+
+  public void loadJSON(JsonReader jr) throws IOException
   {
     this.penalties.clear();
     this.crews.clear();
     this.disciplines.clear();
     this.gates.clear();
-    
+
     jr.beginObject();
     while( jr.hasNext() ) {
       switch( jr.nextName() ) {
@@ -163,37 +127,17 @@ public class TerminalStatus
 
   public void saveSettings(SharedPreferences settings)
   {
+    StringWriter w = new StringWriter();
+    JsonWriter jw = new JsonWriter(w);
     SharedPreferences.Editor ed;
- 
+
+    try {
+      saveJSON(jw);
+    } catch( IOException e ) {
+    }
+
     ed = settings.edit();
-    ed.clear();
-
-    ed.putLong("time_code", this.timeCode);
-
-    ed.putInt("gates", this.gates.size());
-    for( int i = 0; i < this.gates.size(); i++ ) {
-      String name = "gate_" + Integer.toString(i);
-      ed.putInt(name, this.gates.get(i));
-    }
-
-    ed.putInt("penalties", this.penalties.size());
-    for( int i = 0; i < this.penalties.size(); i++ ) {
-      String name = "penalty_" + Integer.toString(i);
-      ed.putInt(name, this.penalties.get(i));
-    }
-
-    ed.putInt("crews", this.crews.size());
-    for( int i = 0; i < this.crews.size(); i++ ) {
-      String name = "crew_" + Integer.toString(i);
-      ed.putInt(name, this.crews.get(i));
-    }
-
-    ed.putInt("disciplines", this.disciplines.size());
-    for( int i = 0; i < this.disciplines.size(); i++ ) {
-      String name = "discipline_" + Integer.toString(i);
-      ed.putString(name, this.disciplines.get(i).toString());
-    }
-
+    ed.putString("RaceStatus", w.toString());
     ed.commit();
   }
 
