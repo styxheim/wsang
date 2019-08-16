@@ -489,6 +489,15 @@ public class StartActivity extends StartFinish
     }
   }
 
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  public void _event_settings_reload(EventMessage.ReloadSettings msg)
+  {
+    lapId2RowId.clear();
+    ((ViewGroup)findViewById(R.id.start_table_crew)).removeAllViews();
+    ((ViewGroup)findViewById(R.id.start_table_time)).removeAllViews();
+    EventBus.getDefault().post(new EventMessage.Boot());
+  }
+
   public void startTimeOnClick(View v)
   {
     RowHelper helper = getHelper(v.getId());

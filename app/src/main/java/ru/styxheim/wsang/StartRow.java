@@ -254,6 +254,12 @@ public class StartRow
       case "CrewNumber":
         this.crewId = r.nextInt();
         break;
+      case "StartTime":
+        this.startAt = r.nextLong();
+        break;
+      case "FinishTime":
+        this.finishAt = r.nextLong();
+        break;
       default:
         Log.d("wsa-ng", "StartRow: Unknown field '" + name + "'");
         r.skipValue();

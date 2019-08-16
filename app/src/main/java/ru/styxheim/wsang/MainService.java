@@ -593,7 +593,6 @@ public class MainService extends Service
           /* update settings */
           _updateTimeStamp(status.raceStatus.timestamp);
           raceStatus = status.raceStatus;
-          /* TODO: clear screen */
         }
         else if ( status.raceStatus.timestamp > timestamp ) {
           Log.i("wsa-ng", _("[RECEIVE] RaceStatus timestamp: local = %d, remote = %d",
@@ -602,9 +601,9 @@ public class MainService extends Service
           /* update settings */
           _updateTimeStamp(status.raceStatus.timestamp);
           raceStatus = status.raceStatus;
-          /* TODO: update screen */
-        }
+         }
         raceStatus.saveSettings(race_settings);
+        EventBus.getDefault().post(new EventMessage.ReloadSettings());
       }
 
       /* check terminalStatus data */
@@ -614,7 +613,8 @@ public class MainService extends Service
           Log.i("wsa-ng", _("[RECEIVE] apply new TerminalStatus"));
           this.terminalStatus = term;
           this.terminalStatus.saveSettings(race_settings);
-          /* TODO: update Screen */
+          /* update Screen */
+          EventBus.getDefault().post(new EventMessage.ReloadSettings());
         }
         if( timestamp < term.timestamp ) {
           /* apply timestamp from any received struct */
@@ -685,4 +685,11 @@ public class MainService extends Service
       break;
     }
   }
+  
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  public void _event_boot(EventMessage.Boot msg)
+  {
+    _boot();
+  }
+  
 }

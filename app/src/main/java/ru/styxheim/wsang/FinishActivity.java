@@ -377,6 +377,13 @@ public class FinishActivity extends StartFinish
       });
     }
   }
+  
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  public void _event_settings_reload(EventMessage.ReloadSettings msg)
+  {
+    ((ViewGroup)findViewById(R.id.finish_table)).removeAllViews();
+    EventBus.getDefault().post(new EventMessage.Boot());
+  }
 
   /* TOREMOVE */
   public void startOnClick(View v)
