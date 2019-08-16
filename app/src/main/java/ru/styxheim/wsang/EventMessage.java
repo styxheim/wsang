@@ -16,9 +16,6 @@ public class EventMessage
     COUNTDOWN,      /* notify UI about current countdown */
     COUNTDOWN_END,  /* countdown successfull completed.
                       endAtMs == -1 says what timer is stopped (forced or normal) */
-
-    /* SettingsMsg */
-    SETTINGS_UPDATE, /* notify UI about model update */
   };
 
   public static class ProposeMsg
@@ -77,11 +74,6 @@ public class EventMessage
     }
   }
 
-  public static class SettingsMsg
-  {
-    public Launcher.Mode new_mode;
-  }
-
   public EventType type;
   public Object obj;
 
@@ -91,15 +83,15 @@ public class EventMessage
     this.obj = obj;
   }
 
-  public EventMessage(ProposeMsg obj)
+  public EventMessage(StartRow obj)
   {
-    this.type = EventType.PROPOSE;
+    this.type = EventType.UPDATE;
     this.obj = obj;
   }
 
-  public EventMessage(SettingsMsg obj)
+  public EventMessage(ProposeMsg obj)
   {
-    this.type = EventType.SETTINGS_UPDATE;
+    this.type = EventType.PROPOSE;
     this.obj = obj;
   }
 }

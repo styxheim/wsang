@@ -17,7 +17,9 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.util.EntityUtils;
+import java.net.URISyntaxException;
 
 import android.media.MediaPlayer;
 
@@ -35,10 +37,13 @@ import android.widget.*;
 public class MainService extends Service
 {
   private StartList starts;
-  private static final String SET_URL = "http://%s/api/update";
-  private static final String GET_URL = "http://%s/api/laps";
+  private TerminalStatus terminalStatus;
+  private RaceStatus raceStatus;
 
-  private long TerminalId = 0;
+  private static final String SET_URL = "http://%s/api/update/%d/%s";
+  private static final String GET_URL = "http://%s/api/data/%d/%d/%s";
+
+  private long timestamp = 0;
 
   private enum CountDownMode {
     NONE,
@@ -54,9 +59,19 @@ public class MainService extends Service
   private EventMessage.CountDownMsg nextCountDownMsg = null;
 
   private SharedPreferences settings;
+  private SharedPreferences race_settings;
 
-  public String _(String in) {
-    return "[" + android.os.Process.myTid() + "] " + in;
+  public String _(String format, Object ... args) {
+    return "[" + android.os.Process.myTid() + "] " + String.format(format, args);
+  }
+
+  private void _updateTimeStamp(long newTimeStamp)
+  {
+    timestamp = newTimeStamp;
+
+    SharedPreferences.Editor ed = settings.edit();
+    ed.putLong(RaceStatus.TIMESTAMP, newTimeStamp);
+    ed.apply();
   }
 
   private void _sync_next_row() {
@@ -75,6 +90,7 @@ public class MainService extends Service
 
   @Override
   public void onCreate() {
+    race_settings = getSharedPreferences("race", Context.MODE_PRIVATE);
     settings = getSharedPreferences("main", Context.MODE_PRIVATE);
     // The service is being created
     Log.i("wsa-ng", _("service created"));
@@ -83,24 +99,22 @@ public class MainService extends Service
     /* Load data */
     starts.Load(getApplicationContext());
 
-    /* Load TerminalId */
-    if( settings.contains(TerminalStatus.TERMINAL_ID) ) {
-      this.TerminalId = settings.getLong(TerminalStatus.TERMINAL_ID, 0);
-    }
-    else {
-      this.TerminalId = java.util.concurrent.ThreadLocalRandom.current().nextLong();
-      SharedPreferences.Editor ed = settings.edit();
-      ed.putLong(TerminalStatus.TERMINAL_ID, this.TerminalId);
-      ed.commit();
+    this.terminalStatus = new TerminalStatus(race_settings);
+    this.raceStatus = new RaceStatus(race_settings);
+
+    if( this.terminalStatus.terminalId.compareTo("") == 0 ) {
+      this.terminalStatus.terminalId = Long.toHexString(java.util.concurrent.ThreadLocalRandom.current().nextLong());
+      this.terminalStatus.saveSettings(race_settings);
     }
 
-    Log.i("wsa-ng", _("TerminalId=" + Long.toHexString(this.TerminalId)));
+    this.timestamp = settings.getLong(raceStatus.TIMESTAMP, 0);
 
+    Log.i("wsa-ng", _("TerminalId=" + this.terminalStatus.terminalId));
+
+    /* TODO: disable sync when apllication no visible */
     _sync_handler.post(new Runnable() {
       public void run() {
-        _sync_next_row();
         _sync_receive();
-
         _sync_handler.postDelayed(this, 3000);
       }
     });
@@ -208,7 +222,10 @@ public class MainService extends Service
 
     try {
       jw.beginArray();
-      url = String.format(SET_URL, settings.getString("server_addr", Default.server_addr));
+      url = String.format(SET_URL,
+                          settings.getString("server_addr", Default.server_addr),
+                          raceStatus.competitionId,
+                          terminalStatus.terminalId);
       inprintCount = row.prepareJSON(jw);
       jw.endArray();
       body = sw.toString().getBytes("utf-8");
@@ -255,7 +272,7 @@ public class MainService extends Service
           if( rs_code == 200 ) {
             String result;
             try {
-              result = EntityUtils.toString(rs.getEntity());
+              result = EntityUtils.toString(rs.getEntity(), "UTF-8");
               if( result.compareTo("true") == 0 ) {
                 state = StartRow.SyncState.SYNCED;
                 Log.d("wsa-ng", _("sync rowId #" + Integer.toString(rowId) + " complete"));
@@ -291,58 +308,28 @@ public class MainService extends Service
 
   private boolean isSyncNow = false;
 
-  private Handler _sync_receive_handler = new Handler() {
-    @Override
-    public void handleMessage(Message msg) {
-      Bundle data = msg.getData();
-      boolean syncingComplete = data.getBoolean("syncingComplete");
-      int rowId = data.getInt("rowId");
-      int lapId = data.getInt("lapId");
-      int crewId = data.getInt("crewId");
-
-      if( syncingComplete ) {
-        isSyncNow = false;
-        return;
-      }
-
-      if( starts.getRecord(rowId) == null ) {
-        StartRow row = new StartRow(rowId);
-        starts.addRecord(row);
-
-        Log.d("wsa-ng", _("rsync emit PROPOSE: " +
-                          "rowId=" + Integer.toString(rowId) + " " +
-                          "crewId=" + Integer.toString(crewId) + " " +
-                          "lapId=" + Integer.toString(lapId)));
-
-        /* default interface */
-        EventMessage.ProposeMsg req = new EventMessage.ProposeMsg(crewId, lapId);
-        req.setRowId(rowId);
-        EventBus.getDefault().post(new EventMessage(EventMessage.EventType.PROPOSE, req));
-      }
-    }
-  };
-
   /* receive and sync data from server */
   private void _sync_receive()
   {
-    final Launcher.Mode mode;
     final String url;
-
-    mode = Launcher.Mode.valueOf(settings.getString("mode", Default.mode));
 
     if( isSyncNow )
       return;
 
     isSyncNow = true;
-    url = String.format(GET_URL, settings.getString("server_addr", Default.server_addr));
+    url = String.format(GET_URL,
+                        settings.getString("server_addr", Default.server_addr),
+                        this.raceStatus.competitionId,
+                        this.timestamp,
+                        this.terminalStatus.terminalId);
 
     Thread thread = new Thread(new Runnable() {
       public void run() {
-        Bundle data;
-        Message msg;
         HttpClient client = _build_client();
         HttpGet rq = new HttpGet(url);
+        ServerStatus serverStatus = new ServerStatus();
 
+        Log.d("wsa-ng", _("rsync addr: %s", url));
         rq.setHeader("User-Agent", "wsa-ng/1.0");
 
         HttpResponse rs;
@@ -358,28 +345,13 @@ public class MainService extends Service
           if( rs_code == 200 ) {
             String result;
             try {
-              result = EntityUtils.toString(rs.getEntity());
+              result = EntityUtils.toString(rs.getEntity(), "UTF-8");
               Log.d("wsa-ng", _("rsync response: " + result));
 
               JsonReader jr = new JsonReader(new StringReader(result));
-
-              jr.beginArray();
-              while( jr.hasNext() ) {
-                StartRow row = new StartRow(-1);
-                row.loadJSONServer(jr);
-
-                data = new Bundle();
-                data.putInt("rowId", row.getRowId());
-                data.putInt("lapId", row.lapId);
-                data.putInt("crewId", row.crewId);
-
-                msg = _sync_receive_handler.obtainMessage();
-                msg.setData(data);
-                _sync_receive_handler.sendMessage(msg);
-              }
-              jr.endArray();
+              serverStatus.loadJSON(jr);
             }
-            catch( IOException e ) {
+            catch( IOException|IllegalStateException e ) {
               Log.e("wsa-ng", _("rsync decoding exception: " + e.getMessage()));
               return;
             }
@@ -389,12 +361,7 @@ public class MainService extends Service
           }
         }
         finally {
-          data = new Bundle();
-          data.putBoolean("syncingComplete", true);
-
-          msg = _sync_receive_handler.obtainMessage();
-          msg.setData(data);
-          _sync_receive_handler.sendMessage(msg);
+          EventBus.getDefault().post(serverStatus);
         }
       }
     });
@@ -602,6 +569,91 @@ public class MainService extends Service
     }
     EventBus.getDefault().post(new EventMessage(EventMessage.EventType.UPDATE, row));
     starts.Save(getApplicationContext());
+  }
+
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  public void _event_receive(ServerStatus status)
+  {
+    isSyncNow = false;
+
+    Log.d("wsa-ng", _("[RECEIVE] process ServerStatus -> [ " +
+                      (status.raceStatus == null ? "" : "RaceStatus ") +
+                      (status.terminalStatus.size() == 0 ? "" : " T" + Integer.toString(status.terminalStatus.size())) +
+                      (status.lap.size() == 0 ? "" : " L" + Integer.toString(status.lap.size())) +
+                      "]"));
+
+    try {
+      if( status.raceStatus != null ) {
+        if( status.raceStatus.competitionId != raceStatus.competitionId ) {
+          Log.i("wsa-ng", _("[RECEIVE] CompetitionId: local = %d, remote = %d",
+                            raceStatus.competitionId,
+                            status.raceStatus.competitionId));
+          /* clear all data */
+          starts = new StartList();
+          /* update settings */
+          _updateTimeStamp(status.raceStatus.timestamp);
+          raceStatus = status.raceStatus;
+          /* TODO: clear screen */
+        }
+        else if ( status.raceStatus.timestamp > timestamp ) {
+          Log.i("wsa-ng", _("[RECEIVE] RaceStatus timestamp: local = %d, remote = %d",
+                            timestamp,
+                            status.raceStatus.timestamp));
+          /* update settings */
+          _updateTimeStamp(status.raceStatus.timestamp);
+          raceStatus = status.raceStatus;
+          /* TODO: update screen */
+        }
+        raceStatus.saveSettings(race_settings);
+      }
+
+      /* check terminalStatus data */
+      for( int i = 0; i < status.terminalStatus.size(); i++ ) {
+        TerminalStatus term = status.terminalStatus.get(i);
+        if( term.terminalId.compareTo(this.terminalStatus.terminalId) == 0 ) {
+          Log.i("wsa-ng", _("[RECEIVE] apply new TerminalStatus"));
+          this.terminalStatus = term;
+          this.terminalStatus.saveSettings(race_settings);
+          /* TODO: update Screen */
+        }
+        if( timestamp < term.timestamp ) {
+          /* apply timestamp from any received struct */
+          Log.i("wsa-ng", _("[RECEIVE] TerminalStatus timestamp: local = %d, remote = %d",
+                            timestamp,
+                            term.timestamp));
+          _updateTimeStamp(term.timestamp);
+        }
+      }
+
+      /* check laps data */
+      for( int i = 0; i < status.lap.size(); i++ ) {
+        StartRow rrow = status.lap.get(i);
+        StartRow lrow = starts.getRecord(rrow.getRowId());
+        if( lrow == null ) {
+          starts.addRecord(rrow);
+          EventBus.getDefault().post(new EventMessage(rrow));
+        }
+        /* TODO: record already exist, what next?
+        else {
+        }
+        */
+        if( rrow.timestamp > timestamp ) {
+          _updateTimeStamp(rrow.timestamp);
+          Log.i("wsa-ng", _("[RECEIVE] StartRow timestamp: local = %d, remote = %d",
+                            timestamp,
+                            rrow.timestamp));
+        }
+      }
+      starts.Save(getApplicationContext());
+    } catch( Exception e ) {
+      StringWriter sw = new StringWriter();
+      PrintWriter pw = new PrintWriter(sw);
+
+      e.printStackTrace(pw);
+      Log.e("wsa-ng", _("[RECEIVE] Got error: %s ->\n%s", e.getMessage(), sw.toString()));
+    }
+
+    _sync_next_row();
   }
 
   @Subscribe(threadMode = ThreadMode.MAIN)

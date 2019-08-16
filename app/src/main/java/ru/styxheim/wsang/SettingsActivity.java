@@ -161,8 +161,10 @@ public class SettingsActivity extends Activity
   public void _update_terminal_id()
   {
     final TextView tv = findViewById(R.id.settings_terminal_id);
+    SharedPreferences race_settings = getSharedPreferences("race", Context.MODE_PRIVATE);
+    TerminalStatus terminalStatus = new TerminalStatus(race_settings);
 
-    tv.setText(Long.toHexString(settings.getLong(TerminalStatus.TERMINAL_ID, 0)));
+    tv.setText(terminalStatus.terminalId);
   }
 
   public void _update_chrono_offset_title()

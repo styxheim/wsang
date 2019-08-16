@@ -6,7 +6,11 @@ import java.util.*;
 
 public class StartRow
 {
+  final static String CLASS_NAME = "Lap";
+
   private int rowId;
+
+  public long timestamp = 0;
 
   public int crewId;
   public int lapId;
@@ -91,6 +95,11 @@ public class StartRow
   protected ArrayList<SyncData> syncList = new ArrayList<SyncData>();
 
   public SyncState state = SyncState.NONE;
+
+  public StartRow(JsonReader jr) throws IllegalStateException, IOException
+  {
+    loadJSONServer(jr);
+  }
 
   public StartRow(int rowId)
   {
@@ -211,12 +220,31 @@ public class StartRow
     w.endObject();
   }
 
-  public void loadJSONServer(JsonReader r) throws IOException
+  public void saveJSONServer(JsonWriter w) throws IOException
   {
+    w.beginObject();
+    /* confusing names: for compatable with old WSA application */
+    w.name(RaceStatus.TIMESTAMP).value(this.timestamp);
+    w.name("lapId").value(this.rowId);
+    w.name("lapNumber").value(this.lapId);
+    w.name("crewNumber").value(this.crewId);
+    w.name("startTimeMs").value(this.startAt);
+    w.name("finishTimeMs").value(this.finishAt);
+    w.endObject();
+  }
+
+  public void loadJSONServer(JsonReader r) throws IllegalStateException, IOException
+  {
+    if( !r.hasNext() )
+      return;
+
     r.beginObject();
     while( r.hasNext() ) {
       String name = r.nextName();
       switch( name ) {
+      case RaceStatus.TIMESTAMP:
+        this.timestamp = r.nextLong();
+        break;
       case "LapId":
         this.rowId = r.nextInt();
         break;
@@ -234,9 +262,12 @@ public class StartRow
     r.endObject();
   }
 
-  public void loadJSON(JsonReader r) throws IOException
+  public void loadJSON(JsonReader r) throws IllegalStateException, IOException
   {
     this.syncList.clear();
+
+    if( !r.hasNext() )
+      return;
 
     r.beginObject();
     while( r.hasNext() ) {

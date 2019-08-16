@@ -11,9 +11,10 @@ import java.io.*;
 
 public class RaceStatus
 {
-  final static String SETTING_NAME = "competition";
+  final static String CLASS_NAME = "RaceStatus";
 
-  final static String TIMECODE = "TimeCode";
+  final static String COMPETITION_ID = "CompetitionId";
+  final static String TIMESTAMP = "TimeStamp";
   final static String CREWS = "Crews";
   final static String GATES = "Gates";
   final static String PENALTIES = "Penalties";
@@ -21,7 +22,8 @@ public class RaceStatus
   final static String ID = "Id";
   final static String NAME = "Name";
 
-  public long timeCode;
+  public long competitionId;
+  public long timestamp;
   public ArrayList<Integer> gates = new ArrayList<Integer>();
   public ArrayList<Integer> penalties = new ArrayList<Integer>();
   public ArrayList<Integer> crews = new ArrayList<Integer>();
@@ -29,16 +31,19 @@ public class RaceStatus
 
   public class Discipline
   {
-    public int id;
-    public String name;
+    public int id = 0;
+    public String name = "";
 
-    public Discipline(JsonReader jr) throws IOException
+    public Discipline(JsonReader jr) throws IOException, IllegalStateException
     {
       this.fromJSON(jr);
     }
 
-    public void fromJSON(JsonReader jr) throws IOException
+    public void fromJSON(JsonReader jr) throws IOException, IllegalStateException
     {
+      if( !jr.hasNext() )
+        return;
+
       jr.beginObject();
       while( jr.hasNext() ) {
         switch( jr.nextName() ) {
@@ -49,6 +54,7 @@ public class RaceStatus
           this.id = jr.nextInt();
           break;
         default:
+          jr.skipValue();
           break;
         }
       }
@@ -66,12 +72,23 @@ public class RaceStatus
 
   public RaceStatus(SharedPreferences settings)
   {
-    StringReader r = new StringReader(settings.getString("RaceStatus", ""));
+    String jsonString = settings.getString("RaceStatus", "");
+    StringReader r = new StringReader(jsonString);
     JsonReader jr = new JsonReader(r);
 
     try {
       loadJSON(jr);
-    } catch( IOException e ) {
+    } catch( Exception e ) {
+      StringWriter sw = new StringWriter();
+      PrintWriter pw = new PrintWriter(sw);
+
+      e.printStackTrace(pw);
+      Log.e("wsa-ng",
+            String.format("[RaceStatus] load error: %s ->\n%s\n%s",
+                          e.getMessage(),
+                          jsonString,
+                          sw.toString()
+                          ));
     }
   }
 
@@ -96,11 +113,17 @@ public class RaceStatus
     this.disciplines.clear();
     this.gates.clear();
 
+    if( !jr.hasNext() )
+      return;
+
     jr.beginObject();
     while( jr.hasNext() ) {
       switch( jr.nextName() ) {
-      case TIMECODE:
-        this.timeCode = jr.nextLong();
+      case COMPETITION_ID:
+        this.competitionId = jr.nextLong();
+        break;
+      case TIMESTAMP:
+        this.timestamp = jr.nextLong();
         break;
       case PENALTIES:
         _fillArrayList(this.penalties, jr);
@@ -119,6 +142,7 @@ public class RaceStatus
         jr.endArray();
         break;
       default:
+        jr.skipValue();
         break;
       }
     }
@@ -144,14 +168,16 @@ public class RaceStatus
   public void saveJSON(JsonWriter jw) throws IOException
   {
     jw.beginObject();
-    jw.name(TIMECODE).value(this.timeCode);
+
+    jw.name(COMPETITION_ID).value(this.competitionId);
+    jw.name(TIMESTAMP).value(this.timestamp);
 
     jw.name(GATES);
     jw.beginArray();
     for( int i = 0; i < this.gates.size(); i++ ) {
       jw.value(this.gates.get(i));
     }
-    jw.beginArray();
+    jw.endArray();
 
     jw.name(PENALTIES);
     jw.beginArray();
@@ -172,6 +198,7 @@ public class RaceStatus
     for( int i = 0; i < this.disciplines.size(); i++ ) {
       this.disciplines.get(i).toJSON(jw);
     }
+    jw.endArray();
     jw.endObject();
   }
 }
