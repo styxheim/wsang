@@ -191,10 +191,10 @@ public class MainService extends Service
 
       Log.d("wsa-ng", _("publish sync result for rowId #" + rowId + " new state: " + state.name()));
       EventBus.getDefault().post(new EventMessage(EventMessage.EventType.UPDATE, row));
-      starts.Save(getApplicationContext());
 
       isSyncNow = false;
       if( state == StartRow.SyncState.SYNCED ) {
+        starts.Save(getApplicationContext());
         _sync_next_row();
       }
     }
