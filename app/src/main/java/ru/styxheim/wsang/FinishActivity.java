@@ -110,6 +110,20 @@ public class FinishActivity extends StartFinish
   }
 
   @Subscribe(threadMode = ThreadMode.MAIN)
+  public void _event_response(EventMessage.ResponseRow msg)
+  {
+    String result = String.format("Заезд: %d Команда: %d Финиш: %s",
+                                  msg.row.lapId, msg.row.crewId,
+                                  Default.millisecondsToString(msg.row.finishAt));
+    ClipboardManager clipboard = (ClipboardManager)getSystemService(Context.CLIPBOARD_SERVICE);
+    ClipData clip = ClipData.newPlainText("Finish result", result);
+    clipboard.setPrimaryClip(clip);
+    Toast.makeText(FinishActivity.this,
+                   "Скопировано: " + result,
+                   Toast.LENGTH_SHORT).show();
+  }
+
+  @Subscribe(threadMode = ThreadMode.MAIN)
   public void onServiceMessageUpdate(EventMessage ev)
   {
     switch( ev.type ) {
@@ -234,6 +248,7 @@ public class FinishActivity extends StartFinish
     }
 
     pmenu.getMenu().add(1, _c, _c, "  ... ещё ... ");
+    pmenu.getMenu().add(1, _c + 1, _c + 1, "Скопировать в буфер обмена");
 
     final int c = _c;
 
@@ -244,6 +259,9 @@ public class FinishActivity extends StartFinish
         try {
           if( item.getItemId() == c ) {
             _showMoreItems(row.getTag(), askForReplace);
+          }
+          else if( item.getItemId() == c + 1 ) {
+            EventBus.getDefault().post(new EventMessage.RequestRow(row.getTag()));
           }
           else {
             _startRowSetTime(row.getTag(),

@@ -82,4 +82,24 @@ public class EventMessage
     this.type = type;
     this.obj = obj;
   }
+  
+  public static class RequestRow
+  {
+    public int rowId;
+    
+    public RequestRow(int rowId)
+    {
+      this.rowId = rowId;
+    }
+  }
+  
+  public static class ResponseRow
+  {
+    public StartRow row;
+    
+    public ResponseRow(StartRow row)
+    {
+      this.row = row;
+    }
+  }
 }

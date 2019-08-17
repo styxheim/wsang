@@ -646,6 +646,16 @@ public class MainService extends Service
   }
 
   @Subscribe(threadMode = ThreadMode.MAIN)
+  public void _event_request_row(EventMessage.RequestRow msg)
+  {
+    StartRow row = starts.getRecord(msg.rowId);
+
+    if( row != null ) {
+      EventBus.getDefault().post(new EventMessage.ResponseRow(row));
+    }
+  }
+  
+  @Subscribe(threadMode = ThreadMode.MAIN)
   public void onEventMessage(EventMessage ev)
   {
     switch( ev.type ) {
