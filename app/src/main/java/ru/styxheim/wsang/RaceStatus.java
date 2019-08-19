@@ -76,6 +76,11 @@ public class RaceStatus
     StringReader r = new StringReader(jsonString);
     JsonReader jr = new JsonReader(r);
 
+    if( jsonString.length() == 0 ) {
+      Log.i("wsa-ng", "[RaceStatus] load empty");
+      return;
+    }
+
     try {
       loadJSON(jr);
     } catch( Exception e ) {
@@ -84,10 +89,10 @@ public class RaceStatus
 
       e.printStackTrace(pw);
       Log.e("wsa-ng",
-            String.format("[RaceStatus] load error: %s ->\n%s\n%s",
+            String.format("[RaceStatus] load error: %s ->\n%s->\n'%s'",
                           e.getMessage(),
-                          jsonString,
-                          sw.toString()
+                          sw.toString(),
+                          jsonString
                           ));
     }
   }

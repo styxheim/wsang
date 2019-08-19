@@ -59,15 +59,17 @@ public class Launcher extends Activity
             " to " + new_launch_mode.name());
       launch_mode = new_launch_mode;
       switch( new_launch_mode ) {
+        /*
       case START:
         intent = new Intent(this, StartActivity.class);
         break;
       case FINISH:
         intent = new Intent(this, FinishActivity.class);
         break;
+        */
       default:
-        /* ??? */
-        return true;
+        intent = new Intent(this, MainActivity.class);
+        break;
       }
       launch_mode = new_launch_mode;
       intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK |

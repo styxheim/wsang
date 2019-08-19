@@ -29,7 +29,11 @@
             </intent-filter>
           </activity>
 
-
+      <activity
+        android:name=".MainActivity"
+        android:theme="@style/AppTheme.NoActionBar"
+        android:screenOrientation="unspecified" />
+          
         <activity
             android:name=".StartActivity"
             android:theme="@style/AppTheme.NoActionBar"

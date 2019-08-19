@@ -132,7 +132,11 @@ public class MainService extends Service
                       Integer.toString(flags) + " startId=" +
                       Integer.toString(startId)));
 
-    _boot();
+    /*
+    if( startId == 1 )
+      _boot();
+      */
+
     return super.onStartCommand(intent, flags, startId);
   }
 
@@ -152,7 +156,7 @@ public class MainService extends Service
 
     for( StartRow row : starts ) {
       Log.d("wsa-ng", _("Post row: " + row.toString()));
-      EventBus.getDefault().post(new EventMessage(EventMessage.EventType.UPDATE, row));
+      EventBus.getDefault().post(row);
     }
 
     if( inCountDownMode != CountDownMode.COUNTDOWN )
@@ -190,7 +194,7 @@ public class MainService extends Service
       row.setState(state, inprintCount);
 
       Log.d("wsa-ng", _("publish sync result for rowId #" + rowId + " new state: " + state.name()));
-      EventBus.getDefault().post(new EventMessage(EventMessage.EventType.UPDATE, row));
+      EventBus.getDefault().post(row);
 
       isSyncNow = false;
       if( state == StartRow.SyncState.SYNCED ) {
@@ -241,7 +245,7 @@ public class MainService extends Service
 
     row.setState(StartRow.SyncState.SYNCING, 0);
     /* publish status */
-    EventBus.getDefault().post(new EventMessage(EventMessage.EventType.UPDATE, row));
+    EventBus.getDefault().post(row);
 
     /* run sync */
     Thread thread = new Thread(new Runnable() {
@@ -512,7 +516,7 @@ public class MainService extends Service
         continue;
       Log.d("wsa-ng", _("Set time to " + time + " (" + msg.endAtMs + ") for row #" + row.getRowId()));
       row.setStartData(msg.endAtMs);
-      EventBus.getDefault().post(new EventMessage(EventMessage.EventType.UPDATE, row));
+      EventBus.getDefault().post(row);
     }
     starts.Save(getApplicationContext());
   }
@@ -567,7 +571,8 @@ public class MainService extends Service
         return;
       }
     }
-    EventBus.getDefault().post(new EventMessage(EventMessage.EventType.UPDATE, row));
+
+    EventBus.getDefault().post(row);
     starts.Save(getApplicationContext());
   }
 
@@ -583,6 +588,9 @@ public class MainService extends Service
                       "]"));
 
     try {
+      boolean changed = false;
+      boolean needReload = false;
+
       if( status.raceStatus != null ) {
         if( status.raceStatus.competitionId != raceStatus.competitionId ) {
           Log.i("wsa-ng", _("[RECEIVE] CompetitionId: local = %d, remote = %d",
@@ -601,21 +609,24 @@ public class MainService extends Service
           /* update settings */
           _updateTimeStamp(status.raceStatus.timestamp);
           raceStatus = status.raceStatus;
-         }
+        }
+
         raceStatus.saveSettings(race_settings);
-        EventBus.getDefault().post(new EventMessage.ReloadSettings());
+        needReload = true;
       }
 
       /* check terminalStatus data */
       for( int i = 0; i < status.terminalStatus.size(); i++ ) {
         TerminalStatus term = status.terminalStatus.get(i);
+
         if( term.terminalId.compareTo(this.terminalStatus.terminalId) == 0 ) {
           Log.i("wsa-ng", _("[RECEIVE] apply new TerminalStatus"));
           this.terminalStatus = term;
           this.terminalStatus.saveSettings(race_settings);
           /* update Screen */
-          EventBus.getDefault().post(new EventMessage.ReloadSettings());
+          needReload = true;
         }
+
         if( timestamp < term.timestamp ) {
           /* apply timestamp from any received struct */
           Log.i("wsa-ng", _("[RECEIVE] TerminalStatus timestamp: local = %d, remote = %d",
@@ -629,6 +640,8 @@ public class MainService extends Service
       for( int i = 0; i < status.lap.size(); i++ ) {
         StartRow rrow = status.lap.get(i);
         StartRow lrow = starts.getRecord(rrow.getRowId());
+
+        changed = true;
         if( lrow == null ) {
           starts.addRecord(rrow);
           EventBus.getDefault().post(new EventMessage(rrow));
@@ -644,7 +657,11 @@ public class MainService extends Service
                             rrow.timestamp));
         }
       }
-      starts.Save(getApplicationContext());
+
+      if( changed )
+        starts.Save(getApplicationContext());
+      if( needReload )
+        EventBus.getDefault().post(new EventMessage.ReloadSettings());
     } catch( Exception e ) {
       StringWriter sw = new StringWriter();
       PrintWriter pw = new PrintWriter(sw);
