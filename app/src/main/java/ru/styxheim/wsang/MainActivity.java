@@ -310,63 +310,69 @@ public class MainActivity extends Activity
             return;
           }
 
-          for( Chrono.Record r : chrono ) {
-            String title;
+          if( finish == 0 ) {
+            for( Chrono.Record r : chrono ) {
+              String title;
 
-            if( i == 0 ) {
-              offset = r.getValue();
+              if( i == 0 ) {
+                offset = r.getValue();
+              }
+              title = String.format("%2d. %s %s%s",
+                                    size - i,
+                                    Default.millisecondsToString(r.getValue()),
+                                    ((offset >= r.getValue()) ? ("+") : ("-")),
+                                    Default.millisecondsToString(offset - r.getValue()));
+
+              pmenu.getMenu().add(1, i, i, title);
+              if( r.isSelected() ) {
+                pmenu.getMenu().getItem(i).setEnabled(false);
+              }
+
+              i++;
             }
-            title = String.format("%2d. %s %s%s",
-                                  size - i,
-                                  Default.millisecondsToString(r.getValue()),
-                                  ((offset >= r.getValue()) ? ("+") : ("-")),
-                                  Default.millisecondsToString(offset - r.getValue()));
-
-            pmenu.getMenu().add(1, i, i, title);
-            if( r.isSelected() ) {
-              pmenu.getMenu().getItem(i).setEnabled(false);
-            }
-
-            i++;
+          }
+          else {
+            pmenu.getMenu().add(1, 1, 1, "Отменить финиш");
           }
 
           pmenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item)
             {
-              final Chrono.Record r = chrono.getRecord(item.getItemId());
-              final Runnable set = new Runnable() {
-                public void run() {
-                  EventMessage.ProposeMsg req;
+              if( finish == 0 ) {
+                Chrono.Record r = chrono.getRecord(item.getItemId());
+                EventMessage.ProposeMsg req;
 
+                if( r == null )
+                  return false;
 
-                  req = new EventMessage.ProposeMsg(r.getValue(), EventMessage.ProposeMsg.Type.FINISH);
-                  req.setRowId(rowId);
-                  EventBus.getDefault().post(new EventMessage(EventMessage.EventType.PROPOSE, req));
-                }
-              };
-
-              if( r == null )
-                return false;
-
-              if( finish != 0 ) {
-                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-                builder.setMessage("Заменить финишное время?");
-                builder.setPositiveButton("Да", new DialogInterface.OnClickListener() {
-                  @Override
-                  public void onClick(DialogInterface dialog, int id) {
-                    set.run();
-                  }
-                });
-                builder.setNegativeButton("Нет", new DialogInterface.OnClickListener() {
-                  @Override
-                  public void onClick(DialogInterface dialog, int id) {
-                  }
-                });
-                builder.create().show();
+                req = new EventMessage.ProposeMsg(r.getValue(), EventMessage.ProposeMsg.Type.FINISH);
+                req.setRowId(rowId);
+                EventBus.getDefault().post(new EventMessage(EventMessage.EventType.PROPOSE, req));
               }
               else {
-                set.run();
+                switch( item.getItemId() ) {
+                case 1:
+                  AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                  builder.setMessage("Обнулить финишное время?");
+                  builder.setPositiveButton("Да", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int id) {
+                      EventMessage.ProposeMsg req;
+
+                      req = new EventMessage.ProposeMsg(0, EventMessage.ProposeMsg.Type.FINISH);
+                      req.setRowId(rowId);
+                      EventBus.getDefault().post(new EventMessage(EventMessage.EventType.PROPOSE, req));
+                    }
+                  });
+                  builder.setNegativeButton("Нет", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int id) {
+                    }
+                  });
+                  builder.create().show();
+                  break;
+                }
               }
 
               return true;
