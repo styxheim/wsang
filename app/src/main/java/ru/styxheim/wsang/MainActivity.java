@@ -20,6 +20,7 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 import android.widget.RelativeLayout.*;
+import android.text.style.*;
 
 public class MainActivity extends Activity
 {
@@ -30,9 +31,6 @@ public class MainActivity extends Activity
   protected TerminalStatus term;
   protected RaceStatus race;
   protected Chrono chrono;
-
-  protected View selectedRow;
-  protected Drawable selectedDrawable;
 
   protected ArrayList<ViewData> dataList = new ArrayList<ViewData>();
 
@@ -98,22 +96,6 @@ public class MainActivity extends Activity
         return true;
     }
     return super.onKeyDown(keyCode, event);
-  }
-
-  protected void _selectRow(final View v)
-  {
-    final Drawable drw = this.selectedDrawable;
-    final View row = this.selectedRow;
-
-    if( row != null ) {
-      row.setBackground(drw);
-    }
-
-    if( v != null ) {
-      this.selectedRow = v;
-      this.selectedDrawable = v.getBackground();
-      v.setBackgroundResource(R.color.selected_row);
-    }
   }
 
   public void startOnClick(View v)
@@ -214,7 +196,30 @@ public class MainActivity extends Activity
       this.rowId = id;
       this.context = context;
     }
+    
+    public void select()
+    {
+      boolean selected = tRow.getTag(R.id.tag_selected);
 
+      if( selected )
+        return;
+
+      tRow.setTag(R.id.tag_selected, true);
+      tRow.setTag(R.id.tag_background, tRow.getBackground());
+      tRow.setBackgroundResource(R.color.selected_row);
+    }
+
+    public void deselect()
+    {
+      boolean selected = tRow.getTag(R.id.tag_selected);
+
+      if( !selected )
+        return;
+      
+      tRow.setTag(R.id.tag_selected, false);
+      tRow.setBackground((Drawable)tRow.getTag(R.id.tag_background));
+    }
+    
     protected void _update()
     {
       if( tLap != null ) {
@@ -266,6 +271,9 @@ public class MainActivity extends Activity
       tRow = (TableRow)LayoutInflater.from(this.context).inflate(R.layout.data_row, null);
       tCrew = tRow.findViewById(R.id.crew);
       tLap = tRow.findViewById(R.id.lap);
+      
+      tRow.setTag(R.id.tag_selected, false);
+      tRow.setTag(R.id.tag_background, null);
 
       View.OnClickListener lapcrew = new View.OnClickListener() {
         @Override
@@ -273,7 +281,12 @@ public class MainActivity extends Activity
         {
           StartLineEditDialog sled = new StartLineEditDialog(crew, lap, true);
 
-          _selectRow(tRow);
+          for( ViewData vd : dataList ) {
+            if( vd.rowId == rowId )
+              vd.select();
+            else
+              vd.deselect();
+          }
 
           sled.setStartLineEditDialogListener(new StartLineEditDialog.StartLineEditDialogListener() {
               @Override
@@ -301,7 +314,13 @@ public class MainActivity extends Activity
           long offset = 0;
           PopupMenu pmenu = new PopupMenu(MainActivity.this, v);
 
-          _selectRow(tRow);
+          for( ViewData vd : dataList ) {
+            /*
+            if( vd.rowId == rowId )
+              vd.select();
+            else*/
+              vd.deselect();
+          }
 
           if( size == 0 ) {
             Toast.makeText(MainActivity.this,
@@ -389,7 +408,15 @@ public class MainActivity extends Activity
         {
           PopupMenu popup = new PopupMenu(MainActivity.this, v);
 
-          _selectRow(tRow);
+          for( ViewData vd : dataList ) {
+            if( vd.lap == lap ) {
+              vd.select();
+            }
+            else {
+              vd.deselect();
+            }
+          }
+          ViewData.this.select();
 
           if( start != 0 ) {
             /* reset start time */
@@ -422,10 +449,15 @@ public class MainActivity extends Activity
                 builder.setPositiveButton("Отменить", new DialogInterface.OnClickListener() {
                   @Override
                   public void onClick(DialogInterface dialog, int id) {
-                    Toast.makeText(MainActivity.this,
-                                   "Not now",
-                                   Toast.LENGTH_SHORT).show();
-                    /*_reset_start_time_for_lap(lapId);*/
+                    EventMessage.ProposeMsg req;
+
+                    req = new EventMessage.ProposeMsg(EventMessage.ProposeMsg.Type.START);
+                    for( ViewData vd : dataList ) {
+                      if( vd.lap == lap ) {
+                        req.setRowId(vd.rowId);
+                        EventBus.getDefault().post(new EventMessage(EventMessage.EventType.PROPOSE, req));
+                      }
+                    }
                   }
                 });
                 builder.setNegativeButton("Нет", new DialogInterface.OnClickListener() {
@@ -438,10 +470,11 @@ public class MainActivity extends Activity
               case 10:
               case 30:
               case 60:
-                Toast.makeText(MainActivity.this,
-                               "Not now",
-                               Toast.LENGTH_SHORT).show();
-                /* startCountDown(lapId, item.getItemId()); */
+                long seconds = item.getItemId();
+                EventMessage.CountDownMsg msg;
+
+                msg = new EventMessage.CountDownMsg(lap, seconds * 1000, 0);
+                EventBus.getDefault().post(new EventMessage(EventMessage.EventType.COUNTDOWN_START, msg));
                 break;
               default:
                 return false;

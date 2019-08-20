@@ -1,3 +1,4 @@
 <resources xmlns:android="http://schemas.android.com/apk/res/android">
-  <item name="tag_milliseconds" type="id"/>
+  <item name="tag_selected" type="id"/>
+  <item name="tag_background" type="id"/>
 </resources>
