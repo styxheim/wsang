@@ -36,6 +36,8 @@ public class MainActivity extends Activity
 
   protected ArrayList<ViewData> dataList = new ArrayList<ViewData>();
 
+  protected boolean countDownMode = false;
+
   @Override
   protected void onCreate(Bundle savedInstanceState)
   {
@@ -379,7 +381,70 @@ public class MainActivity extends Activity
         @Override
         public void onClick(View v)
         {
+          PopupMenu popup = new PopupMenu(MainActivity.this, v);
+
           _selectRow(tRow);
+
+          if( start != 0 ) {
+            /* reset start time */
+            popup.getMenu().add(1, 3, 3, R.string.false_start);
+          }
+          else if( !countDownMode ) {
+            popup.getMenu().add(1, 10, 10, R.string.ten_seconds_button);
+            popup.getMenu().add(1, 30, 30, R.string.thirty_seconds_button);
+            popup.getMenu().add(1, 60, 60, R.string.sixty_seconds_button);
+          }
+
+          if( countDownMode ) {
+            popup.getMenu().add(1, 1, 1, R.string.start_cancel_stop);
+          }
+
+          popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item)
+            {
+              AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+
+              switch( item.getItemId() ) {
+              case 1:
+                /* stop countdown */
+                EventBus.getDefault().post(new EventMessage(EventMessage.EventType.COUNTDOWN_STOP, null));
+                return true;
+              case 3:
+                builder.setTitle(R.string.false_start);
+                builder.setMessage("Отменить результаты заезда " + Integer.toString(lap) + "?");
+                builder.setPositiveButton("Отменить", new DialogInterface.OnClickListener() {
+                  @Override
+                  public void onClick(DialogInterface dialog, int id) {
+                    Toast.makeText(MainActivity.this,
+                                   "Not now",
+                                   Toast.LENGTH_SHORT).show();
+                    /*_reset_start_time_for_lap(lapId);*/
+                  }
+                });
+                builder.setNegativeButton("Нет", new DialogInterface.OnClickListener() {
+                  @Override
+                  public void onClick(DialogInterface dialog, int id) {
+                  }
+                });
+                builder.create().show();
+                break;
+              case 10:
+              case 30:
+              case 60:
+                Toast.makeText(MainActivity.this,
+                               "Not now",
+                               Toast.LENGTH_SHORT).show();
+                /* startCountDown(lapId, item.getItemId()); */
+                break;
+              default:
+                return false;
+              }
+              return true;
+            }
+          });
+
+          popup.show();
         }
       };
 
