@@ -62,13 +62,20 @@ public class EventMessage
 
   public static class CountDownMsg
   {
+    public long startAt;
     public long leftMs;
     public int lapId;
     public long endAtMs;
     
-    public CountDownMsg(int lapId, long leftMs, long endAtMs)
+    public CountDownMsg(int lapId, long leftMs)
     {
+      this.lapId = lapId;
       this.leftMs = leftMs;
+    }
+
+    public CountDownMsg(int lapId, long startAt, long endAtMs)
+    {
+      this.startAt = startAt;
       this.lapId = lapId;
       this.endAtMs = endAtMs;
     }
@@ -104,5 +111,9 @@ public class EventMessage
   public static class Boot
   {
     /* Request boot */
+  }
+  
+  public static class CountDownCancelled
+  {
   }
 }

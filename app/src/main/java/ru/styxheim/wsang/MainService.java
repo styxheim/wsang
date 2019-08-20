@@ -51,7 +51,7 @@ public class MainService extends Service
     CANCEL
   };
 
-  private CountDownTimer mTimer = null;
+  private EventMessage.CountDownMsg cdmsg = null;
   private MediaPlayer mPlayer = null;
   private CountDownMode inCountDownMode = CountDownMode.NONE;
   private long startCountDownAt = 0;
@@ -60,6 +60,7 @@ public class MainService extends Service
 
   private SharedPreferences settings;
   private SharedPreferences race_settings;
+  private SharedPreferences chrono_settings;
 
   public String _(String format, Object ... args) {
     return "[" + android.os.Process.myTid() + "] " + String.format(format, args);
@@ -90,6 +91,7 @@ public class MainService extends Service
 
   @Override
   public void onCreate() {
+    chrono_settings = getSharedPreferences("chrono", Context.MODE_PRIVATE);
     race_settings = getSharedPreferences("race", Context.MODE_PRIVATE);
     settings = getSharedPreferences("main", Context.MODE_PRIVATE);
     // The service is being created
@@ -159,8 +161,8 @@ public class MainService extends Service
       EventBus.getDefault().post(row);
     }
 
-    if( inCountDownMode != CountDownMode.COUNTDOWN )
-      EventBus.getDefault().post(new EventMessage(EventMessage.EventType.COUNTDOWN_END, null));
+    if( cdmsg != null )
+      EventBus.getDefault().post(cdmsg);
 
     Log.i("wsa-ng", _("Boot End"));
   }
@@ -387,12 +389,7 @@ public class MainService extends Service
       mPlayer = null;
     }
 
-    if( mTimer != null ) {
-      mTimer.cancel();
-      mTimer = null;
-    }
-
-    EventBus.getDefault().post(new EventMessage(EventMessage.EventType.COUNTDOWN_END, null));
+    EventBus.getDefault().post(new EventMessage.CountDownCancelled());
   }
 
   private void _event_countdown_stop(Object none)
@@ -466,16 +463,6 @@ public class MainService extends Service
 
     /* create mplayer and timer */
     mPlayer = MediaPlayer.create(MainService.this, sound_id);
-    mTimer = new CountDownTimer(signal_offset, 1000) {
-      public void onTick(long left) {
-        EventMessage.CountDownMsg smsg = new EventMessage.CountDownMsg(lapId, left, 0);
-        EventBus.getDefault().post(new EventMessage(EventMessage.EventType.COUNTDOWN, smsg));
-      }
-      public void onFinish() {
-        EventMessage.CountDownMsg smsg = new EventMessage.CountDownMsg(lapId, 0, 0);
-        EventBus.getDefault().post(new EventMessage(EventMessage.EventType.COUNTDOWN, smsg));
-      }
-    };
 
     /* setup mPlayer */
     mPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
@@ -483,9 +470,10 @@ public class MainService extends Service
       public void onPrepared(MediaPlayer mp) {
         long millis = System.currentTimeMillis();
         mp.start();
-        mTimer.start();
         Log.d("wsa-ng", _("MediaPlayer: prepared at " + Long.toString(millis)));
         startCountDownAt = millis;
+        cdmsg = new EventMessage.CountDownMsg(lapId, millis, millis + signal_offset);
+        EventBus.getDefault().post(cdmsg);
       }
     });
 
@@ -494,12 +482,12 @@ public class MainService extends Service
       public void onCompletion(MediaPlayer mp) {
         long millis = System.currentTimeMillis();
         Log.d("wsa-ng", _("MediaPlayer: end at " + Long.toString(millis)));
-        mTimer.cancel();
 
-        long endAt = startCountDownAt - settings.getLong("chrono_offset", Default.chrono_offset) + signal_offset;
+        long endAt = startCountDownAt - chrono_settings.getLong("offset", Default.chrono_offset) + signal_offset;
+
         EventMessage.CountDownMsg smsg = new EventMessage.CountDownMsg(lapId, 0, endAt);
         EventBus.getDefault().post(new EventMessage(EventMessage.EventType.COUNTDOWN_END, smsg));
-
+        
         _countdown_cleanup();
       }
     });

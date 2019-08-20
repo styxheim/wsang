@@ -28,6 +28,7 @@ public class MainActivity extends Activity
   protected int lastLapId = 0;
   protected SharedPreferences settings;
   protected SharedPreferences settingsRace;
+  protected SharedPreferences settingsChrono;
   protected TerminalStatus term;
   protected RaceStatus race;
   protected Chrono chrono;
@@ -35,6 +36,9 @@ public class MainActivity extends Activity
   protected ArrayList<ViewData> dataList = new ArrayList<ViewData>();
 
   protected boolean countDownMode = false;
+  protected long countDownLap;
+  protected long countDownEndAt;
+  protected long countDownStartAt;
 
   @Override
   protected void onCreate(Bundle savedInstanceState)
@@ -43,6 +47,7 @@ public class MainActivity extends Activity
 
     settings = getSharedPreferences("main", Context.MODE_PRIVATE);
     settingsRace = getSharedPreferences("race", Context.MODE_PRIVATE);
+    settingsChrono = getSharedPreferences("chrono", Context.MODE_PRIVATE);
     setContentView(R.layout.main);
   }
 
@@ -60,12 +65,36 @@ public class MainActivity extends Activity
 
     /* chronometer */
     final TextView tv = findViewById(R.id.chronometer);
+    final ProgressBar pb = findViewById(R.id.start_progress);
+    final Drawable drw = tv.getBackground();
 
     cron = new Runnable() {
       public void run() {
-        long offsetMillis = settings.getLong("chrono_offset", Default.chrono_offset);
+        long current = System.currentTimeMillis();
+        long offsetMillis = settingsChrono.getLong("offset", Default.chrono_offset);
 
-        tv.setText(Default.millisecondsToString(System.currentTimeMillis() - offsetMillis));
+        if( current > countDownEndAt ) {
+          if( current < countDownEndAt + 1000 ) {
+            tv.setText(Default.millisecondsToStringShort(0));
+            tv.setBackgroundResource(R.color.selected_row);
+          }
+          else {
+            tv.setBackground(drw);
+          }
+        }
+
+        if( countDownMode ) {
+          if( current > countDownEndAt ) {
+            _disableCountDownMode();
+          }
+          else {
+            tv.setText(Default.millisecondsToStringShort(countDownEndAt - current + 1000));
+            pb.setProgress((int)(countDownEndAt - current));
+          }
+        }
+        else {
+          tv.setText(Default.millisecondsToStringShort(current - offsetMillis));
+        }
         tv.postDelayed(this, 20);
       }
     };
@@ -91,11 +120,16 @@ public class MainActivity extends Activity
   @Override
   public boolean onKeyDown(int keyCode, KeyEvent event)
   {
-    if( chrono != null ) {
+    if( chrono != null && term.hasFinishGate() ) {
       if( chrono.onKeyDown(keyCode, event) )
         return true;
     }
     return super.onKeyDown(keyCode, event);
+  }
+  
+  public void cancelOnClick(View v)
+  {
+    EventBus.getDefault().post(new EventMessage(EventMessage.EventType.COUNTDOWN_STOP, null));
   }
 
   public void startOnClick(View v)
@@ -169,11 +203,59 @@ public class MainActivity extends Activity
 
     vd.update(row);
   }
+  
+  protected void _enableCountDownMode(int lapId, long startAt, long endAt)
+  {
+    ProgressBar pb = findViewById(R.id.start_progress);
+    TextView chronometer = findViewById(R.id.chronometer);
+
+    if( countDownMode )
+      return;
+
+    countDownMode = true;
+    countDownLap = lapId;
+    countDownEndAt = endAt;
+    countDownStartAt = startAt;
+    
+    pb.setMin(0);
+    pb.setMax((int)(endAt - startAt));
+    pb.setProgress(0);
+    
+    findViewById(R.id.countdown_cancel_button).setVisibility(View.VISIBLE);
+    findViewById(R.id.settings_button).setVisibility(View.GONE);
+    chronometer.setTypeface(null, Typeface.BOLD);
+  }
+  
+  protected void _disableCountDownMode()
+  {
+    ProgressBar pb = findViewById(R.id.start_progress);
+    TextView chronometer = findViewById(R.id.chronometer);
+    
+    countDownMode = false;
+    pb.setProgress(0);
+    
+    findViewById(R.id.countdown_cancel_button).setVisibility(View.GONE);
+    findViewById(R.id.settings_button).setVisibility(View.VISIBLE);
+    chronometer.setTypeface(null, Typeface.NORMAL);
+  }
+
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  public void _event_countdown(EventMessage.CountDownMsg msg)
+  {
+    _enableCountDownMode(msg.lapId, msg.startAt, msg.endAtMs);
+  }
+  
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  public void _event_countDownCanceled(EventMessage.CountDownCancelled msg)
+  {
+    _disableCountDownMode();
+  }
 
   private class ViewData
   {
     public int rowId;
 
+    protected StartRow.SyncState state;
     protected int lap;
     protected int crew;
     protected long finish;
@@ -181,6 +263,7 @@ public class MainActivity extends Activity
 
     protected Context context;
 
+    protected View tSyncer;
     protected TableRow tRow;
     protected TextView tLap;
     protected TextView tCrew;
@@ -222,6 +305,24 @@ public class MainActivity extends Activity
     
     protected void _update()
     {
+      switch( state ) {
+        case PENDING:
+          tSyncer.setBackgroundResource(R.color.Pending);
+          break;
+        case SYNCED:
+          tSyncer.setBackgroundResource(R.color.Synced);
+          break;
+        case SYNCING:
+          tSyncer.setBackgroundResource(R.color.Syncing);
+          break;
+        case ERROR:
+          tSyncer.setBackgroundResource(R.color.errSync);
+          break;
+        default:
+          tSyncer.setBackgroundResource(R.color.notSynced);
+        break;
+      }
+
       if( tLap != null ) {
         tLap.setText(Integer.toString(lap));
       }
@@ -252,6 +353,7 @@ public class MainActivity extends Activity
           r.select();
       }
 
+      state = row.state;
       lap = row.lapId;
       crew = row.crewId;
       finish = row.finishAt;
@@ -269,6 +371,7 @@ public class MainActivity extends Activity
     public View getView()
     {
       tRow = (TableRow)LayoutInflater.from(this.context).inflate(R.layout.data_row, null);
+      tSyncer = tRow.findViewById(R.id.syncer);
       tCrew = tRow.findViewById(R.id.crew);
       tLap = tRow.findViewById(R.id.lap);
       
@@ -286,6 +389,13 @@ public class MainActivity extends Activity
               vd.select();
             else
               vd.deselect();
+          }
+          
+          if( countDownMode && countDownLap == lap ) {
+            Toast.makeText(MainActivity.this,
+                           "Идёт отсчёт",
+                           Toast.LENGTH_SHORT).show();
+            return;
           }
 
           sled.setStartLineEditDialogListener(new StartLineEditDialog.StartLineEditDialogListener() {
@@ -428,7 +538,7 @@ public class MainActivity extends Activity
             popup.getMenu().add(1, 60, 60, R.string.sixty_seconds_button);
           }
 
-          if( countDownMode ) {
+          if( (countDownMode && (countDownLap == lap || start == 0)) ) {
             popup.getMenu().add(1, 1, 1, R.string.start_cancel_stop);
           }
 
@@ -473,7 +583,7 @@ public class MainActivity extends Activity
                 long seconds = item.getItemId();
                 EventMessage.CountDownMsg msg;
 
-                msg = new EventMessage.CountDownMsg(lap, seconds * 1000, 0);
+                msg = new EventMessage.CountDownMsg(lap, seconds * 1000);
                 EventBus.getDefault().post(new EventMessage(EventMessage.EventType.COUNTDOWN_START, msg));
                 break;
               default:
@@ -500,6 +610,7 @@ public class MainActivity extends Activity
 
       tRow.removeAllViews();
 
+      tRow.addView(tSyncer);
       tRow.addView(tLap);
       tRow.addView(tCrew);
 
@@ -542,12 +653,14 @@ public class MainActivity extends Activity
     TableRow header = (TableRow)_newDataCol(R.layout.data_row);
     header.removeAllViews();
 
+    View syncer = _newDataCol(R.id.syncer);
     TextView crew = (TextView)_newDataCol(R.id.crew);
     TextView lap = (TextView)_newDataCol(R.id.lap);
 
     crew.setTypeface(crew.getTypeface(), Typeface.BOLD);
     lap.setTypeface(crew.getTypeface(), Typeface.BOLD);
 
+    header.addView(syncer);
     header.addView(lap);
     header.addView(crew);
 
