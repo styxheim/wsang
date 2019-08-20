@@ -17,6 +17,11 @@ public class StartRow
   public long startAt = 0;
   public long finishAt = 0;
 
+  public boolean updateLapId;
+  public boolean updateCrewId;
+  public boolean updateStartAt;
+  public boolean updateFinishAt;
+
   public static enum SyncState {
     NONE,
     PENDING,
@@ -174,6 +179,24 @@ public class StartRow
            ">";
   }
 
+  public void update(StartRow newData)
+  {
+    this.timestamp = newData.timestamp;
+
+    if( newData.updateLapId ) {
+      this.lapId = newData.lapId;
+    }
+    if( newData.updateCrewId ) {
+      this.crewId = newData.crewId;
+    }
+    if( newData.updateStartAt ) {
+      this.startAt = newData.startAt;
+    }
+    if( newData.updateFinishAt) {
+      this.finishAt = newData.finishAt;
+    }
+  }
+
   /* get JSON for server
      return: inprintCount value for setState()
      */
@@ -249,15 +272,19 @@ public class StartRow
         this.rowId = r.nextInt();
         break;
       case "LapNumber":
+        this.updateLapId = true;
         this.lapId = r.nextInt();
         break;
       case "CrewNumber":
+        this.updateCrewId = true;
         this.crewId = r.nextInt();
         break;
       case "StartTime":
+        this.updateStartAt = true;
         this.startAt = r.nextLong();
         break;
       case "FinishTime":
+        this.updateFinishAt = true;
         this.finishAt = r.nextLong();
         break;
       default:

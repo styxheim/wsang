@@ -646,10 +646,11 @@ public class MainService extends Service
           starts.addRecord(rrow);
           EventBus.getDefault().post(new EventMessage(rrow));
         }
-        /* TODO: record already exist, what next?
         else {
+          lrow.update(rrow);
+          EventBus.getDefault().post(new EventMessage(lrow));
         }
-        */
+
         if( rrow.timestamp > timestamp ) {
           _updateTimeStamp(rrow.timestamp);
           Log.i("wsa-ng", _("[RECEIVE] StartRow timestamp: local = %d, remote = %d",
