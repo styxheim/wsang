@@ -50,10 +50,20 @@ public class TerminalStatus
     }
   }
 
+  public TerminalStatus()
+  {
+  }
+
   public TerminalStatus(SharedPreferences settings)
   {
-    StringReader r = new StringReader(settings.getString("TerminalStatus", ""));
+    String jsonString = settings.getString("TerminalStatus", "");
+    StringReader r = new StringReader(jsonString);
     JsonReader jr = new JsonReader(r);
+
+    if( jsonString.length() == 0 ) {
+      Log.i("wsa-ng", "[TerminalStatus] load empty from settings");
+      return;
+    }
 
     try {
       loadJSON(jr);

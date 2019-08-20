@@ -63,9 +63,6 @@ public class Launcher extends Activity
       case START:
         intent = new Intent(this, StartActivity.class);
         break;
-      case FINISH:
-        intent = new Intent(this, FinishActivity.class);
-        break;
         */
       default:
         intent = new Intent(this, MainActivity.class);

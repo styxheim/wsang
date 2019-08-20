@@ -70,6 +70,10 @@ public class RaceStatus
     }
   }
 
+  public RaceStatus()
+  {
+  }
+
   public RaceStatus(SharedPreferences settings)
   {
     String jsonString = settings.getString("RaceStatus", "");
@@ -77,7 +81,7 @@ public class RaceStatus
     JsonReader jr = new JsonReader(r);
 
     if( jsonString.length() == 0 ) {
-      Log.i("wsa-ng", "[RaceStatus] load empty");
+      Log.i("wsa-ng", "[RaceStatus] load empty from settings");
       return;
     }
 

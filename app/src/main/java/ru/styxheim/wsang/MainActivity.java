@@ -10,6 +10,9 @@ import android.text.TextWatcher;
 import android.text.Editable;
 import android.util.Log;
 
+import android.graphics.Typeface;
+import android.graphics.drawable.Drawable;
+
 import java.io.*;
 import java.util.ArrayList;
 
@@ -17,7 +20,6 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 import android.widget.RelativeLayout.*;
-import android.graphics.*;
 
 public class MainActivity extends Activity
 {
@@ -27,7 +29,11 @@ public class MainActivity extends Activity
   protected SharedPreferences settingsRace;
   protected TerminalStatus term;
   protected RaceStatus race;
-  
+  protected Chrono chrono;
+
+  protected View selectedRow;
+  protected Drawable selectedDrawable;
+
   protected ArrayList<ViewData> dataList = new ArrayList<ViewData>();
 
   @Override
@@ -82,6 +88,32 @@ public class MainActivity extends Activity
     startActivity(intent);
   }
 
+  @Override
+  public boolean onKeyDown(int keyCode, KeyEvent event)
+  {
+    if( chrono != null ) {
+      if( chrono.onKeyDown(keyCode, event) )
+        return true;
+    }
+    return super.onKeyDown(keyCode, event);
+  }
+
+  protected void _selectRow(final View v)
+  {
+    final Drawable drw = this.selectedDrawable;
+    final View row = this.selectedRow;
+
+    if( row != null ) {
+      row.setBackground(drw);
+    }
+
+    if( v != null ) {
+      this.selectedRow = v;
+      this.selectedDrawable = v.getBackground();
+      v.setBackgroundResource(R.color.selected_row);
+    }
+  }
+
   public void startOnClick(View v)
   {
     StartLineEditDialog sled = new StartLineEditDialog(this.lastCrewId + 1, this.lastLapId + 1);
@@ -130,8 +162,14 @@ public class MainActivity extends Activity
 
     if( vd == null ) {
       /* add new row */
+      TableLayout table = findViewById(R.id.table);
+      View v;
       vd = new ViewData(row.getRowId(), term, this);
-      ((TableLayout)findViewById(R.id.table)).addView(vd.getView());
+      v = vd.getView();
+      if( table.getChildCount() % 2 == 0 )
+        v.setBackgroundResource(R.color.rowEven);
+
+      table.addView(v);
       dataList.add(vd);
     }
 
@@ -198,6 +236,15 @@ public class MainActivity extends Activity
 
     public void update(StartRow row)
     {
+      Chrono.Record r;
+
+      if( chrono != null && finish != row.finishAt ) {
+        if( (r = chrono.getRecord(finish)) != null )
+          r.deselect();
+        if( (r = chrono.getRecord(row.finishAt)) != null )
+          r.select();
+      }
+
       lap = row.lapId;
       crew = row.crewId;
       finish = row.finishAt;
@@ -218,21 +265,149 @@ public class MainActivity extends Activity
       tCrew = tRow.findViewById(R.id.crew);
       tLap = tRow.findViewById(R.id.lap);
 
-      if( term.hasStartGate() )
+      View.OnClickListener lapcrew = new View.OnClickListener() {
+        @Override
+        public void onClick(View v)
+        {
+          StartLineEditDialog sled = new StartLineEditDialog(crew, lap, true);
+
+          _selectRow(tRow);
+
+          sled.setStartLineEditDialogListener(new StartLineEditDialog.StartLineEditDialogListener() {
+              @Override
+              public void onStartLineEditDialogResult(StartLineEditDialog sled, int crewId, int lapId) {
+                EventMessage.ProposeMsg req;
+
+                Log.i("wsa-ng", "Set new lap/crew for row #" + Integer.toString(rowId));
+                req = new EventMessage.ProposeMsg(crewId, lapId);
+
+                req.setRowId(rowId);
+
+                EventBus.getDefault().post(new EventMessage(EventMessage.EventType.PROPOSE, req));
+              }
+            });
+          sled.show(getFragmentManager(), "StartLineEditDialog");
+        }
+      };
+
+      View.OnClickListener finishListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v)
+        {
+          int i = 0;
+          int size = chrono.getSize();
+          long offset = 0;
+          PopupMenu pmenu = new PopupMenu(MainActivity.this, v);
+
+          _selectRow(tRow);
+
+          if( size == 0 ) {
+            Toast.makeText(MainActivity.this,
+                           "Используйте кнопку секундомера для отсечки времени",
+                           Toast.LENGTH_SHORT).show();
+            return;
+          }
+
+          for( Chrono.Record r : chrono ) {
+            String title;
+
+            if( i == 0 ) {
+              offset = r.getValue();
+            }
+            title = String.format("%2d. %s %s%s",
+                                  size - i,
+                                  Default.millisecondsToString(r.getValue()),
+                                  ((offset >= r.getValue()) ? ("+") : ("-")),
+                                  Default.millisecondsToString(offset - r.getValue()));
+
+            pmenu.getMenu().add(1, i, i, title);
+            if( r.isSelected() ) {
+              pmenu.getMenu().getItem(i).setEnabled(false);
+            }
+
+            i++;
+          }
+
+          pmenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item)
+            {
+              final Chrono.Record r = chrono.getRecord(item.getItemId());
+              final Runnable set = new Runnable() {
+                public void run() {
+                  EventMessage.ProposeMsg req;
+
+
+                  req = new EventMessage.ProposeMsg(r.getValue(), EventMessage.ProposeMsg.Type.FINISH);
+                  req.setRowId(rowId);
+                  EventBus.getDefault().post(new EventMessage(EventMessage.EventType.PROPOSE, req));
+                }
+              };
+
+              if( r == null )
+                return false;
+
+              if( finish != 0 ) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                builder.setMessage("Заменить финишное время?");
+                builder.setPositiveButton("Да", new DialogInterface.OnClickListener() {
+                  @Override
+                  public void onClick(DialogInterface dialog, int id) {
+                    set.run();
+                  }
+                });
+                builder.setNegativeButton("Нет", new DialogInterface.OnClickListener() {
+                  @Override
+                  public void onClick(DialogInterface dialog, int id) {
+                  }
+                });
+                builder.create().show();
+              }
+              else {
+                set.run();
+              }
+
+              return true;
+            }
+          });
+
+          pmenu.show();
+        }
+      };
+
+      View.OnClickListener startListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v)
+        {
+          _selectRow(tRow);
+        }
+      };
+
+      tCrew.setOnClickListener(lapcrew);
+      tLap.setOnClickListener(lapcrew);
+
+      if( term.hasStartGate() ) {
         tStart = tRow.findViewById(R.id.start_gate);
-      if( term.hasFinishGate() )
+      }
+
+      if( term.hasFinishGate() ) {
         tFinish = tRow.findViewById(R.id.finish_gate);
+      }
 
       tRow.removeAllViews();
 
       tRow.addView(tLap);
       tRow.addView(tCrew);
 
-      if( tStart != null )
+      if( tStart != null ) {
+        tStart.setOnClickListener(startListener);
         tRow.addView(tStart);
+      }
 
-      if( tFinish != null )
+      if( tFinish != null ) {
+        tFinish.setOnClickListener(finishListener);
         tRow.addView(tFinish);
+      }
 
       return tRow;
     }
@@ -291,6 +466,10 @@ public class MainActivity extends Activity
     }
 
     table.addView(header);
+
+    chrono = new Chrono(getSharedPreferences("chrono", Context.MODE_PRIVATE),
+                        getSharedPreferences("chrono_data", Context.MODE_PRIVATE),
+                        (Vibrator)getSystemService(Context.VIBRATOR_SERVICE));
 
     table.post(new Runnable() {
       public void run() {

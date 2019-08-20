@@ -14,6 +14,7 @@ import java.io.*;
 public class SettingsActivity extends Activity
 {
   private SharedPreferences settings;
+  private SharedPreferences settings_chrono;
 
   @Override
   public boolean onKeyDown(int keyCode, KeyEvent event) {
@@ -24,11 +25,11 @@ public class SettingsActivity extends Activity
     if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN ||
         keyCode == KeyEvent.KEYCODE_VOLUME_UP )
     {
-      SharedPreferences.Editor ed = settings.edit();
-      ed.putLong("chrono_offset", timeInMillis);
+      SharedPreferences.Editor ed = settings_chrono.edit();
+      ed.putLong("offset", timeInMillis);
       ed.apply();
 
-      int vtime = settings.getInt("chrono_vibro", Default.chrono_vibro);
+      int vtime = settings_chrono.getInt("vibro", Default.chrono_vibro);
       if( vtime > 0 ) {
         Vibrator v = (Vibrator)getSystemService(Context.VIBRATOR_SERVICE);
         v.vibrate(VibrationEffect.createOneShot(vtime, VibrationEffect.DEFAULT_AMPLITUDE));
@@ -47,6 +48,7 @@ public class SettingsActivity extends Activity
     super.onCreate(savedInstanceState);
 
     settings = getSharedPreferences("main", Context.MODE_PRIVATE);
+    settings_chrono = getSharedPreferences("chrono", Context.MODE_PRIVATE);
     setContentView(R.layout.settings);
   }
 
@@ -64,7 +66,7 @@ public class SettingsActivity extends Activity
 
     cron = new Runnable() {
       public void run() {
-        long offsetMillis = settings.getLong("chrono_offset", Default.chrono_offset);
+        long offsetMillis = settings_chrono.getLong("offset", Default.chrono_offset);
 
         tv.setText(Default.millisecondsToString(System.currentTimeMillis() - offsetMillis));
         tv.postDelayed(this, 20);
@@ -171,7 +173,7 @@ public class SettingsActivity extends Activity
   {
     final TextView tv = (TextView)findViewById(R.id.settings_chrono_offset);
 
-    tv.setText(Long.toString(settings.getLong("chrono_offset", Default.chrono_offset)));
+    tv.setText(Long.toString(settings_chrono.getLong("offset", Default.chrono_offset)));
   }
 
   public void _update_chrono_key_title()
@@ -187,25 +189,6 @@ public class SettingsActivity extends Activity
     });
   }
 
-  public void changeChronoKeyOnClick(View v)
-  {
-    AlertDialog.Builder builder = new AlertDialog.Builder(this);
-    final String[] keys = {"VOLUME UP/DOWN"};
-
-    builder.setTitle("Key choose");
-    builder.setItems(keys, new DialogInterface.OnClickListener() {
-      @Override
-      public void onClick(DialogInterface dialog, int item)
-      {
-        SharedPreferences.Editor ed = settings.edit();
-        ed.putInt("chrono_key", item);
-        ed.apply();
-        _update_chrono_key_title();
-      }
-    });
-    //builder.create().show();
-  }
-  
   public void importOnClick(View v) {
     String jsonf;
     final Launcher.Mode mode = Launcher.Mode.valueOf(settings.getString("mode", Default.mode));
@@ -266,8 +249,12 @@ public class SettingsActivity extends Activity
         starts.Save(getApplicationContext());
 
         SharedPreferences.Editor ed;
-        ed = getSharedPreferences("chrono", Context.MODE_PRIVATE).edit();
+        ed = getSharedPreferences("chrono_data", Context.MODE_PRIVATE).edit();
         ed.clear();
+        ed.commit();
+
+        ed = settings.edit();
+        ed.putLong(RaceStatus.TIMESTAMP, 0L);
         ed.commit();
 
         moveTaskToBack(true);
