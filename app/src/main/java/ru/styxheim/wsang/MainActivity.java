@@ -439,14 +439,14 @@ public class MainActivity extends Activity
               vd.deselect();
           }
 
-          if( size == 0 ) {
-            Toast.makeText(MainActivity.this,
-                           "Используйте кнопку секундомера для отсечки времени",
-                           Toast.LENGTH_SHORT).show();
-            return;
-          }
-
           if( finish == 0 ) {
+            if( size == 0 ) {
+              Toast.makeText(MainActivity.this,
+                             "Используйте кнопку секундомера для отсечки времени",
+                             Toast.LENGTH_SHORT).show();
+              return;
+            }
+            
             for( Chrono.Record r : chrono ) {
               String title;
 
