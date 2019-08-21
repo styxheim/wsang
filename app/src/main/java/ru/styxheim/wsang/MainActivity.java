@@ -151,7 +151,7 @@ public class MainActivity extends Activity
       EventBus.getDefault().post(new EventMessage(req));
     }
     });
-    sled.show(getFragmentManager(), "StartLineEditDialog");
+    sled.show(getFragmentManager(), sled.getClass().getCanonicalName());
   }
 
   protected ViewData _getViewDataById(int rowId)
@@ -268,6 +268,7 @@ public class MainActivity extends Activity
     protected int crew;
     protected long finish;
     protected long start;
+    protected ArrayList<Integer> gates = new ArrayList<Integer>();
 
     protected Context context;
 
@@ -343,7 +344,12 @@ public class MainActivity extends Activity
         tStart.setText(Default.millisecondsToString(start));
       }
 
-      /* TODO: set data to gates */
+      for( int i = 0; i < gates.size(); i++ ) {
+        int gatePenaltyId = gates.get(i);
+        TextView tGate = tGates.get(i);
+
+        tGate.setText(Integer.toString(race.penalties.get(gatePenaltyId)));
+      }
 
       if( tFinish != null ) {
         tFinish.setText(Default.millisecondsToString(finish));
@@ -366,6 +372,12 @@ public class MainActivity extends Activity
       crew = row.crewId;
       finish = row.finishAt;
       start = row.startAt;
+      /* TODO: ... */
+      gates.clear();
+      for( int i = 0; i < term.gates.size(); i++ ) {
+        /* TODO: get penalties from StartRow */
+        gates.add(0); /* penalty index: 0 */
+      }
 
       if( tRow != null ) {
         tRow.post(new Runnable() {
@@ -382,11 +394,11 @@ public class MainActivity extends Activity
       tSyncer = tRow.findViewById(R.id.syncer);
       tCrew = tRow.findViewById(R.id.crew);
       tLap = tRow.findViewById(R.id.lap);
-      
+
       tRow.setTag(R.id.tag_selected, false);
       tRow.setTag(R.id.tag_background, null);
 
-      View.OnClickListener lapcrew = new View.OnClickListener() {
+      View.OnClickListener lapcrewListener = new View.OnClickListener() {
         @Override
         public void onClick(View v)
         {
@@ -419,7 +431,7 @@ public class MainActivity extends Activity
                 EventBus.getDefault().post(new EventMessage(EventMessage.EventType.PROPOSE, req));
               }
             });
-          sled.show(getFragmentManager(), "StartLineEditDialog");
+          sled.show(getFragmentManager(), sled.getClass().getCanonicalName());
         }
       };
 
@@ -523,14 +535,22 @@ public class MainActivity extends Activity
         @Override
         public void onClick(View v)
         {
+          GatePenaltyEditDialog dialog;
+
+          dialog = new GatePenaltyEditDialog(lap, crew,
+                                             term.gates, race.penalties,
+                                             gates);
+
           for( ViewData vd : dataList ) {
-            if( vd.lap == lap ) {
+            if( vd.rowId == rowId ) {
               vd.select();
             }
             else {
               vd.deselect();
             }
           }
+
+          dialog.show(getFragmentManager(), dialog.getClass().getCanonicalName());
         }
       };
 
@@ -618,19 +638,18 @@ public class MainActivity extends Activity
         }
       };
 
-      tCrew.setOnClickListener(lapcrew);
-      tLap.setOnClickListener(lapcrew);
+      tCrew.setOnClickListener(lapcrewListener);
+      tLap.setOnClickListener(lapcrewListener);
 
       if( term.hasStartGate() ) {
         tStart = tRow.findViewById(R.id.start_gate);
       }
 
       for( int i = 0; i < term.gates.size(); i++ ) {
-        TextView gate = (TextView)_newDataCol(R.id.any_gate);
+        TextView tGate = (TextView)_newDataCol(R.id.any_gate);
 
-        gate.setOnClickListener(gateListener);
-        gate.setText("");
-        tGates.add(gate);
+        tGate.setOnClickListener(gateListener);
+        tGates.add(tGate);
       }
 
       if( term.hasFinishGate() ) {

@@ -1,0 +1,344 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:orientation="vertical">
+
+	<TextView
+		android:id="@+id/title"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:text="Penalties for lap 1 crew 1"
+		android:textAppearance="?android:attr/textAppearanceMedium"
+		android:gravity="center"
+		android:textStyle="bold"
+		android:padding="10dp"/>
+
+	<ProgressBar
+		android:layout_width="match_parent"
+		style="?android:attr/progressBarStyleHorizontal"
+		android:layout_height="wrap_content"/>
+
+	<ScrollView
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:layout_gravity="center">
+
+		<LinearLayout
+			android:orientation="vertical"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:gravity="center">
+
+			<GridLayout
+				android:id="@+id/container"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:columnCount="2"
+				android:layout_gravity="center">
+
+				<LinearLayout
+					android:orientation="vertical"
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:padding="10dp"
+					android:gravity="center">
+
+					<TextView
+						android:layout_width="wrap_content"
+						android:layout_height="wrap_content"
+						android:text="Gate"
+						android:textAppearance="?android:attr/textAppearanceLarge"
+						android:padding="6dp"/>
+
+					<RadioGroup
+						android:orientation="vertical"
+						android:layout_width="wrap_content"
+						android:layout_height="wrap_content">
+
+						<RadioButton
+							android:layout_width="wrap_content"
+							android:layout_height="wrap_content"
+							android:text="Penalty 1"
+							android:padding="6dp"/>
+
+						<RadioButton
+							android:layout_width="wrap_content"
+							android:layout_height="wrap_content"
+							android:text="Penalty 2"
+							android:padding="6dp"/>
+
+						<RadioButton
+							android:layout_width="wrap_content"
+							android:layout_height="wrap_content"
+							android:padding="6dp"
+							android:text="Penalty 3"/>
+
+					</RadioGroup>
+
+				</LinearLayout>
+
+				<LinearLayout
+					android:orientation="vertical"
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:padding="10dp"
+					android:gravity="center">
+
+					<TextView
+						android:layout_width="wrap_content"
+						android:layout_height="wrap_content"
+						android:text="Gate"
+						android:textAppearance="?android:attr/textAppearanceLarge"
+						android:padding="6dp"/>
+
+					<RadioGroup
+						android:orientation="vertical"
+						android:layout_width="wrap_content"
+						android:layout_height="wrap_content">
+
+						<RadioButton
+							android:layout_width="wrap_content"
+							android:layout_height="wrap_content"
+							android:text="Penalty 1"
+							android:padding="6dp"/>
+
+						<RadioButton
+							android:layout_width="wrap_content"
+							android:layout_height="wrap_content"
+							android:text="Penalty 2"
+							android:padding="6dp"/>
+
+						<RadioButton
+							android:layout_width="wrap_content"
+							android:layout_height="wrap_content"
+							android:padding="6dp"
+							android:text="Penalty 3"/>
+
+					</RadioGroup>
+
+				</LinearLayout>
+
+				<LinearLayout
+					android:orientation="vertical"
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:padding="10dp"
+					android:gravity="center">
+
+					<TextView
+						android:layout_width="wrap_content"
+						android:layout_height="wrap_content"
+						android:text="Gate"
+						android:textAppearance="?android:attr/textAppearanceLarge"
+						android:padding="6dp"/>
+
+					<RadioGroup
+						android:orientation="vertical"
+						android:layout_width="wrap_content"
+						android:layout_height="wrap_content">
+
+						<RadioButton
+							android:layout_width="wrap_content"
+							android:layout_height="wrap_content"
+							android:text="Penalty 1"
+							android:padding="6dp"/>
+
+						<RadioButton
+							android:layout_width="wrap_content"
+							android:layout_height="wrap_content"
+							android:text="Penalty 2"
+							android:padding="6dp"/>
+
+						<RadioButton
+							android:layout_width="wrap_content"
+							android:layout_height="wrap_content"
+							android:padding="6dp"
+							android:text="Penalty 3"/>
+
+					</RadioGroup>
+
+				</LinearLayout>
+
+				<LinearLayout
+					android:orientation="vertical"
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:padding="10dp"
+					android:gravity="center">
+
+					<TextView
+						android:layout_width="wrap_content"
+						android:layout_height="wrap_content"
+						android:text="Gate"
+						android:textAppearance="?android:attr/textAppearanceLarge"
+						android:padding="6dp"/>
+
+					<RadioGroup
+						android:orientation="vertical"
+						android:layout_width="wrap_content"
+						android:layout_height="wrap_content">
+
+						<RadioButton
+							android:layout_width="wrap_content"
+							android:layout_height="wrap_content"
+							android:text="Penalty 1"
+							android:padding="6dp"/>
+
+						<RadioButton
+							android:layout_width="wrap_content"
+							android:layout_height="wrap_content"
+							android:text="Penalty 2"
+							android:padding="6dp"/>
+
+						<RadioButton
+							android:layout_width="wrap_content"
+							android:layout_height="wrap_content"
+							android:padding="6dp"
+							android:text="Penalty 3"/>
+
+					</RadioGroup>
+
+				</LinearLayout>
+
+				<LinearLayout
+					android:orientation="vertical"
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:padding="10dp"
+					android:gravity="center">
+
+					<TextView
+						android:layout_width="wrap_content"
+						android:layout_height="wrap_content"
+						android:text="Gate"
+						android:textAppearance="?android:attr/textAppearanceLarge"
+						android:padding="6dp"/>
+
+					<RadioGroup
+						android:orientation="vertical"
+						android:layout_width="wrap_content"
+						android:layout_height="wrap_content">
+
+						<RadioButton
+							android:layout_width="wrap_content"
+							android:layout_height="wrap_content"
+							android:text="Penalty 1"
+							android:padding="6dp"/>
+
+						<RadioButton
+							android:layout_width="wrap_content"
+							android:layout_height="wrap_content"
+							android:text="Penalty 2"
+							android:padding="6dp"/>
+
+						<RadioButton
+							android:layout_width="wrap_content"
+							android:layout_height="wrap_content"
+							android:padding="6dp"
+							android:text="Penalty 3"/>
+
+					</RadioGroup>
+
+				</LinearLayout>
+
+				<LinearLayout
+					android:orientation="vertical"
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:padding="10dp"
+					android:gravity="center">
+
+					<TextView
+						android:layout_width="wrap_content"
+						android:layout_height="wrap_content"
+						android:text="Gate"
+						android:textAppearance="?android:attr/textAppearanceLarge"
+						android:padding="6dp"/>
+
+					<RadioGroup
+						android:orientation="vertical"
+						android:layout_width="wrap_content"
+						android:layout_height="wrap_content">
+
+						<RadioButton
+							android:layout_width="wrap_content"
+							android:layout_height="wrap_content"
+							android:text="Penalty 1"
+							android:padding="6dp"/>
+
+						<RadioButton
+							android:layout_width="wrap_content"
+							android:layout_height="wrap_content"
+							android:text="Penalty 2"
+							android:padding="6dp"/>
+
+						<RadioButton
+							android:layout_width="wrap_content"
+							android:layout_height="wrap_content"
+							android:padding="6dp"
+							android:text="Penalty 3"/>
+
+					</RadioGroup>
+
+				</LinearLayout>
+
+				<LinearLayout
+					android:orientation="vertical"
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:padding="10dp"
+					android:gravity="center">
+
+					<TextView
+						android:layout_width="wrap_content"
+						android:layout_height="wrap_content"
+						android:text="Gate"
+						android:textAppearance="?android:attr/textAppearanceLarge"
+						android:padding="6dp"/>
+
+					<RadioGroup
+						android:orientation="vertical"
+						android:layout_width="wrap_content"
+						android:layout_height="wrap_content">
+
+						<RadioButton
+							android:layout_width="wrap_content"
+							android:layout_height="wrap_content"
+							android:text="Penalty 1"
+							android:padding="6dp"/>
+
+						<RadioButton
+							android:layout_width="wrap_content"
+							android:layout_height="wrap_content"
+							android:text="Penalty 2"
+							android:padding="6dp"/>
+
+						<RadioButton
+							android:layout_width="wrap_content"
+							android:layout_height="wrap_content"
+							android:padding="6dp"
+							android:text="Penalty 3"/>
+
+					</RadioGroup>
+
+				</LinearLayout>
+
+			</GridLayout>
+
+			<Button
+				android:id="@+id/save_button"
+				android:layout_width="match_parent"
+				style="?android:attr/buttonBarButtonStyle"
+				android:layout_height="wrap_content"
+				android:text="Save"
+				android:padding="6dp"
+				android:layout_gravity="center"/>
+
+		</LinearLayout>
+
+	</ScrollView>
+
+</LinearLayout>
+
