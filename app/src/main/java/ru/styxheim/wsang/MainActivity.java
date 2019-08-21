@@ -95,7 +95,7 @@ public class MainActivity extends Activity
         else {
           tv.setText(Default.millisecondsToStringShort(current - offsetMillis));
         }
-        tv.postDelayed(this, 20);
+        tv.postDelayed(this, 300);
       }
     };
 
