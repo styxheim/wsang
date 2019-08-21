@@ -179,9 +179,10 @@ public class MainActivity extends Activity
           "got " + row.toString() + ", visible=" + (vd == null ? "false" : "true"));
 
     if( vd == null ) {
+      final ScrollView sv = findViewById(R.id.vscroll);
       /* add new row */
-      TableLayout table = findViewById(R.id.table);
-      View v;
+      final TableLayout table = findViewById(R.id.table);
+      final View v;
       vd = new ViewData(row.getRowId(), term, this);
       v = vd.getView();
       if( table.getChildCount() % 2 == 0 )
@@ -189,6 +190,12 @@ public class MainActivity extends Activity
 
       table.addView(v);
       dataList.add(vd);
+
+      sv.post(new Runnable() {
+        public void run() {
+          sv.scrollTo(0, findViewById(R.id.spacer).getBottom());
+        }
+      });
     }
 
     /* auto-confirm */
