@@ -632,11 +632,11 @@ public class MainService extends Service
         changed = true;
         if( lrow == null ) {
           starts.addRecord(rrow);
-          EventBus.getDefault().post(new EventMessage(rrow));
+          EventBus.getDefault().post(rrow);
         }
         else {
           lrow.update(rrow);
-          EventBus.getDefault().post(new EventMessage(lrow));
+          EventBus.getDefault().post(lrow.clone());
         }
 
         if( rrow.timestamp > timestamp ) {

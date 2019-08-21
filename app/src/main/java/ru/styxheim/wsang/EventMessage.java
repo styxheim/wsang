@@ -7,9 +7,6 @@ public class EventMessage
     /* ProposeMsg */
     PROPOSE, /* UI proporse new record or change old */
 
-    /* StartRow */
-    UPDATE,  /* Record info message (Service -> UI) */
-
     /* CountDownMsg */
     COUNTDOWN_START,
     COUNTDOWN_STOP,
@@ -87,12 +84,6 @@ public class EventMessage
   public EventMessage(EventType type, Object obj)
   {
     this.type = type;
-    this.obj = obj;
-  }
-
-  public EventMessage(StartRow obj)
-  {
-    this.type = EventType.UPDATE;
     this.obj = obj;
   }
 

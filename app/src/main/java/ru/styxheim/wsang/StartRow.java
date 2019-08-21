@@ -172,11 +172,25 @@ public class StartRow
   {
     return "<Start " + 
            " id='" + Integer.toString(this.rowId) + "'" +
+           " ts='" + Long.toString(this.timestamp) + "'" +
            " lapId='" + Integer.toString(this.lapId) + "'" +
            " crewId='" + Integer.toString(this.crewId) + "'" +
            " startTime='" + Default.millisecondsToString(this.startAt) + "'" +
            " finishTime='" + Default.millisecondsToString(this.finishAt) + "'" +
+           " " + state.name() +
            ">";
+  }
+
+  public StartRow clone()
+  {
+    StartRow r = new StartRow(this.getRowId());
+    r.crewId = crewId;
+    r.lapId = lapId;
+    r.startAt = startAt;
+    r.finishAt = finishAt;
+    r.timestamp = timestamp;
+    r.state = state;
+    return r;
   }
 
   public void update(StartRow newData)

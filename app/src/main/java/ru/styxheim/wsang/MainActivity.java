@@ -176,7 +176,7 @@ public class MainActivity extends Activity
     ViewData vd = _getViewDataById(row.getRowId());
 
     Log.d("wsa-ng-ui",
-          "got StartRow, visible=" + (vd == null ? "false" : "true"));
+          "got " + row.toString() + ", visible=" + (vd == null ? "false" : "true"));
 
     if( vd == null ) {
       /* add new row */
