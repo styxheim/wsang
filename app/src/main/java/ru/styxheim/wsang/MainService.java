@@ -632,7 +632,8 @@ public class MainService extends Service
         changed = true;
         if( lrow == null ) {
           starts.addRecord(rrow);
-          EventBus.getDefault().post(rrow);
+          rrow.setState(StartRow.SyncState.SYNCED, 0);
+          EventBus.getDefault().post(rrow.clone());
         }
         else {
           lrow.update(rrow);
