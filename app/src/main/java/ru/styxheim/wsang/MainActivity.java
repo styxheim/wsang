@@ -21,6 +21,7 @@ import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 import android.widget.RelativeLayout.*;
 import android.text.style.*;
+import org.apache.http.impl.client.*;
 
 public class MainActivity extends Activity
 {
@@ -397,7 +398,7 @@ public class MainActivity extends Activity
             else
               vd.deselect();
           }
-          
+
           if( countDownMode && countDownLap == lap ) {
             Toast.makeText(MainActivity.this,
                            "Идёт отсчёт",
@@ -432,10 +433,9 @@ public class MainActivity extends Activity
           PopupMenu pmenu = new PopupMenu(MainActivity.this, v);
 
           for( ViewData vd : dataList ) {
-            /*
             if( vd.rowId == rowId )
               vd.select();
-            else*/
+            else
               vd.deselect();
           }
 
@@ -519,6 +519,21 @@ public class MainActivity extends Activity
         }
       };
 
+      View.OnClickListener gateListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v)
+        {
+          for( ViewData vd : dataList ) {
+            if( vd.lap == lap ) {
+              vd.select();
+            }
+            else {
+              vd.deselect();
+            }
+          }
+        }
+      };
+
       View.OnClickListener startListener = new View.OnClickListener() {
         @Override
         public void onClick(View v)
@@ -533,7 +548,6 @@ public class MainActivity extends Activity
               vd.deselect();
             }
           }
-          ViewData.this.select();
 
           if( start != 0 ) {
             /* reset start time */
@@ -611,6 +625,14 @@ public class MainActivity extends Activity
         tStart = tRow.findViewById(R.id.start_gate);
       }
 
+      for( int i = 0; i < term.gates.size(); i++ ) {
+        TextView gate = (TextView)_newDataCol(R.id.any_gate);
+
+        gate.setOnClickListener(gateListener);
+        gate.setText("");
+        tGates.add(gate);
+      }
+
       if( term.hasFinishGate() ) {
         tFinish = tRow.findViewById(R.id.finish_gate);
       }
@@ -624,6 +646,10 @@ public class MainActivity extends Activity
       if( tStart != null ) {
         tStart.setOnClickListener(startListener);
         tRow.addView(tStart);
+      }
+
+      for( TextView v : tGates ) {
+        tRow.addView(v);
       }
 
       if( tFinish != null ) {
@@ -664,8 +690,8 @@ public class MainActivity extends Activity
     TextView crew = (TextView)_newDataCol(R.id.crew);
     TextView lap = (TextView)_newDataCol(R.id.lap);
 
-    crew.setTypeface(crew.getTypeface(), Typeface.BOLD);
-    lap.setTypeface(crew.getTypeface(), Typeface.BOLD);
+    crew.setTypeface(null, Typeface.BOLD);
+    lap.setTypeface(null, Typeface.BOLD);
 
     header.addView(syncer);
     header.addView(lap);
@@ -673,19 +699,21 @@ public class MainActivity extends Activity
 
     if( term.hasStartGate() ) {
       TextView start = (TextView)_newDataCol(R.id.start_gate);
-      start.setTypeface(start.getTypeface(), Typeface.BOLD);
+      start.setTypeface(null, Typeface.BOLD);
       header.addView(start);
     }
 
-    if( term.gates.size() != 0 ) {
-      for( int i = 0; i < term.gates.size(); i++ ) {
-        /* TODO */
-      }
+    for( int i = 0; i < term.gates.size(); i++ ) {
+      TextView gate = (TextView)_newDataCol(R.id.any_gate);
+
+      gate.setTypeface(null, Typeface.BOLD);
+      gate.setText(Integer.toString(term.gates.get(i)));
+      header.addView(gate);
     }
 
     if( term.hasFinishGate() ) {
       TextView finish = (TextView)_newDataCol(R.id.finish_gate);
-      finish.setTypeface(finish.getTypeface(), Typeface.BOLD);
+      finish.setTypeface(null, Typeface.BOLD);
       header.addView(finish);
     }
 
