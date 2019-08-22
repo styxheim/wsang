@@ -276,7 +276,6 @@ public class StartRow
     r.startAt = startAt;
     r.finishAt = finishAt;
     r.timestamp = timestamp;
-    /* todo clone gate */
     for( Gate gate : gates ) {
       r.gates.add(new Gate(gate));
     }
