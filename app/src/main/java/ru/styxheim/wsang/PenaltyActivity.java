@@ -77,7 +77,8 @@ public class PenaltyActivity extends Activity
         RadioButton rb = _v.findViewById(R.id.penalty);
 
         rb.setId(rb_id++);
-        rb.setTag(i);
+        rb.setTag(R.id.tag_gate_id, gi);
+        rb.setTag(R.id.tag_penalty_id, i);
 
         ((ViewGroup)rb.getParent()).removeView(rb);
         rb.setText(penalties.get(i).toString());
@@ -108,6 +109,25 @@ public class PenaltyActivity extends Activity
   {
     EventBus.getDefault().unregister(this);
     super.onStop();
+  }
+
+  public void onClickCancel(View v)
+  {
+    finish();
+  }
+
+  public void onClickSave(View v)
+  {
+    /* TODO: send new data */
+    finish();
+  }
+
+  public void onClickPenaltyRadioButton(View v)
+  {
+    int gate = v.getTag(R.id.tag_gate_id);
+    int penalty = v.getTag(R.id.tag_penalty_id);
+
+    values.set(gate, penalty);
   }
 
   @Subscribe(threadMode = ThreadMode.MAIN)

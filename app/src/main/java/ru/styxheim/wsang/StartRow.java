@@ -16,6 +16,75 @@ public class StartRow
   public int lapId;
   public long startAt = 0;
   public long finishAt = 0;
+  public ArrayList<Gate>gates = new ArrayList<Gate>();
+
+  public static class Gate {
+    public int gate;
+    public int penalty;
+
+    public Gate(Gate other)
+    {
+      this.update(other);
+    }
+
+    public Gate(int gate, int penalty)
+    {
+      this.gate = gate;
+      this.penalty = penalty;
+    }
+
+    public void update(Gate other)
+    {
+      this.gate = other.gate;
+      this.penalty = other.penalty;
+    }
+
+    public Gate(JsonReader jr) throws IOException, IllegalStateException
+    {
+      fromJSON(jr);
+    }
+
+    public void toJSON(JsonWriter jw) throws IOException, IllegalStateException
+    {
+      jw.beginObject();
+      jw.name("Gate").value(this.gate);
+      jw.name("Penalty").value(this.penalty);
+      jw.endObject();
+    }
+
+    public void fromJSON(JsonReader jr) throws IOException, IllegalStateException
+    {
+      if( !jr.hasNext() )
+        return;
+
+      this.gate = 0;
+      this.penalty = 0;
+
+      jr.beginObject();
+      while( jr.hasNext() ) {
+        switch( jr.nextName() ) {
+        case "Gate":
+          this.gate = jr.nextInt();
+          break;
+        case "Penalty":
+          this.penalty = jr.nextInt();
+          break;
+        default:
+          jr.skipValue();
+          break;
+        }
+      }
+      jr.endObject();
+      Log.i("wsa-ng", "[GATE] parsed gate: " + toString());
+    }
+
+    public String toString()
+    {
+      String r;
+      r = String.format("<Gate #%d penalty=%d>", gate, penalty);
+      return r;
+    }
+  };
 
   public boolean updateLapId;
   public boolean updateCrewId;
@@ -35,6 +104,13 @@ public class StartRow
     public Integer lapId;
     public Long finishTime;
     public Long startTime;
+    public Gate gate;
+
+    public SyncData(Gate gate)
+    {
+      /* save copy */
+      this.gate = new Gate(gate);
+    }
 
     public SyncData(int crewId, int lapId)
     {
@@ -148,6 +224,16 @@ public class StartRow
     this.syncList.add(new SyncData(crewId, lapId));
   }
 
+  public void setGateData(int gate, int penalty)
+  {
+    Gate rgate = new Gate(gate, penalty);
+
+    if( !updateGate(rgate) )
+      this.gates.add(rgate);
+
+    this.syncList.add(new SyncData(rgate));
+  }
+
   public void setState(SyncState state, int inprintCount)
   {
     if( state == SyncState.SYNCED ) {
@@ -177,6 +263,7 @@ public class StartRow
            " crewId='" + Integer.toString(this.crewId) + "'" +
            " startTime='" + Default.millisecondsToString(this.startAt) + "'" +
            " finishTime='" + Default.millisecondsToString(this.finishAt) + "'" +
+           " gates=" + Integer.toString(this.gates.size()) +
            " " + state.name() +
            ">";
   }
@@ -189,6 +276,10 @@ public class StartRow
     r.startAt = startAt;
     r.finishAt = finishAt;
     r.timestamp = timestamp;
+    /* todo clone gate */
+    for( Gate gate : gates ) {
+      r.gates.add(new Gate(gate));
+    }
     r.state = state;
     return r;
   }
@@ -208,6 +299,11 @@ public class StartRow
     }
     if( newData.updateFinishAt) {
       this.finishAt = newData.finishAt;
+    }
+    for( Gate rgate : newData.gates )
+    {
+      if( !updateGate(rgate) )
+        this.gates.add(new Gate(rgate));
     }
   }
 
@@ -246,6 +342,12 @@ public class StartRow
     w.name("startTimeMs").value(this.startAt);
     w.name("finishTimeMs").value(this.finishAt);
     w.name("_state_name").value(this.state.name());
+    w.name("Gates");
+    w.beginArray();
+    for( Gate gate : this.gates ) {
+      gate.toJSON(w);
+    }
+    w.endArray();
     w.name("syncList");
     w.beginArray();
     for( SyncData sd : this.syncList ) {
@@ -267,7 +369,23 @@ public class StartRow
     w.name("crewNumber").value(this.crewId);
     w.name("startTimeMs").value(this.startAt);
     w.name("finishTimeMs").value(this.finishAt);
+    w.name("Gates");
+    w.beginArray();
+    for( Gate gate : this.gates ) {
+      gate.toJSON(w);
+    }
+    w.endArray();
     w.endObject();
+  }
+
+  boolean updateGate(Gate rgate) {
+    for( Gate lgate : gates ) {
+      if( lgate.gate == rgate.gate ) {
+        lgate.update(rgate);
+        return true;
+      }
+    }
+    return false;
   }
 
   public void loadJSONServer(JsonReader r) throws IllegalStateException, IOException
@@ -301,6 +419,15 @@ public class StartRow
         this.updateFinishAt = true;
         this.finishAt = r.nextLong();
         break;
+      case "Gates":
+        r.beginArray();
+        while( r.hasNext() ) {
+          Gate gate = new Gate(r);
+          if( !updateGate(gate) )
+            this.gates.add(gate);
+        }
+        r.endArray();
+        break;
       default:
         Log.d("wsa-ng", "StartRow: Unknown field '" + name + "'");
         r.skipValue();
@@ -312,6 +439,7 @@ public class StartRow
   public void loadJSON(JsonReader r) throws IllegalStateException, IOException
   {
     this.syncList.clear();
+    this.gates.clear();
 
     if( !r.hasNext() )
       return;
@@ -350,6 +478,13 @@ public class StartRow
           r.beginObject();
           syncList.add(new SyncData(r));
           r.endObject();
+        }
+        r.endArray();
+        break;
+      case "Gates":
+        r.beginArray();
+        while( r.hasNext() ) {
+          this.gates.add(new Gate(r));
         }
         r.endArray();
         break;

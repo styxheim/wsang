@@ -1,19 +1,60 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
 	xmlns:android="http://schemas.android.com/apk/res/android"
-	android:layout_width="wrap_content"
-	android:layout_height="wrap_content"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
 	android:orientation="vertical">
 
-	<TextView
-		android:id="@+id/title"
-		android:layout_width="wrap_content"
+	<LinearLayout
+		android:layout_width="match_parent"
 		android:layout_height="wrap_content"
-		android:text="Penalties for lap 1 crew 1"
-		android:textAppearance="?android:attr/textAppearanceMedium"
-		android:gravity="center"
-		android:textStyle="bold"
-		android:padding="10dp"/>
+		android:paddingTop="5dp">
+
+		<LinearLayout
+			android:orientation="horizontal"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:gravity="center">
+
+			<Button
+				android:id="@+id/save_button"
+				android:layout_width="wrap_content"
+				style="?android:attr/buttonBarButtonStyle"
+				android:layout_height="wrap_content"
+				android:text="Cancel"
+				android:padding="6dp"
+				android:onClick="onClickCancel"/>
+
+			<TextView
+				android:id="@+id/title"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:text="Penalties for lap 1 crew 1"
+				android:textAppearance="?android:attr/textAppearanceMedium"
+				android:gravity="center"
+				android:textStyle="bold"
+				android:padding="10dp"/>
+
+		</LinearLayout>
+
+		<LinearLayout
+			android:orientation="horizontal"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:gravity="right">
+
+			<Button
+				android:id="@+id/save_button"
+				android:layout_width="wrap_content"
+				style="?android:attr/buttonBarButtonStyle"
+				android:layout_height="wrap_content"
+				android:text="Save"
+				android:padding="6dp"
+				android:onClick="onClickSave"/>
+
+		</LinearLayout>
+
+	</LinearLayout>
 
 	<ProgressBar
 		android:layout_width="match_parent"
@@ -22,21 +63,21 @@
 
 	<ScrollView
 		android:layout_width="match_parent"
-		android:layout_height="wrap_content"
+		android:layout_height="match_parent"
 		android:layout_gravity="center">
 
 		<LinearLayout
 			android:orientation="vertical"
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"
+			android:layout_width="match_parent"
+			android:layout_height="match_parent"
 			android:gravity="center">
 
 			<GridLayout
 				android:id="@+id/container"
 				android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
-				android:columnCount="2"
-				android:layout_gravity="center">
+				android:layout_gravity="center"
+				android:columnCount="3">
 
 				<LinearLayout
 					android:orientation="vertical"
@@ -326,15 +367,6 @@
 				</LinearLayout>
 
 			</GridLayout>
-
-			<Button
-				android:id="@+id/save_button"
-				android:layout_width="match_parent"
-				style="?android:attr/buttonBarButtonStyle"
-				android:layout_height="wrap_content"
-				android:text="Save"
-				android:padding="6dp"
-				android:layout_gravity="center"/>
 
 		</LinearLayout>
 

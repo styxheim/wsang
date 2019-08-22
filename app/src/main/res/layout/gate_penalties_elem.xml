@@ -1,33 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
-  <LinearLayout
-        xmlns:android="http://schemas.android.com/apk/res/android"
-				android:orientation="vertical"
-				android:layout_width="match_parent"
-				android:layout_height="wrap_content"
-				android:padding="10dp"
-				android:gravity="center">
+<LinearLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	android:orientation="vertical"
+	android:layout_width="match_parent"
+	android:layout_height="wrap_content"
+	android:padding="10dp"
+	android:gravity="center">
 
-        <TextView
-          android:id="@+id/gate_title"
-					android:layout_width="wrap_content"
-					android:layout_height="wrap_content"
-					android:text="Gate"
-          android:textAppearance="?android:attr/textAppearanceMedium"
-          android:textStyle="bold"
-					android:padding="6dp"/>
+	<TextView
+		android:id="@+id/gate_title"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:text="Gate"
+		android:textAppearance="?android:attr/textAppearanceMedium"
+		android:textStyle="bold"
+		android:padding="6dp"/>
 
-        <RadioGroup
-          android:id="@+id/penalty_container"
-					android:orientation="vertical"
-					android:layout_width="wrap_content"
-					android:layout_height="wrap_content">
+	<RadioGroup
+		android:id="@+id/penalty_container"
+		android:orientation="vertical"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content">
 
-        <RadioButton
-            android:id="@+id/penalty"
-						android:layout_width="wrap_content"
-						android:layout_height="wrap_content"
-						android:text="No penalty"
-            android:padding="6dp"/>
+		<RadioButton
+			android:id="@+id/penalty"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="No penalty"
+			android:padding="6dp"
+			android:onClick="onClickPenaltyRadioButton"/>
 
-				</RadioGroup>
-  </LinearLayout>
+	</RadioGroup>
+
+</LinearLayout>
+

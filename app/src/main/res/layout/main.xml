@@ -60,7 +60,7 @@
 				android:visibility="gone"
 				android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
-				android:text="Отменить отсчёт"
+				android:text="Стоп"
 				android:onClick="cancelOnClick"/>
 
 		</LinearLayout>

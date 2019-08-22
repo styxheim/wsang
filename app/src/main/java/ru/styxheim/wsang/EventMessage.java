@@ -1,5 +1,6 @@
 package ru.styxheim.wsang;
 
+import java.util.ArrayList;
 
 public class EventMessage
 {
@@ -22,12 +23,14 @@ public class EventMessage
     public int crewId; /* crewId and lapId used together */
     public int lapId;
     public int rowId = -1;
+    public ArrayList<Integer> penalty;
 
     public enum Type {
       UNK,
       IDENTIFY, /* update identify */
       START,    /* update start time */
       FINISH,   /* update finish time */
+      PENALTY,  /* update penalties */
       CONFIRM   /* send data to server */
     };
 

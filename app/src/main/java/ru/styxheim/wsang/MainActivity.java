@@ -349,9 +349,13 @@ public class MainActivity extends Activity
 
       for( int i = 0; i < gates.size(); i++ ) {
         int gatePenaltyId = gates.get(i);
+        int pvalue = race.penalties.get(gatePenaltyId);
         TextView tGate = tGates.get(i);
 
-        tGate.setText(Integer.toString(race.penalties.get(gatePenaltyId)));
+        if( pvalue == 0 )
+          tGate.setText("");
+        else
+          tGate.setText(Integer.toString(pvalue));
       }
 
       if( tFinish != null ) {
@@ -375,11 +379,17 @@ public class MainActivity extends Activity
       crew = row.crewId;
       finish = row.finishAt;
       start = row.startAt;
-      /* TODO: ... */
+
       gates.clear();
       for( int i = 0; i < term.gates.size(); i++ ) {
-        /* TODO: get penalties from StartRow */
-        gates.add(0); /* penalty index: 0 */
+        int gateId = term.gates.get(i);
+        gates.add(0);
+        for( StartRow.Gate lgate : row.gates ) {
+          if( lgate.gate == gateId ) {
+            gates.set(i, lgate.penalty);
+            break;
+          }
+        }
       }
 
       if( tRow != null ) {
