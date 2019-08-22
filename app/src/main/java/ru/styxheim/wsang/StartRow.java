@@ -220,7 +220,7 @@ public class StartRow
         this.crewId = other.crewId;
 
       if( other.lapId != null )
-        this.lapId = other.crewId;
+        this.lapId = other.lapId;
 
       if( other.finishTime != null )
         this.finishTime = other.finishTime;
