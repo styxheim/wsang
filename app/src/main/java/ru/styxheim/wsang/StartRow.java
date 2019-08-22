@@ -302,6 +302,7 @@ public class StartRow
     if( !updateGate(rgate) )
       this.gates.add(rgate);
 
+    this.state = SyncState.NONE;
     this.syncList.add(new SyncData(rgate));
   }
 

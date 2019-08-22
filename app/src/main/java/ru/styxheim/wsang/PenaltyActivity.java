@@ -118,6 +118,15 @@ public class PenaltyActivity extends Activity
 
   public void onClickSave(View v)
   {
+    EventMessage.ProposeMsg msg;
+
+    for( int i = 0; i < gates.size(); i++ ) {
+      msg = new EventMessage.ProposeMsg(EventMessage.ProposeMsg.Type.PENALTY);
+      msg.rowId = rowId;
+      msg.gate = gates.get(i);
+      msg.penalty = values.get(i);
+      EventBus.getDefault().post(new EventMessage(msg));
+    }
     /* TODO: send new data */
     finish();
   }

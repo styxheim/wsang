@@ -557,10 +557,9 @@ public class MainService extends Service
       case START:
         row.setStartData(msg.time);
         break;
-        /*
       case PENALTY:
-        row.setPenalty(msg.penalty);
-        break;*/
+        row.setGateData(msg.gate, msg.penalty);
+        break;
       default:
         Log.e("wsa-ng", _("Unknown msg type for rowId #" +
                           Integer.toString(msg.rowId) + ": " + msg.type.name()));

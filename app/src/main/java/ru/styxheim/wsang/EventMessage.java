@@ -23,7 +23,9 @@ public class EventMessage
     public int crewId; /* crewId and lapId used together */
     public int lapId;
     public int rowId = -1;
-    public ArrayList<Integer> penalty;
+
+    public int gate;
+    public int penalty;
 
     public enum Type {
       UNK,
