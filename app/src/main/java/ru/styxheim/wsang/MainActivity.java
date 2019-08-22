@@ -34,6 +34,9 @@ public class MainActivity extends Activity
   protected RaceStatus race;
   protected Chrono chrono;
 
+  protected int selectedRowId = -1;
+  protected int selectedLapId = -1;
+
   protected ArrayList<ViewData> dataList = new ArrayList<ViewData>();
 
   protected boolean countDownMode = false;
@@ -288,7 +291,7 @@ public class MainActivity extends Activity
       this.rowId = id;
       this.context = context;
     }
-    
+
     public void select()
     {
       boolean selected = tRow.getTag(R.id.tag_selected);
@@ -307,11 +310,11 @@ public class MainActivity extends Activity
 
       if( !selected )
         return;
-      
+
       tRow.setTag(R.id.tag_selected, false);
       tRow.setBackground((Drawable)tRow.getTag(R.id.tag_background));
     }
-    
+
     protected void _update()
     {
       switch( state ) {
@@ -382,6 +385,13 @@ public class MainActivity extends Activity
       if( tRow != null ) {
         tRow.post(new Runnable() {
           public void run() {
+            if( selectedRowId == rowId || selectedLapId == lap ) {
+              select();
+            }
+            else {
+              deselect();
+            }
+
             _update();
           }
         });
@@ -410,6 +420,8 @@ public class MainActivity extends Activity
             else
               vd.deselect();
           }
+          selectedRowId = rowId;
+          selectedLapId = -1;
 
           if( countDownMode && countDownLap == lap ) {
             Toast.makeText(MainActivity.this,
@@ -450,6 +462,8 @@ public class MainActivity extends Activity
             else
               vd.deselect();
           }
+          selectedRowId = rowId;
+          selectedLapId = -1;
 
           if( finish == 0 ) {
             if( size == 0 ) {
@@ -535,22 +549,29 @@ public class MainActivity extends Activity
         @Override
         public void onClick(View v)
         {
-          GatePenaltyEditDialog dialog;
-
-          dialog = new GatePenaltyEditDialog(lap, crew,
-                                             term.gates, race.penalties,
-                                             gates);
+          Bundle extras = new Bundle();
+          Intent intent = new Intent(MainActivity.this, PenaltyActivity.class);
 
           for( ViewData vd : dataList ) {
-            if( vd.rowId == rowId ) {
+            if( vd.rowId == rowId )
               vd.select();
-            }
-            else {
+            else
               vd.deselect();
-            }
           }
 
-          dialog.show(getFragmentManager(), dialog.getClass().getCanonicalName());
+          selectedRowId = rowId;
+          selectedLapId = -1;
+
+          extras.putInt("rowId", rowId);
+          extras.putInt("lap", lap);
+          extras.putInt("crew", crew);
+
+          extras.putIntegerArrayList("gates", term.gates);
+          extras.putIntegerArrayList("penalties", race.penalties);
+          extras.putIntegerArrayList("values", gates);
+
+          intent.putExtras(extras);
+          startActivity(intent);
         }
       };
 
@@ -568,6 +589,8 @@ public class MainActivity extends Activity
               vd.deselect();
             }
           }
+          selectedRowId = -1;
+          selectedLapId = lap;
 
           if( start != 0 ) {
             /* reset start time */

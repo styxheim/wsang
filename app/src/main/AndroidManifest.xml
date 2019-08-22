@@ -33,16 +33,16 @@
         android:name=".MainActivity"
         android:theme="@style/AppTheme.NoActionBar"
         android:screenOrientation="unspecified" />
-          
-        <activity
-            android:name=".StartActivity"
-            android:theme="@style/AppTheme.NoActionBar"
-            android:screenOrientation="unspecified" />
 
-        <activity
-            android:name=".SettingsActivity"
-            android:theme="@style/AppTheme.NoActionBar"
-            android:screenOrientation="unspecified" />
+      <activity
+          android:name=".PenaltyActivity"
+          android:theme="@style/AppTheme.NoActionBar"
+          android:screenOrientation="unspecified" />
+
+      <activity
+          android:name=".SettingsActivity"
+          android:theme="@style/AppTheme.NoActionBar"
+          android:screenOrientation="unspecified" />
 
     </application>
 
