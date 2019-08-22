@@ -236,7 +236,11 @@ public class MainService extends Service
       jw.endArray();
       body = sw.toString().getBytes("utf-8");
     } catch( Exception e ) {
-      Log.e("wsa-ng", _("sync rowId #" + Integer.toString(rowId) + " error: " + e.getMessage()));
+      StringWriter psw = new StringWriter();
+      PrintWriter pw = new PrintWriter(psw);
+
+      e.printStackTrace(pw);
+      Log.e("wsa-ng", _("sync rowId #" + Integer.toString(rowId) + " error: " + e.getMessage() + " ->\n" + psw.toString()));
       row.setState(StartRow.SyncState.ERROR, 0);
       return;
     }

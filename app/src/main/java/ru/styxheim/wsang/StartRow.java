@@ -22,9 +22,15 @@ public class StartRow
     public int gate;
     public int penalty;
 
-    public Gate(Gate other)
+    public Gate()
     {
-      this.update(other);
+    }
+
+    public Gate clone()
+    {
+      Gate n = new Gate();
+      n.update(this);
+      return n;
     }
 
     public Gate(int gate, int penalty)
@@ -75,7 +81,6 @@ public class StartRow
         }
       }
       jr.endObject();
-      Log.i("wsa-ng", "[GATE] parsed gate: " + toString());
     }
 
     public String toString()
@@ -100,16 +105,20 @@ public class StartRow
   };
 
   protected class SyncData {
+    public Integer rowId;
     public Integer crewId;
     public Integer lapId;
     public Long finishTime;
     public Long startTime;
-    public Gate gate;
+    public ArrayList<Gate> gates = new ArrayList<Gate>();
+
+    public SyncData()
+    {
+    }
 
     public SyncData(Gate gate)
     {
-      /* save copy */
-      this.gate = new Gate(gate);
+      this.gates.add(gate.clone());
     }
 
     public SyncData(int crewId, int lapId)
@@ -131,9 +140,13 @@ public class StartRow
 
     public SyncData(JsonReader jr) throws IOException
     {
+      jr.beginObject();
       while( jr.hasNext() ) {
         String name = jr.nextName();
         switch( name ) {
+          case "LapId":
+            this.rowId = new Integer(jr.nextInt());
+            break;
           case "LapNumber":
             this.lapId = new Integer(jr.nextInt());
             break;
@@ -146,15 +159,30 @@ public class StartRow
           case "StartTime":
             this.startTime = new Long(jr.nextLong());
             break;
+          case "Gates":
+            this.gates.clear();
+            jr.beginArray();
+            while( jr.hasNext() ) {
+              this.gates.add(new Gate(jr));
+            }
+            jr.endArray();
+            break;
           default:
             Log.d("wsa-ng", "StartRow.SyncData: Unknown field '" + name + "'");
             jr.skipValue();
         }
       }
+      jr.endObject();
     }
 
-    public void inprintJSON(JsonWriter jw) throws IOException
+    public void toJSON(JsonWriter jw) throws IOException
     {
+      jw.beginObject();
+
+      if( this.rowId != null ) {
+        jw.name("LapId").value(this.rowId);
+      }
+
       if( this.crewId != null ) {
         jw.name("CrewNumber").value(this.crewId);
       }
@@ -169,6 +197,49 @@ public class StartRow
 
       if( this.startTime != null ) {
         jw.name("StartTime").value(this.startTime);
+      }
+
+      if( this.gates.size() != 0 ) {
+        jw.name("Gates");
+        jw.beginArray();
+        for( Gate gate : this.gates ) {
+          gate.toJSON(jw);
+        }
+        jw.endArray();
+      }
+
+      jw.endObject();
+    }
+
+    public void inprint(SyncData other)
+    {
+      if( other.rowId != null )
+        this.rowId = other.rowId;
+
+      if( other.crewId != null )
+        this.crewId = other.crewId;
+
+      if( other.lapId != null )
+        this.lapId = other.crewId;
+
+      if( other.finishTime != null )
+        this.finishTime = other.finishTime;
+
+      if( other.startTime != null )
+        this.startTime = other.startTime;
+
+      for( Gate ogate : other.gates ) {
+        boolean found = false;
+
+        for( Gate lgate : this.gates ) {
+          if( lgate.gate == ogate.gate ) {
+            lgate.update(ogate);
+            found = true;
+            break;
+          }
+        }
+        if( !found )
+          this.gates.add(ogate.clone());
       }
     }
   };
@@ -264,6 +335,7 @@ public class StartRow
            " startTime='" + Default.millisecondsToString(this.startAt) + "'" +
            " finishTime='" + Default.millisecondsToString(this.finishAt) + "'" +
            " gates=" + Integer.toString(this.gates.size()) +
+           " syncPending=" + Integer.toString(this.syncList.size()) +
            " " + state.name() +
            ">";
   }
@@ -277,7 +349,7 @@ public class StartRow
     r.finishAt = finishAt;
     r.timestamp = timestamp;
     for( Gate gate : gates ) {
-      r.gates.add(new Gate(gate));
+      r.gates.add(gate.clone());
     }
     r.state = state;
     return r;
@@ -302,7 +374,7 @@ public class StartRow
     for( Gate rgate : newData.gates )
     {
       if( !updateGate(rgate) )
-        this.gates.add(new Gate(rgate));
+        this.gates.add(rgate.clone());
     }
   }
 
@@ -312,13 +384,15 @@ public class StartRow
   public int prepareJSON(JsonWriter w) throws IOException
   {
     int i;
-    w.beginObject();
-    w.name("LapId").value(this.rowId);
+    SyncData data = new SyncData();
+
+    data.rowId = new Integer(rowId);
 
     for( i = 0; i < syncList.size(); i++ ) {
-      syncList.get(i).inprintJSON(w);
+      data.inprint(syncList.get(i));
     }
-    w.endObject();
+
+    data.toJSON(w);
     return i;
   }
 
@@ -341,20 +415,24 @@ public class StartRow
     w.name("startTimeMs").value(this.startAt);
     w.name("finishTimeMs").value(this.finishAt);
     w.name("_state_name").value(this.state.name());
-    w.name("Gates");
-    w.beginArray();
-    for( Gate gate : this.gates ) {
-      gate.toJSON(w);
+
+    if( this.gates.size() != 0 ) {
+      w.name("Gates");
+      w.beginArray();
+      for( Gate gate : this.gates ) {
+        gate.toJSON(w);
+      }
+      w.endArray();
     }
-    w.endArray();
-    w.name("syncList");
-    w.beginArray();
-    for( SyncData sd : this.syncList ) {
-      w.beginObject();
-      sd.inprintJSON(w);
-      w.endObject();
+
+    if( this.syncList.size() != 0 ) {
+      w.name("syncList");
+      w.beginArray();
+      for( SyncData sd : this.syncList ) {
+        sd.toJSON(w);
+      }
+      w.endArray();
     }
-    w.endArray();
     w.endObject();
   }
 
@@ -474,9 +552,7 @@ public class StartRow
       case "syncList":
         r.beginArray();
         while( r.hasNext() ) {
-          r.beginObject();
           syncList.add(new SyncData(r));
-          r.endObject();
         }
         r.endArray();
         break;

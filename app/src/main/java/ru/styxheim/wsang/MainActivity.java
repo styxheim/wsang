@@ -630,7 +630,7 @@ public class MainActivity extends Activity
               case 3:
                 builder.setTitle(R.string.false_start);
                 builder.setMessage("Отменить результаты заезда " + Integer.toString(lap) + "?");
-                builder.setPositiveButton("Отменить", new DialogInterface.OnClickListener() {
+                builder.setPositiveButton("Да", new DialogInterface.OnClickListener() {
                   @Override
                   public void onClick(DialogInterface dialog, int id) {
                     EventMessage.ProposeMsg req;
