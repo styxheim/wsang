@@ -30,7 +30,7 @@
 			<TextView
 				android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
-				android:text="@string/lap_title"
+				android:text="@string/lap"
 				android:padding="5dp"/>
 
 			<NumberPicker
@@ -50,7 +50,7 @@
 			<TextView
 				android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
-				android:text="@string/crew_title"
+				android:text="@string/crew"
 				android:padding="5dp"/>
 
 			<NumberPicker

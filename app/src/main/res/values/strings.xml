@@ -14,9 +14,10 @@
   <string name="new_crew_save_title">Добавить</string>
   <string name="edit_crew_save_title">Сохранить</string>
   <string name="new_crew_dialog_title">Редактирование заезда</string>
-  <string name="crew_title">Команда</string>
-  <string name="lap_title">Заезд</string>
 
+  <string name="crew">Команда</string>
+  <string name="lap">Заезд</string>
+  <string name="start_time">Время старта</string>
   <string name="finish_time">Время финиша</string>
 
   <string name="false_start">Фальшстарт</string>
