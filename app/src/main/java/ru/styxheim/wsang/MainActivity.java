@@ -26,7 +26,6 @@ import org.apache.http.impl.client.*;
 public class MainActivity extends Activity
 {
   protected int lastCrewId = 0;
-  protected int lastLapId = 0;
   protected SharedPreferences settings;
   protected SharedPreferences settingsRace;
   protected SharedPreferences settingsChrono;
@@ -148,21 +147,35 @@ public class MainActivity extends Activity
   public void startOnClick(View v)
   {
     StartLineEditDialog sled;
+    final ArrayList<Integer> lap_values = new ArrayList<Integer>();
+    ViewData vd;
+    int lastLapId = 0;
+
+    if( dataList.size() > 0 ) {
+      vd = dataList.get(dataList.size() - 1);
+      lastLapId = vd.lap;
+      if( vd.start == 0 ) {
+        lap_values.add(vd.lap);
+      }
+    }
+
+    lap_values.add(lastLapId + 1);
 
     if( race.crews.size() != 0 ) {
-      sled = new StartLineEditDialog(-1, this.lastLapId + 1);
+      sled = new StartLineEditDialog(-1, lap_values.size() - 1);
       sled.setCrewValues(race.crews);
     }
     else {
-      sled = new StartLineEditDialog(this.lastCrewId + 1, this.lastLapId + 1);
+      sled = new StartLineEditDialog(this.lastCrewId + 1, lap_values.size() - 1);
     }
 
-    Log.d("wsa-ng-ui", "emit StartLineEditDialog");
+    sled.setLapValues(lap_values);
     sled.setStartLineEditDialogListener(new StartLineEditDialog.StartLineEditDialogListener() {
     @Override
-    public void onStartLineEditDialogResult(StartLineEditDialog sled, int crewNum, int lapId) {
+    public void onStartLineEditDialogResult(StartLineEditDialog sled, int crewNum, int lapNum) {
       EventMessage.ProposeMsg req;
       int crewId;
+      int lapId = lap_values.get(lapNum);
 
       if( race.crews.size() != 0 )
         crewId = race.crews.get(crewNum);
@@ -170,7 +183,6 @@ public class MainActivity extends Activity
         crewId = crewNum;
 
       lastCrewId = crewId;
-      lastLapId = lapId;
 
       req = new EventMessage.ProposeMsg(crewId, lapId);
 
@@ -309,12 +321,12 @@ public class MainActivity extends Activity
   {
     public int rowId;
 
-    protected StartRow.SyncState state;
-    protected int lap;
-    protected int crew;
-    protected long finish;
-    protected long start;
-    protected ArrayList<Integer> gates = new ArrayList<Integer>();
+    public StartRow.SyncState state;
+    public int lap;
+    public int crew;
+    public long finish;
+    public long start;
+    public ArrayList<Integer> gates = new ArrayList<Integer>();
 
     protected Context context;
 
@@ -466,13 +478,62 @@ public class MainActivity extends Activity
         public void onClick(View v)
         {
           StartLineEditDialog sled;
+          final ArrayList<Integer> lap_values = new ArrayList<Integer>();
+
+          /* pass previous and next lap data */
+          int cpos = dataList.indexOf(ViewData.this);
+          int pos = cpos;
+          int lap_cur_pos;
+
+          if( start == 0 ) {
+            /* previous lap */
+            while ( --cpos >= 0 ) {
+              ViewData prev = dataList.get(cpos);
+
+              if( prev.lap != lap && lap_values.indexOf(prev.lap) == -1 ) {
+                if( prev.start == 0 ) {
+                  /* not add when prev started */
+                  lap_values.add(prev.lap);
+                }
+                break;
+              }
+            }
+          }
+
+          lap_values.add(lap);
+          cpos = pos;
+
+
+          if( start == 0 ) {
+            int lastLapId = lap;
+            boolean found = false;
+            /* next lap */
+            while( ++cpos < dataList.size() ) {
+              ViewData next = dataList.get(cpos);
+
+              if( !found ) {
+                if( lap_values.indexOf(next.lap) == -1 ) {
+                  if( next.start == 0 ) {
+                    lap_values.add(next.lap);
+                  }
+                  found = true;;
+                }
+              }
+              lastLapId = next.lap;
+            }
+            lap_values.add(lastLapId + 1);
+          }
+
+          Log.d("wsa-ng-ui", String.format("<LAPS[%d] %s>", lap_values.size(), lap_values.toString()));
+
           if( race.crews.size() != 0 ) {
-            sled = new StartLineEditDialog(race.crews.indexOf(crew), lap, true);
+            sled = new StartLineEditDialog(race.crews.indexOf(crew), lap_values.indexOf(lap), true);
             sled.setCrewValues(race.crews);
           }
           else {
-            sled = new StartLineEditDialog(crew, lap, true);
+            sled = new StartLineEditDialog(crew, lap_values.indexOf(lap), true);
           }
+          sled.setLapValues(lap_values);
 
           for( ViewData vd : dataList ) {
             if( vd.rowId == rowId )
@@ -492,9 +553,10 @@ public class MainActivity extends Activity
 
           sled.setStartLineEditDialogListener(new StartLineEditDialog.StartLineEditDialogListener() {
               @Override
-              public void onStartLineEditDialogResult(StartLineEditDialog sled, int crewNum, int lapId) {
+              public void onStartLineEditDialogResult(StartLineEditDialog sled, int crewNum, int lapNum) {
                 EventMessage.ProposeMsg req;
                 int crewId;
+                int lapId = lap_values.get(lapNum);
 
                 if( race.crews.size() != 0 )
                   crewId = race.crews.get(crewNum);

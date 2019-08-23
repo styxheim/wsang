@@ -70,7 +70,7 @@ public class StartLineEditDialog extends DialogFragment
       if( crew_values.size() != 0 && (crew_chosen >= crew_values.size() ||
                                       crew_chosen < 0) )
         return;
-      if( lap_values.size() != 0 && (lap_chosen >= crew_values.size() ||
+      if( lap_values.size() != 0 && (lap_chosen >= lap_values.size() ||
                                      lap_chosen < 0 ) )
         return;
       listener.onStartLineEditDialogResult(this,
@@ -116,49 +116,51 @@ public class StartLineEditDialog extends DialogFragment
         crew_chosen = ThreadLocalRandom.current().nextInt(MIN, MAX);
       np.setMinValue(MIN);
       np.setMaxValue(MAX);
+      np.setWrapSelectorWheel(true);
     }
     else {
+      String[] values = new String[crew_values.size()];
+
+      for( int i = 0; i < crew_values.size(); i++ ) {
+        values[i] = crew_values.get(i).toString();
+      }
+
       if( crew_chosen == -1 )
         crew_chosen = ThreadLocalRandom.current().nextInt(0, crew_values.size() - 1);
+      np.setDescendantFocusability(NumberPicker.FOCUS_BLOCK_DESCENDANTS);
       np.setMinValue(0);
-      np.setMaxValue(crew_values.size());
-      np.setFormatter(new NumberPicker.Formatter() {
-        @Override
-        public String format(int val) {
-          if( crew_values.size() > val && val >= 0 )
-            return crew_values.get(val).toString();
-          else
-            return "";
-        }
-      });
+      np.setMaxValue(crew_values.size() - 1);
+      np.setDisplayedValues(values);
+      np.setWrapSelectorWheel(false);
     }
     np.setValue(crew_chosen);
 
-    np = (NumberPicker)v.findViewById(R.id.start_line_edit_dialog_lap_picker);
-    np.setOnValueChangedListener(this);
+    final NumberPicker lnp;
+
+    lnp = (NumberPicker)v.findViewById(R.id.start_line_edit_dialog_lap_picker);
+    lnp.setOnValueChangedListener(this);
     if( lap_values.size() == 0 ) {
       if( lap_chosen == -1 )
         lap_chosen = ThreadLocalRandom.current().nextInt(MIN, MAX);
-      np.setMinValue(MIN);
-      np.setMaxValue(MAX);
+      lnp.setMinValue(MIN);
+      lnp.setMaxValue(MAX);
+      lnp.setWrapSelectorWheel(true);
     }
     else {
+      String[] values = new String[lap_values.size()];
+
+      for( int i = 0; i < lap_values.size(); i++ ) {
+        values[i] = lap_values.get(i).toString();
+      }
       if( lap_chosen == -1 )
         lap_chosen = ThreadLocalRandom.current().nextInt(0, lap_values.size() - 1);
-      np.setMinValue(0);
-      np.setMaxValue(lap_values.size());
-      np.setFormatter(new NumberPicker.Formatter() {
-        @Override
-        public String format(int val) {
-          if( lap_values.size() > val && val >= 0 )
-            return lap_values.get(val).toString();
-          else
-            return "";
-        }
-      });
+      lnp.setDescendantFocusability(NumberPicker.FOCUS_BLOCK_DESCENDANTS);
+      lnp.setMinValue(0);
+      lnp.setMaxValue(lap_values.size() - 1);
+      lnp.setDisplayedValues(values);
+      lnp.setWrapSelectorWheel(false);
     }
-    np.setValue(lap_chosen);
-
+    lnp.setValue(lap_chosen);
     return v;
   }
 
