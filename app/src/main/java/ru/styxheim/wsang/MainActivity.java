@@ -816,14 +816,17 @@ public class MainActivity extends Activity
       tRow.addView(tSyncer);
       tRow.addView(tLap);
       tRow.addView(tCrew);
+      tRow.addView(_build_spacer());
 
       if( tStart != null ) {
         tStart.setOnClickListener(startListener);
         tRow.addView(tStart);
+        tRow.addView(_build_spacer());
       }
 
       for( TextView v : tGates ) {
         tRow.addView(v);
+        tRow.addView(_build_spacer());
       }
 
       if( tFinish != null ) {
@@ -844,6 +847,11 @@ public class MainActivity extends Activity
     }
     v.setId(v.generateViewId());
     return v;
+  }
+
+  public View _build_spacer()
+  {
+    return _newDataCol(R.id.spacer);
   }
 
   protected void _tableSetup()
@@ -871,11 +879,13 @@ public class MainActivity extends Activity
     header.addView(syncer);
     header.addView(lap);
     header.addView(crew);
+    header.addView(_build_spacer());
 
     if( term.hasStartGate() ) {
       TextView start = (TextView)_newDataCol(R.id.start_gate);
       start.setTypeface(null, Typeface.BOLD);
       header.addView(start);
+      header.addView(_build_spacer());
     }
 
     for( int i = 0; i < term.gates.size(); i++ ) {
@@ -884,6 +894,7 @@ public class MainActivity extends Activity
       gate.setTypeface(null, Typeface.BOLD);
       gate.setText(Integer.toString(term.gates.get(i)));
       header.addView(gate);
+      header.addView(_build_spacer());
     }
 
     if( term.hasFinishGate() ) {

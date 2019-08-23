@@ -4,6 +4,7 @@
 
   <color name="rowEven">#C8D2DD</color>
   <color name="rowOdd">#169e1d</color>
+  <color name="spacer">#000000</color>
 
   <color name="notSynced">#E0C351</color>
   <color name="Synced">#51E064</color>
