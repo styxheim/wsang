@@ -80,23 +80,10 @@
 		android:id="@+id/discipline_switch"
 		android:gravity="center">
 
-		<Button
+		<ProgressBar
 			android:layout_width="wrap_content"
-			style="?android:attr/buttonBarButtonStyle"
-			android:layout_height="wrap_content"
-			android:text="Bar Button"/>
-
-		<Button
-			android:layout_width="wrap_content"
-			style="?android:attr/buttonBarButtonStyle"
-			android:layout_height="wrap_content"
-			android:text="Bar Button"/>
-
-		<Button
-			android:layout_width="wrap_content"
-			style="?android:attr/buttonBarButtonStyle"
-			android:layout_height="wrap_content"
-			android:text="Bar Button"/>
+			style="?android:attr/progressBarStyleLarge"
+			android:layout_height="wrap_content"/>
 
 	</LinearLayout>
 

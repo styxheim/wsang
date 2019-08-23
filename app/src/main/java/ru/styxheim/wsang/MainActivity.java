@@ -106,7 +106,13 @@ public class MainActivity extends Activity
     tv.post(cron);
 
     findViewById(R.id.settings_button).setEnabled(true);
-    EventBus.getDefault().post(new EventMessage.Boot());
+
+    /* FIXME: sleep for wait service - bad idea */
+    tv.postDelayed(new Runnable() {
+      public void run() {
+        EventBus.getDefault().post(new EventMessage.Boot());
+      }
+    }, 1000);
   }
 
   @Override
