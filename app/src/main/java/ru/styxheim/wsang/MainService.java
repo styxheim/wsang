@@ -598,19 +598,17 @@ public class MainService extends Service
                             status.raceStatus.competitionId));
           /* clear all data */
           starts = new StartList();
-          /* update settings */
-          _updateTimeStamp(status.raceStatus.timestamp);
-          raceStatus = status.raceStatus;
         }
-        else if ( status.raceStatus.timestamp > timestamp ) {
+
+        if ( status.raceStatus.timestamp > timestamp ) {
           Log.i("wsa-ng", _("[RECEIVE] RaceStatus timestamp: local = %d, remote = %d",
                             timestamp,
                             status.raceStatus.timestamp));
           /* update settings */
           _updateTimeStamp(status.raceStatus.timestamp);
-          raceStatus = status.raceStatus;
         }
 
+        raceStatus = status.raceStatus;
         raceStatus.saveSettings(race_settings);
         EventBus.getDefault().post(raceStatus);
       }
@@ -627,7 +625,7 @@ public class MainService extends Service
           EventBus.getDefault().post(term);
         }
 
-        if( timestamp < term.timestamp ) {
+        if( term.timestamp > timestamp ) {
           /* apply timestamp from any received struct */
           Log.i("wsa-ng", _("[RECEIVE] TerminalStatus timestamp: local = %d, remote = %d",
                             timestamp,

@@ -214,7 +214,8 @@ public class MainActivity extends Activity
   @Subscribe(threadMode = ThreadMode.MAIN)
   public void _event_raceStatus(RaceStatus new_race)
   {
-    if( race == null || race.timestamp != new_race.timestamp ) {
+    if( race == null || (race.timestamp != new_race.timestamp ||
+                         race.competitionId != new_race.competitionId) ) {
       race = new_race;
       _tableSetup();
     }
