@@ -5,10 +5,18 @@ import android.view.*;
 import android.widget.*;
 import android.content.DialogInterface;
 
+import java.util.ArrayList;
+import java.util.concurrent.ThreadLocalRandom;
+
+
 public class StartLineEditDialog extends DialogFragment
   implements View.OnClickListener,
              NumberPicker.OnValueChangeListener
 {
+
+  public static int MIN = 0;
+  public static int MAX = 9999;
+
   public interface StartLineEditDialogListener {
     void onStartLineEditDialogResult(StartLineEditDialog sled, int crew, int lap);
   }
@@ -18,12 +26,9 @@ public class StartLineEditDialog extends DialogFragment
   private int crew_chosen;
   private int lap_chosen;
 
-  private int lap_min = 1;
-  private int lap_max = 999;
+  private ArrayList<Integer> crew_values = new ArrayList<Integer>();
+  private ArrayList<Integer> lap_values = new ArrayList<Integer>();
 
-  private int crew_min = 1;
-  private int crew_max = 999;
-  
   boolean editMode = false;
 
   public StartLineEditDialog(int crew_no, int lap_no)
@@ -44,16 +49,14 @@ public class StartLineEditDialog extends DialogFragment
     this.listener = listener;
   }
 
-  public void setLapMinMax(int min, int max)
+  public void setLapValues(ArrayList<Integer> values)
   {
-    this.lap_min = min;
-    this.lap_max = max;
+    this.lap_values = values;
   }
 
-  public void setCrewMinMax(int min, int max)
+  public void setCrewValues(ArrayList<Integer> values)
   {
-    this.crew_min = min;
-    this.crew_max = max;
+    this.crew_values = values;
   }
 
   @Override
@@ -64,6 +67,12 @@ public class StartLineEditDialog extends DialogFragment
     /* remove dialog */
     this.dismiss();
     if( v.getId() == R.id.start_line_edit_dialog_save && listener != null) {
+      if( crew_values.size() != 0 && (crew_chosen >= crew_values.size() ||
+                                      crew_chosen < 0) )
+        return;
+      if( lap_values.size() != 0 && (lap_chosen >= crew_values.size() ||
+                                     lap_chosen < 0 ) )
+        return;
       listener.onStartLineEditDialogResult(this,
                                            this.crew_chosen,
                                            this.lap_chosen);
@@ -90,11 +99,7 @@ public class StartLineEditDialog extends DialogFragment
     NumberPicker np;
     Button b;
 
-    if( this.crew_chosen == -1 )
-      this.crew_chosen = java.util.concurrent.ThreadLocalRandom.current().nextInt(this.crew_min, this.crew_max);
 
-    if( this.lap_chosen == -1 )
-      this.lap_chosen = java.util.concurrent.ThreadLocalRandom.current().nextInt(this.lap_min, this.lap_max);
 
     b = (Button)v.findViewById(R.id.start_line_edit_dialog_save);
     b.setOnClickListener(this);
@@ -106,15 +111,53 @@ public class StartLineEditDialog extends DialogFragment
 
     np = (NumberPicker)v.findViewById(R.id.start_line_edit_dialog_crew_picker);
     np.setOnValueChangedListener(this);
-    np.setMinValue(this.crew_min);
-    np.setMaxValue(this.crew_max);
-    np.setValue(this.crew_chosen);
+    if( crew_values.size() == 0 ) {
+      if( crew_chosen == -1 )
+        crew_chosen = ThreadLocalRandom.current().nextInt(MIN, MAX);
+      np.setMinValue(MIN);
+      np.setMaxValue(MAX);
+    }
+    else {
+      if( crew_chosen == -1 )
+        crew_chosen = ThreadLocalRandom.current().nextInt(0, crew_values.size() - 1);
+      np.setMinValue(0);
+      np.setMaxValue(crew_values.size());
+      np.setFormatter(new NumberPicker.Formatter() {
+        @Override
+        public String format(int val) {
+          if( crew_values.size() > val && val >= 0 )
+            return crew_values.get(val).toString();
+          else
+            return "";
+        }
+      });
+    }
+    np.setValue(crew_chosen);
 
     np = (NumberPicker)v.findViewById(R.id.start_line_edit_dialog_lap_picker);
     np.setOnValueChangedListener(this);
-    np.setMinValue(this.lap_min);
-    np.setMaxValue(this.lap_max);
-    np.setValue(this.lap_chosen);
+    if( lap_values.size() == 0 ) {
+      if( lap_chosen == -1 )
+        lap_chosen = ThreadLocalRandom.current().nextInt(MIN, MAX);
+      np.setMinValue(MIN);
+      np.setMaxValue(MAX);
+    }
+    else {
+      if( lap_chosen == -1 )
+        lap_chosen = ThreadLocalRandom.current().nextInt(0, lap_values.size() - 1);
+      np.setMinValue(0);
+      np.setMaxValue(lap_values.size());
+      np.setFormatter(new NumberPicker.Formatter() {
+        @Override
+        public String format(int val) {
+          if( lap_values.size() > val && val >= 0 )
+            return lap_values.get(val).toString();
+          else
+            return "";
+        }
+      });
+    }
+    np.setValue(lap_chosen);
 
     return v;
   }

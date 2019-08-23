@@ -242,6 +242,13 @@ public class StartRow
           this.gates.add(ogate.clone());
       }
     }
+
+    public SyncData clone()
+    {
+      SyncData r = new SyncData();
+      r.inprint(this);
+      return r;
+    }
   };
 
   protected ArrayList<SyncData> syncList = new ArrayList<SyncData>();
@@ -351,6 +358,9 @@ public class StartRow
     r.timestamp = timestamp;
     for( Gate gate : gates ) {
       r.gates.add(gate.clone());
+    }
+    for( SyncData sdata : syncList ) {
+      r.syncList.add(sdata.clone());
     }
     r.state = state;
     return r;

@@ -20,6 +20,7 @@ import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.util.EntityUtils;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 
 import android.media.MediaPlayer;
 
@@ -155,11 +156,16 @@ public class MainService extends Service
   private void _boot()
   {
     Log.i("wsa-ng", _("Begin boot"));
+    ArrayList<StartRow> row_list = new ArrayList<StartRow>();
+
+    EventBus.getDefault().post(raceStatus);
+    EventBus.getDefault().post(terminalStatus);
 
     for( StartRow row : starts ) {
-      Log.d("wsa-ng", _("Post row: " + row.toString()));
-      EventBus.getDefault().post(row);
+      row_list.add(row.clone());
     }
+
+    EventBus.getDefault().post(row_list);
 
     if( cdmsg != null )
       EventBus.getDefault().post(cdmsg);
@@ -584,7 +590,6 @@ public class MainService extends Service
 
     try {
       boolean changed = false;
-      boolean needReload = false;
 
       if( status.raceStatus != null ) {
         if( status.raceStatus.competitionId != raceStatus.competitionId ) {
@@ -607,7 +612,7 @@ public class MainService extends Service
         }
 
         raceStatus.saveSettings(race_settings);
-        needReload = true;
+        EventBus.getDefault().post(raceStatus);
       }
 
       /* check terminalStatus data */
@@ -619,7 +624,7 @@ public class MainService extends Service
           this.terminalStatus = term;
           this.terminalStatus.saveSettings(race_settings);
           /* update Screen */
-          needReload = true;
+          EventBus.getDefault().post(term);
         }
 
         if( timestamp < term.timestamp ) {
@@ -657,8 +662,6 @@ public class MainService extends Service
 
       if( changed )
         starts.Save(getApplicationContext());
-      if( needReload )
-        EventBus.getDefault().post(new EventMessage.ReloadSettings());
     } catch( Exception e ) {
       StringWriter sw = new StringWriter();
       PrintWriter pw = new PrintWriter(sw);

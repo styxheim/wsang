@@ -105,7 +105,8 @@ public class MainActivity extends Activity
 
     tv.post(cron);
 
-    _tableSetup();
+    findViewById(R.id.settings_button).setEnabled(true);
+    EventBus.getDefault().post(new EventMessage.Boot());
   }
 
   @Override
@@ -117,6 +118,8 @@ public class MainActivity extends Activity
 
   public void settingsOnClick(View v)
   {
+    v.setEnabled(false);
+
     Intent intent = new Intent(this, SettingsActivity.class);
     startActivity(intent);
   }
@@ -138,13 +141,27 @@ public class MainActivity extends Activity
 
   public void startOnClick(View v)
   {
-    StartLineEditDialog sled = new StartLineEditDialog(this.lastCrewId + 1, this.lastLapId + 1);
+    StartLineEditDialog sled;
+
+    if( race.crews.size() != 0 ) {
+      sled = new StartLineEditDialog(-1, this.lastLapId + 1);
+      sled.setCrewValues(race.crews);
+    }
+    else {
+      sled = new StartLineEditDialog(this.lastCrewId + 1, this.lastLapId + 1);
+    }
 
     Log.d("wsa-ng-ui", "emit StartLineEditDialog");
     sled.setStartLineEditDialogListener(new StartLineEditDialog.StartLineEditDialogListener() {
     @Override
-    public void onStartLineEditDialogResult(StartLineEditDialog sled, int crewId, int lapId) {
+    public void onStartLineEditDialogResult(StartLineEditDialog sled, int crewNum, int lapId) {
       EventMessage.ProposeMsg req;
+      int crewId;
+
+      if( race.crews.size() != 0 )
+        crewId = race.crews.get(crewNum);
+      else
+        crewId = crewNum;
 
       lastCrewId = crewId;
       lastLapId = lapId;
@@ -168,13 +185,33 @@ public class MainActivity extends Activity
   }
 
   @Subscribe(threadMode = ThreadMode.MAIN)
-  public void _event_reloadSettings(EventMessage.ReloadSettings msg)
+  public void _event_terminalStatus(TerminalStatus new_term)
   {
-    _tableSetup();
+    if( term == null || term.timestamp != new_term.timestamp ) {
+      term = new_term;
+      _tableSetup();
+    }
   }
 
   @Subscribe(threadMode = ThreadMode.MAIN)
-  public void _event_StartRow(StartRow row)
+  public void _event_raceStatus(RaceStatus new_race)
+  {
+    if( race == null || race.timestamp != new_race.timestamp ) {
+      race = new_race;
+      _tableSetup();
+    }
+  }
+
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  public void _event_StartRowList(ArrayList<StartRow> rows)
+  {
+    for( StartRow row : rows ) {
+      _update_StartRow(row);
+    }
+  }
+
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  public void _update_StartRow(StartRow row)
   {
     /* Update or add new data */
     ViewData vd = _getViewDataById(row.getRowId());
@@ -422,7 +459,14 @@ public class MainActivity extends Activity
         @Override
         public void onClick(View v)
         {
-          StartLineEditDialog sled = new StartLineEditDialog(crew, lap, true);
+          StartLineEditDialog sled;
+          if( race.crews.size() != 0 ) {
+            sled = new StartLineEditDialog(race.crews.indexOf(crew), lap, true);
+            sled.setCrewValues(race.crews);
+          }
+          else {
+            sled = new StartLineEditDialog(crew, lap, true);
+          }
 
           for( ViewData vd : dataList ) {
             if( vd.rowId == rowId )
@@ -442,10 +486,17 @@ public class MainActivity extends Activity
 
           sled.setStartLineEditDialogListener(new StartLineEditDialog.StartLineEditDialogListener() {
               @Override
-              public void onStartLineEditDialogResult(StartLineEditDialog sled, int crewId, int lapId) {
+              public void onStartLineEditDialogResult(StartLineEditDialog sled, int crewNum, int lapId) {
                 EventMessage.ProposeMsg req;
+                int crewId;
 
-                Log.i("wsa-ng", "Set new lap/crew for row #" + Integer.toString(rowId));
+                if( race.crews.size() != 0 )
+                  crewId = race.crews.get(crewNum);
+                else
+                  crewId = crewNum;
+
+                Log.i("wsa-ng", "Set new lap/crew for row #" + Integer.toString(rowId) +
+                                " crew=" + Integer.toString(crewId) + " lap=" + Integer.toString(lapId) );
                 req = new EventMessage.ProposeMsg(crewId, lapId);
 
                 req.setRowId(rowId);
@@ -579,6 +630,9 @@ public class MainActivity extends Activity
           extras.putIntegerArrayList("gates", term.gates);
           extras.putIntegerArrayList("penalties", race.penalties);
           extras.putIntegerArrayList("values", gates);
+
+          extras.putLong("term_timestamp", term.timestamp);
+          extras.putLong("race_timestamp", race.timestamp);
 
           intent.putExtras(extras);
           startActivity(intent);
@@ -728,8 +782,9 @@ public class MainActivity extends Activity
   {
     LinearLayout dswitch = findViewById(R.id.discipline_switch);
     TableLayout table = findViewById(R.id.table);
-    term = new TerminalStatus(settingsRace);
-    race = new RaceStatus(settingsRace);
+
+    if( term == null || race == null )
+      return;
 
     dataList.clear();
     table.removeAllViews();

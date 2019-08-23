@@ -97,12 +97,6 @@ public class EventMessage
     this.type = EventType.PROPOSE;
     this.obj = obj;
   }
-
-  public static class ReloadSettings
-  {
-    /* Request screen reset
-    */
-  }
   
   public static class Boot
   {

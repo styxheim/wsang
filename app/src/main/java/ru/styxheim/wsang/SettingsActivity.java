@@ -92,6 +92,7 @@ public class SettingsActivity extends Activity
 
   public void doneOnClick(View v)
   {
+    v.setEnabled(false);
     finish();
   }
 

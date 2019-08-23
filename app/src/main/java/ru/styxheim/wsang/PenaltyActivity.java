@@ -33,6 +33,9 @@ public class PenaltyActivity extends Activity
 
   protected SharedPreferences settingsChrono;
 
+  protected long race_timestamp;
+  protected long term_timestamp;
+
   @Override
   protected void onCreate(Bundle savedInstanceState)
   {
@@ -49,6 +52,8 @@ public class PenaltyActivity extends Activity
       this.gates = extras.getIntegerArrayList("gates");
       this.penalties = extras.getIntegerArrayList("penalties");
       this.values = extras.getIntegerArrayList("values");
+      this.race_timestamp = extras.getLong("race_timestamp");
+      this.term_timestamp = extras.getLong("term_timestamp");
     }
 
     _setupPenalties();
@@ -113,12 +118,14 @@ public class PenaltyActivity extends Activity
 
   public void onClickCancel(View v)
   {
+    v.setEnabled(false);
     finish();
   }
 
   public void onClickSave(View v)
   {
     EventMessage.ProposeMsg msg;
+    v.setEnabled(false);
 
     for( int i = 0; i < gates.size(); i++ ) {
       msg = new EventMessage.ProposeMsg(EventMessage.ProposeMsg.Type.PENALTY);
@@ -140,10 +147,23 @@ public class PenaltyActivity extends Activity
   }
 
   @Subscribe(threadMode = ThreadMode.MAIN)
-  public void _event_reloadSettings(EventMessage.ReloadSettings msg)
+  public void _event_reloadSettings(TerminalStatus term)
   {
-    /* move to launcher for apply new settings */
-    Intent intent = new Intent(PenaltyActivity.this, Launcher.class);
-    startActivity(intent);
+    if( term.timestamp != term_timestamp ) {
+      /* move to launcher for apply new settings */
+      Intent intent = new Intent(PenaltyActivity.this, Launcher.class);
+      startActivity(intent);
+    }
   }
+
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  public void _event_reloadSettings(RaceStatus race)
+  {
+    if( race.timestamp != race_timestamp ) {
+      /* move to launcher for apply new settings */
+      Intent intent = new Intent(PenaltyActivity.this, Launcher.class);
+      startActivity(intent);
+    }
+  }
+
 }
