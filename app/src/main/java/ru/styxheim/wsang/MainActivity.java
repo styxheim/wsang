@@ -883,10 +883,14 @@ public class MainActivity extends Activity
     header.addView(_build_spacer());
 
     if( term.hasStartGate() ) {
+      findViewById(R.id.new_crew).setVisibility(View.VISIBLE);
       TextView start = (TextView)_newDataCol(R.id.start_gate);
       start.setTypeface(null, Typeface.BOLD);
       header.addView(start);
       header.addView(_build_spacer());
+    }
+    else {
+      findViewById(R.id.new_crew).setVisibility(View.GONE);
     }
 
     for( int i = 0; i < term.gates.size(); i++ ) {
