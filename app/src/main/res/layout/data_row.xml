@@ -23,7 +23,8 @@
 		android:text="Lap"
 		android:textAppearance="?android:attr/textAppearanceLarge"
 		android:id="@+id/lap"
-		android:padding="6dp"/>
+		android:padding="6dp"
+		android:gravity="center"/>
 
 	<TextView
 		android:layout_width="wrap_content"
@@ -31,7 +32,8 @@
 		android:text="Crew"
 		android:textAppearance="?android:attr/textAppearanceLarge"
 		android:id="@+id/crew"
-		android:padding="6dp"/>
+		android:padding="6dp"
+		android:gravity="center"/>
 
 	<TextView
 		android:layout_width="wrap_content"
@@ -39,7 +41,8 @@
 		android:text="Start"
 		android:textAppearance="?android:attr/textAppearanceLarge"
 		android:id="@+id/start_gate"
-		android:padding="6dp"/>
+		android:padding="6dp"
+		android:gravity="center"/>
 
 	<TextView
 		android:layout_width="wrap_content"
@@ -50,7 +53,8 @@
 		android:paddingLeft="20dp"
 		android:paddingRight="20dp"
 		android:paddingTop="6dp"
-		android:paddingBottom="6dp"/>
+		android:paddingBottom="6dp"
+		android:gravity="center"/>
 
 	<TextView
 		android:layout_width="wrap_content"
@@ -58,7 +62,8 @@
 		android:text="Finish"
 		android:textAppearance="?android:attr/textAppearanceLarge"
 		android:id="@+id/finish_gate"
-		android:padding="6dp"/>
+		android:padding="6dp"
+		android:gravity="center"/>
 
 </TableRow>
 
