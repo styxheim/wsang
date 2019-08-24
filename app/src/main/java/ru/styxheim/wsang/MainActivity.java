@@ -218,6 +218,7 @@ public class MainActivity extends Activity
                          race.competitionId != new_race.competitionId) ) {
       race = new_race;
       _tableSetup();
+      chrono.reload();
     }
   }
 

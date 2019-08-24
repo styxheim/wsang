@@ -63,13 +63,7 @@ public class Chrono implements Iterable<Chrono.Record>
     this.chrono_data = chrono_data;
 
     this.vibro_service = vibro_service;
-
-    times.clear();
-    for( int i = 0; i < times_limit; i++ ) {
-      if( !chrono_data.contains(Integer.toString(i)) )
-        break;
-      times.add(new Record(chrono_data.getLong(Integer.toString(i), 0)));
-    }
+    reload();
   }
 
   protected void _save()
@@ -110,6 +104,16 @@ public class Chrono implements Iterable<Chrono.Record>
   public int getSize()
   {
     return times.size();
+  }
+
+  public void reload()
+  {
+    times.clear();
+    for( int i = 0; i < times_limit; i++ ) {
+      if( !chrono_data.contains(Integer.toString(i)) )
+        break;
+      times.add(new Record(chrono_data.getLong(Integer.toString(i), 0)));
+    }
   }
 
   public Record getRecord(int i)

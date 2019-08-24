@@ -598,6 +598,10 @@ public class MainService extends Service
                             status.raceStatus.competitionId));
           /* clear all data */
           starts = new StartList();
+          SharedPreferences chrono_data = getSharedPreferences("chrono_data", Context.MODE_PRIVATE);
+          SharedPreferences.Editor ed = chrono_data.edit();
+          ed.clear();
+          ed.commit();
         }
 
         if ( status.raceStatus.timestamp > timestamp ) {
