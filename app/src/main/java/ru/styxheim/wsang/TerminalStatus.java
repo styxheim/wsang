@@ -12,7 +12,7 @@ import java.io.*;
 public class TerminalStatus
 {
   public String terminalId = "";
-  public ArrayList<Integer> gates = new ArrayList<Integer>();
+  public ArrayList<Integer> gates = new ArrayList<Integer>(Arrays.asList(RaceStatus.GATE_START, RaceStatus.GATE_FINISH));
   protected boolean finishGate = false;
   protected boolean startGate = false;
   protected long timestamp = 0;
@@ -22,8 +22,6 @@ public class TerminalStatus
   final static String TERMINAL_ID = "TerminalId";
   final static String GATES = "Gates";
   final static int INVALID_GATE = -1;
-  final static int FINISH_GATE = -3;
-  final static int START_GATE = -2;
 
   public boolean hasFinishGate()
   {
@@ -38,10 +36,10 @@ public class TerminalStatus
   public void addGate(int gate)
   {
     switch( gate ) {
-    case START_GATE:
+    case RaceStatus.GATE_START:
       this.startGate = true;
       break;
-    case FINISH_GATE:
+    case RaceStatus.GATE_FINISH:
       this.finishGate = true;
       break;
     default:
@@ -105,9 +103,9 @@ public class TerminalStatus
     }
 
     if( this.finishGate )
-      jw.value(FINISH_GATE);
+      jw.value(RaceStatus.GATE_FINISH);
     if( this.startGate )
-      jw.value(START_GATE);
+      jw.value(RaceStatus.GATE_START);
 
     jw.endArray();
 

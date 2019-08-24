@@ -254,6 +254,13 @@ public class SettingsActivity extends Activity
         ed.clear();
         ed.commit();
 
+        SharedPreferences race_settings = getSharedPreferences("race", Context.MODE_PRIVATE);
+        RaceStatus race = new RaceStatus();
+        race.saveSettings(race_settings);
+
+        TerminalStatus term = new TerminalStatus();
+        term.saveSettings(race_settings);
+
         ed = settings.edit();
         ed.putLong(RaceStatus.TIMESTAMP, 0L);
         ed.commit();

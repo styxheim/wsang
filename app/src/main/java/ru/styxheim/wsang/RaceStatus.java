@@ -13,6 +13,9 @@ public class RaceStatus
 {
   final static String CLASS_NAME = "RaceStatus";
 
+  final static int GATE_START = -2;
+  final static int GATE_FINISH = -3;
+
   final static String COMPETITION_ID = "CompetitionId";
   final static String TIMESTAMP = "TimeStamp";
   final static String CREWS = "Crews";
@@ -24,7 +27,7 @@ public class RaceStatus
 
   public long competitionId;
   public long timestamp;
-  public ArrayList<Integer> gates = new ArrayList<Integer>();
+  public ArrayList<Integer> gates = new ArrayList<Integer>(Arrays.asList(GATE_START, GATE_FINISH));
   public ArrayList<Integer> penalties = new ArrayList<Integer>();
   public ArrayList<Integer> crews = new ArrayList<Integer>();
   public ArrayList<Discipline> disciplines = new ArrayList<Discipline>();
