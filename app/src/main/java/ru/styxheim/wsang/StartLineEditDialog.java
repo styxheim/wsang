@@ -131,7 +131,7 @@ public class StartLineEditDialog extends DialogFragment
       np.setMinValue(0);
       np.setMaxValue(crew_values.size() - 1);
       np.setDisplayedValues(values);
-      np.setWrapSelectorWheel(false);
+      np.setWrapSelectorWheel(true);
     }
     np.setValue(crew_chosen);
 
