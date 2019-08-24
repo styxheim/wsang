@@ -12,9 +12,9 @@ import java.io.*;
 public class TerminalStatus
 {
   public String terminalId = "";
-  public ArrayList<Integer> gates = new ArrayList<Integer>(Arrays.asList(RaceStatus.GATE_START, RaceStatus.GATE_FINISH));
-  protected boolean finishGate = false;
-  protected boolean startGate = false;
+  public ArrayList<Integer> gates = new ArrayList<Integer>();
+  protected boolean finishGate = true;
+  protected boolean startGate = true;
   protected long timestamp = 0;
 
   final static String CLASS_NAME = "TerminalStatus";
