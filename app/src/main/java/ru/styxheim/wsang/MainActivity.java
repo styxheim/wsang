@@ -405,8 +405,13 @@ public class MainActivity extends Activity
 
       for( int i = 0; i < gates.size(); i++ ) {
         int gatePenaltyId = gates.get(i);
-        int pvalue = race.penalties.get(gatePenaltyId);
+        int pvalue = 0;
         TextView tGate = tGates.get(i);
+
+        if( gatePenaltyId >= race.penalties.size() || gatePenaltyId < 0 )
+          Log.e("wsa-ng-ui", String.format("Invalid penalty id#%d", gatePenaltyId));
+        else
+          pvalue = race.penalties.get(gatePenaltyId);
 
         if( pvalue == 0 )
           tGate.setText("");
