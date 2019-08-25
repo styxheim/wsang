@@ -4,6 +4,7 @@ import android.os.*;
 import android.view.*;
 import android.widget.*;
 import android.content.DialogInterface;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.concurrent.ThreadLocalRandom;
@@ -114,6 +115,19 @@ public class StartLineEditDialog extends DialogFragment
     if( crew_values.size() == 0 ) {
       if( crew_chosen == -1 )
         crew_chosen = ThreadLocalRandom.current().nextInt(MIN, MAX);
+      try {
+        final EditText wheel = (EditText)np.getChildAt(0);
+        wheel.post(new Runnable() {
+          public void run() {
+            wheel.setSelectAllOnFocus(true);
+            wheel.setFocusableInTouchMode(true);
+            wheel.clearFocus();
+            wheel.requestFocus();
+          }
+        });
+      } catch( Exception e ) {
+        Log.e("wsa-ng-ui", "Error in crew NumberPicker: " + e.getMessage());
+      }
       np.setMinValue(MIN);
       np.setMaxValue(MAX);
       np.setWrapSelectorWheel(true);
@@ -168,6 +182,7 @@ public class StartLineEditDialog extends DialogFragment
   public Dialog onCreateDialog(Bundle savedInstanceState)
   {
     Dialog dialog = super.onCreateDialog(savedInstanceState);
+    dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
     return dialog;
   }
 
