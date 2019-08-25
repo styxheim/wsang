@@ -4,7 +4,6 @@ import android.app.*;
 import android.os.*;
 import android.widget.*;
 import android.view.*;
-import android.view.ViewGroup.LayoutParams;
 import android.content.*;
 import android.text.TextWatcher;
 import android.text.Editable;
