@@ -8,6 +8,9 @@ import android.content.Context;
 import android.view.KeyEvent;
 import android.content.SharedPreferences;
 import java.util.ArrayList;
+import android.util.Log;
+import android.os.Build.VERSION;
+import android.os.Build.VERSION_CODES;
 
 public class Chrono implements Iterable<Chrono.Record>
 {
@@ -93,7 +96,12 @@ public class Chrono implements Iterable<Chrono.Record>
 
       int vtime = settings.getInt("vibro", Default.chrono_vibro);
       if( vtime > 0 ) {
-        vibro_service.vibrate(VibrationEffect.createOneShot(vtime, VibrationEffect.DEFAULT_AMPLITUDE));
+        if( VERSION.SDK_INT >= VERSION_CODES.O ) {
+          vibro_service.vibrate(VibrationEffect.createOneShot(vtime, VibrationEffect.DEFAULT_AMPLITUDE));
+        }
+        else {
+          vibro_service.vibrate(vtime);
+        }
       }
       _save();
       return true;
