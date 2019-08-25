@@ -113,7 +113,8 @@
 				android:layout_width="match_parent"
 				android:layout_height="wrap_content"
 				android:paddingBottom="20dp"
-				android:onClick="modeOnClick">
+				android:onClick="modeOnClick"
+				android:visibility="gone">
 
 				<TextView
 					android:layout_width="wrap_content"
@@ -144,7 +145,7 @@
 					android:text="Идентификатор"
 					android:textStyle="bold"/>
 
-        <TextView
+				<TextView
 					android:id="@+id/settings_terminal_id"
 					android:layout_width="wrap_content"
 					android:layout_height="wrap_content"
@@ -163,14 +164,14 @@
 					android:layout_width="wrap_content"
 					android:layout_height="wrap_content"
 					android:textAppearance="?android:attr/textAppearanceSmall"
-          android:text="Адрес сервера"
+					android:text="Адрес сервера"
 					android:textStyle="bold"/>
 
 				<EditText
 					android:id="@+id/settings_server_edit"
 					android:layout_width="match_parent"
 					android:layout_height="wrap_content"
-          android:descendantFocusability="beforeDescendants"
+					android:descendantFocusability="beforeDescendants"
 					android:ems="10"/>
 
 				<Button
@@ -179,7 +180,7 @@
 					android:layout_width="match_parent"
 					style="?android:attr/buttonBarButtonStyle"
 					android:layout_height="wrap_content"
-          android:text="@string/apply_title"/>
+					android:text="@string/apply_title"/>
 
 			</LinearLayout>
 
@@ -196,13 +197,13 @@
 					android:text="Экспорт в CSV и JSON"
 					android:onClick="exportOnClick"/>
 
-        <Button
-          android:layout_width="match_parent"
-          style="?android:attr/buttonBarButtonStyle"
-          android:layout_height="wrap_content"
-          android:text="Импорт из JSON"
+				<Button
+					android:layout_width="match_parent"
+					style="?android:attr/buttonBarButtonStyle"
+					android:layout_height="wrap_content"
+					android:text="Импорт из JSON"
 					android:onClick="importOnClick"/>
-        
+
 				<Button
 					android:layout_width="match_parent"
 					style="?android:attr/buttonBarButtonStyle"
