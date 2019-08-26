@@ -8,6 +8,7 @@ import android.content.*;
 import android.text.TextWatcher;
 import android.text.Editable;
 import android.util.Log;
+import android.media.MediaPlayer;
 
 import java.io.*;
 
@@ -15,6 +16,7 @@ public class SettingsActivity extends Activity
 {
   private SharedPreferences settings;
   private SharedPreferences settings_chrono;
+  private MediaPlayer mPlayer;
 
   @Override
   public boolean onKeyDown(int keyCode, KeyEvent event) {
@@ -29,12 +31,14 @@ public class SettingsActivity extends Activity
       ed.putLong("offset", timeInMillis);
       ed.apply();
 
+      mPlayer.start();
       int vtime = settings_chrono.getInt("vibro", Default.chrono_vibro);
       if( vtime > 0 ) {
         Vibrator v = (Vibrator)getSystemService(Context.VIBRATOR_SERVICE);
         v.vibrate(VibrationEffect.createOneShot(vtime, VibrationEffect.DEFAULT_AMPLITUDE));
       }
       _update_chrono_offset_title();
+      mPlayer.seekTo(0);
       return true;
     }
     return super.onKeyDown(keyCode, event);
@@ -63,6 +67,8 @@ public class SettingsActivity extends Activity
 
     /* chronometer */
     final TextView tv = (TextView)findViewById(R.id.settings_chronometer);
+    this.mPlayer = MediaPlayer.create(SettingsActivity.this, R.raw.lap);
+    mPlayer.seekTo(0);
 
     cron = new Runnable() {
       public void run() {

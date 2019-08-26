@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import android.util.Log;
 import android.os.Build.VERSION;
 import android.os.Build.VERSION_CODES;
+import android.media.MediaPlayer;
+import java.io.IOException;
 
 public class Chrono implements Iterable<Chrono.Record>
 {
@@ -18,6 +20,7 @@ public class Chrono implements Iterable<Chrono.Record>
   protected int times_limit = 1000;
   protected SharedPreferences settings;
   protected SharedPreferences chrono_data;
+  protected MediaPlayer mPlayer;
 
   protected Vibrator vibro_service;
 
@@ -58,12 +61,16 @@ public class Chrono implements Iterable<Chrono.Record>
     return times.iterator();
   }
 
-  public Chrono(SharedPreferences settings,
+  public Chrono(Context context,
+                SharedPreferences settings,
                 SharedPreferences chrono_data,
                 Vibrator vibro_service)
   {
     this.settings = settings;
     this.chrono_data = chrono_data;
+
+    this.mPlayer = MediaPlayer.create(context, R.raw.lap);
+    mPlayer.seekTo(0);
 
     this.vibro_service = vibro_service;
     reload();
@@ -94,6 +101,7 @@ public class Chrono implements Iterable<Chrono.Record>
       if( times.size() > times_limit )
         times.remove(times.size() - 1);
 
+      this.mPlayer.start();
       int vtime = settings.getInt("vibro", Default.chrono_vibro);
       if( vtime > 0 ) {
         if( VERSION.SDK_INT >= VERSION_CODES.O ) {
@@ -104,6 +112,7 @@ public class Chrono implements Iterable<Chrono.Record>
         }
       }
       _save();
+      this.mPlayer.seekTo(0);
       return true;
     }
     return false;

@@ -915,7 +915,8 @@ public class MainActivity extends Activity
 
     table.addView(header);
 
-    chrono = new Chrono(getSharedPreferences("chrono", Context.MODE_PRIVATE),
+    chrono = new Chrono(MainActivity.this,
+                        getSharedPreferences("chrono", Context.MODE_PRIVATE),
                         getSharedPreferences("chrono_data", Context.MODE_PRIVATE),
                         (Vibrator)getSystemService(Context.VIBRATOR_SERVICE));
 
