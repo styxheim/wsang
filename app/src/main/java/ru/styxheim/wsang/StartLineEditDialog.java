@@ -182,7 +182,8 @@ public class StartLineEditDialog extends DialogFragment
   public Dialog onCreateDialog(Bundle savedInstanceState)
   {
     Dialog dialog = super.onCreateDialog(savedInstanceState);
-    dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
+    if( lap_values.size() == 0 || crew_values.size() == 0 )
+      dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
     return dialog;
   }
 
