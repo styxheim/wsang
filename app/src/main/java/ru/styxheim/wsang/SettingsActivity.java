@@ -264,7 +264,9 @@ public class SettingsActivity extends Activity
         RaceStatus race = new RaceStatus();
         race.saveSettings(race_settings);
 
+        TerminalStatus oldTerm = new TerminalStatus(race_settings);
         TerminalStatus term = new TerminalStatus();
+        term.terminalId = oldTerm.terminalId;
         term.saveSettings(race_settings);
 
         ed = settings.edit();
