@@ -106,4 +106,31 @@ public class EventMessage
   public static class CountDownCancelled
   {
   }
+
+  public static class TimeSync
+  {
+    boolean isEmpty = true;
+    long T1;
+    long T2;
+    long T3;
+    long T4;
+
+    public TimeSync(long T1, long T2, long T3, long T4)
+    {
+      this.isEmpty = false;
+      this.T1 = T1;
+      this.T2 = T2;
+      this.T3 = T3;
+      this.T4 = T4;
+    }
+
+    public String toString()
+    {
+      if( isEmpty )
+        return String.format("<%s empty>", this.getClass().getName());
+      return String.format("<%s T1=%d, T2=%d, T3=%d, T4=%d>",
+                           this.getClass().getName(),
+                           this.T1, this.T2, this.T3, this.T4);
+    }
+  }
 }

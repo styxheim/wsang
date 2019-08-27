@@ -271,6 +271,10 @@ public class SettingsActivity extends Activity
         ed.putLong(RaceStatus.TIMESTAMP, 0L);
         ed.commit();
 
+        ed = settings_chrono.edit();
+        ed.putLong("offset", 0L);
+        ed.commit();
+
         moveTaskToBack(true);
         android.os.Process.killProcess(android.os.Process.myPid());
         System.exit(1);
