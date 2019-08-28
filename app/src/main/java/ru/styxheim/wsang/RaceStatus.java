@@ -30,7 +30,7 @@ public class RaceStatus
   public long competitionId;
   public long timestamp;
   public ArrayList<Integer> gates = new ArrayList<Integer>(Arrays.asList(GATE_START, GATE_FINISH));
-  public ArrayList<Integer> penalties = new ArrayList<Integer>();
+  public ArrayList<Integer> penalties = new ArrayList<Integer>(Arrays.asList(0));
   public ArrayList<Integer> crews = new ArrayList<Integer>();
   public ArrayList<Discipline> disciplines = new ArrayList<Discipline>();
 

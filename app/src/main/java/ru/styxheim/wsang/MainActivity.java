@@ -14,6 +14,7 @@ import android.graphics.drawable.Drawable;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Collections;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -413,7 +414,7 @@ public class MainActivity extends Activity
         else
           pvalue = race.penalties.get(gatePenaltyId);
 
-        if( pvalue == 0 )
+        if( gatePenaltyId == 0 )
           tGate.setText("");
         else
           tGate.setText(Integer.toString(pvalue));
@@ -871,6 +872,8 @@ public class MainActivity extends Activity
     dataList.clear();
     table.removeAllViews();
     dswitch.removeAllViews();
+
+    Collections.sort(term.gates);
 
     TableRow header = (TableRow)_newDataCol(R.layout.data_row);
     header.removeAllViews();

@@ -77,7 +77,8 @@ public class PenaltyActivity extends Activity
       gate_title.setText(gateId.toString());
       penalty_container.removeAllViews();
 
-      for( int i = 0; i < penalties.size(); i++ ) {
+      for( int i = 1; i < penalties.size(); i++ ) {
+        /* i == 0 for `not setted` */
         View _v = inflater.inflate(R.layout.gate_penalties_elem, null, false);
         RadioButton rb = _v.findViewById(R.id.penalty);
 
@@ -87,7 +88,7 @@ public class PenaltyActivity extends Activity
 
         ((ViewGroup)rb.getParent()).removeView(rb);
         rb.setText(penalties.get(i).toString());
-        if( i == values.get(gi)) {
+        if( i + 1 == values.get(gi)) {
           rb.setChecked(true);
         }
         else {
