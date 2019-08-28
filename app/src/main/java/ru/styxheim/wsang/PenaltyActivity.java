@@ -88,7 +88,7 @@ public class PenaltyActivity extends Activity
 
         ((ViewGroup)rb.getParent()).removeView(rb);
         rb.setText(penalties.get(i).toString());
-        if( i + 1 == values.get(gi)) {
+        if( i == values.get(gi)) {
           rb.setChecked(true);
         }
         else {
