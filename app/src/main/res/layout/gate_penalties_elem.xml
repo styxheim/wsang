@@ -27,8 +27,8 @@
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
 			android:text="No penalty"
-			android:padding="6dp"
-			android:onClick="onClickPenaltyRadioButton"
+			android:padding="12dp"
+      android:onClick="onClickPenaltyRadioButton"
 			android:textAppearance="?android:attr/textAppearanceLarge"/>
 
 	</RadioGroup>

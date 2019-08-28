@@ -16,8 +16,13 @@
 			android:layout_height="wrap_content"
 			android:gravity="center">
 
+			<ImageView
+				android:src="@mipmap/ic_launcher"
+				android:layout_width="wrap_content"
+				android:layout_height="match_parent"/>
+
 			<Button
-				android:id="@+id/save_button"
+				android:id="@+id/cancel_button"
 				android:layout_width="wrap_content"
 				style="?android:attr/buttonBarButtonStyle"
 				android:layout_height="wrap_content"
@@ -43,15 +48,6 @@
 			android:layout_height="wrap_content"
 			android:gravity="right">
 
-			<Button
-				android:id="@+id/save_button"
-				android:layout_width="wrap_content"
-				style="?android:attr/buttonBarButtonStyle"
-				android:layout_height="wrap_content"
-				android:text="Save"
-				android:padding="6dp"
-				android:onClick="onClickSave"/>
-
 		</LinearLayout>
 
 	</LinearLayout>
@@ -61,30 +57,57 @@
 		style="?android:attr/progressBarStyleHorizontal"
 		android:layout_height="wrap_content"/>
 
-	<ScrollView
-		android:layout_width="match_parent"
-		android:layout_height="match_parent"
-		android:layout_gravity="center"
-        android:fillViewport="true">
+	<RelativeLayout
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content">
+
+		<ScrollView
+			android:layout_width="match_parent"
+			android:layout_height="match_parent"
+			android:fillViewport="true">
+
+			<LinearLayout
+				android:orientation="vertical"
+				android:layout_width="match_parent"
+				android:layout_height="match_parent"
+				android:gravity="center">
+
+				<GridLayout
+					android:id="@+id/container"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:layout_gravity="center"
+					android:columnCount="3">
+
+				</GridLayout>
+
+				<LinearLayout
+					android:orientation="vertical"
+					android:layout_width="match_parent"
+					android:layout_height="60dp"/>
+
+			</LinearLayout>
+
+		</ScrollView>
 
 		<LinearLayout
 			android:orientation="vertical"
 			android:layout_width="match_parent"
-			android:layout_height="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_alignParentBottom="true"
 			android:gravity="center">
 
-			<GridLayout
-				android:id="@+id/container"
-				android:layout_width="wrap_content"
-				android:layout_height="wrap_content"
-				android:layout_gravity="center"
-				android:columnCount="3">
-
-			</GridLayout>
+			<Button
+				android:layout_width="match_parent"
+				android:layout_height="60dp"
+				android:text="Save"
+				android:id="@+id/save_button"
+				android:padding="6dp"
+				android:onClick="onClickSave"/>
 
 		</LinearLayout>
 
-	</ScrollView>
+	</RelativeLayout>
 
 </LinearLayout>
 
