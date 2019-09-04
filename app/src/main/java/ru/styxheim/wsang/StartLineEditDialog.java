@@ -67,6 +67,8 @@ public class StartLineEditDialog extends DialogFragment
     v.requestFocusFromTouch();
     /* remove dialog */
     this.dismiss();
+    Log.d("wsa-ng-ui", String.format("sled: crew=%d, lap=%d", crew_chosen, lap_chosen));
+
     if( v.getId() == R.id.start_line_edit_dialog_save && listener != null) {
       if( crew_values.size() != 0 && (crew_chosen >= crew_values.size() ||
                                       crew_chosen < 0) )
@@ -139,8 +141,14 @@ public class StartLineEditDialog extends DialogFragment
         values[i] = crew_values.get(i).toString();
       }
 
-      if( crew_chosen == -1 )
-        crew_chosen = ThreadLocalRandom.current().nextInt(0, crew_values.size() - 1);
+      if( crew_chosen == -1 ) {
+        if( crew_values.size() == 1 ) {
+          crew_chosen = 0;
+        }
+        else {
+          crew_chosen = ThreadLocalRandom.current().nextInt(0, crew_values.size() - 1);
+        }
+      }
       np.setDescendantFocusability(NumberPicker.FOCUS_BLOCK_DESCENDANTS);
       np.setMinValue(0);
       np.setMaxValue(crew_values.size() - 1);
@@ -166,8 +174,14 @@ public class StartLineEditDialog extends DialogFragment
       for( int i = 0; i < lap_values.size(); i++ ) {
         values[i] = lap_values.get(i).toString();
       }
-      if( lap_chosen == -1 )
-        lap_chosen = ThreadLocalRandom.current().nextInt(0, lap_values.size() - 1);
+      if( lap_chosen == -1 ) {
+        if( lap_values.size() == 1 ) {
+          lap_chosen = 0;
+        }
+        else {
+          lap_chosen = ThreadLocalRandom.current().nextInt(0, lap_values.size() - 1);
+        }
+      }
       lnp.setDescendantFocusability(NumberPicker.FOCUS_BLOCK_DESCENDANTS);
       lnp.setMinValue(0);
       lnp.setMaxValue(lap_values.size() - 1);

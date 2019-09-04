@@ -169,6 +169,7 @@ public class MainActivity extends Activity
       sled = new StartLineEditDialog(this.lastCrewId + 1, lap_values.size() - 1);
     }
 
+    Log.d("wsa-ng-ui", "show sled");
     sled.setLapValues(lap_values);
     sled.setStartLineEditDialogListener(new StartLineEditDialog.StartLineEditDialogListener() {
     @Override
@@ -186,6 +187,7 @@ public class MainActivity extends Activity
 
       req = new EventMessage.ProposeMsg(crewId, lapId);
 
+      Log.d("wsa-ng-ui", "Propose new: crew=" + Integer.toString(crewId) + " lap=" + Integer.toString(lapId));
       EventBus.getDefault().post(new EventMessage(req));
     }
     });
