@@ -41,6 +41,8 @@ public class MainService extends Service
   private TerminalStatus terminalStatus;
   private RaceStatus raceStatus;
 
+  protected int syncTimeout = 3000;
+
   private static final int TIME_TIMES = 10;
   private static final String SET_URL = "http://%s/api/update/%d/%s";
   private static final String GET_URL = "http://%s/api/data/%d/%d/%s";
@@ -53,6 +55,25 @@ public class MainService extends Service
     COUNTDOWN,
     CANCEL
   };
+
+  private class ScreenIntent extends BroadcastReceiver
+  {
+    protected boolean is_on;
+    protected MainService ctx;
+
+    public ScreenIntent(boolean is_on, MainService ctx)
+    {
+      this.is_on = is_on;
+      this.ctx = ctx;
+    }
+
+    @Override
+    public void onReceive(Context p1, Intent p2)
+    {
+      // TODO: Implement this method
+      ctx.onScreen(this.is_on);
+    }
+  }
 
   private EventMessage.CountDownMsg cdmsg = null;
   private MediaPlayer mPlayer = null;
@@ -94,6 +115,18 @@ public class MainService extends Service
     }
   }
 
+  public void onScreen(boolean is_on)
+  {
+    if( !is_on ) {
+      this.syncTimeout = 60000;
+    }
+    else {
+      this.syncTimeout = 3000;
+      _sync_receive();
+    }
+    Log.d("wsa-ng", _("Set syncTimeout to '%d'", syncTimeout));
+  }
+
   @Override
   public void onCreate() {
     chrono_settings = getSharedPreferences("chrono", Context.MODE_PRIVATE);
@@ -122,9 +155,16 @@ public class MainService extends Service
     _sync_handler.post(new Runnable() {
       public void run() {
         _sync_receive();
-        _sync_handler.postDelayed(this, 3000);
+        _sync_handler.postDelayed(this, syncTimeout);
       }
     });
+
+    IntentFilter filter;
+    filter = new IntentFilter(Intent.ACTION_SCREEN_ON);
+    registerReceiver(new ScreenIntent(true, this), filter);
+    filter = new IntentFilter(Intent.ACTION_SCREEN_OFF);
+    registerReceiver(new ScreenIntent(false, this), filter);
+
   }
 
   @Override
