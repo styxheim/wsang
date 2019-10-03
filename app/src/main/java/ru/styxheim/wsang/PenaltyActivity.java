@@ -129,6 +129,7 @@ public class PenaltyActivity extends Activity
     v.setEnabled(false);
 
     for( int i = 0; i < gates.size(); i++ ) {
+      Log.d("wsa-ng", "Emit Penalty");
       msg = new EventMessage.ProposeMsg(EventMessage.ProposeMsg.Type.PENALTY);
       msg.rowId = rowId;
       msg.gate = gates.get(i);
