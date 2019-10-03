@@ -219,6 +219,9 @@ public class StartRow
 
     public void inprint(SyncData other)
     {
+      if( other.timestamp != null )
+        this.timestamp = other.timestamp;
+
       if( other.rowId != null )
         this.rowId = other.rowId;
 

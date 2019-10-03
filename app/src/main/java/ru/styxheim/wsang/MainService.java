@@ -338,7 +338,6 @@ public class MainService extends Service
   private void _sync_receive()
   {
     final String url;
-    final ServerStatus serverStatus = new ServerStatus();
     Request request;
     Call call;
 
@@ -354,6 +353,7 @@ public class MainService extends Service
     call.enqueue(new Callback() {
       public void onResponse(Call call, Response response) throws IOException
       {
+        ServerStatus serverStatus = new ServerStatus();
         Log.d("wsa-ng", _("rsync: result code == %d", response.code()));
 
         if( response.code() == 200 ) {
@@ -368,7 +368,7 @@ public class MainService extends Service
       public void onFailure(Call call, IOException e)
       {
         Log.e("wsa-ng", _("rsync: failed: %s", e.getMessage()));
-        EventBus.getDefault().post(new EventMessage.RSyncResult(serverStatus));
+        EventBus.getDefault().post(new EventMessage.RSyncResult(null));
       }
     });
   }
@@ -731,11 +731,12 @@ public class MainService extends Service
             if( diff.isEmpty() )
               Log.e("wsa-ng", _("rsync: diff is not empty"));
           }
-          else if( lrow.state != StartRow.SyncState.SYNCED ) {
+          else {
             if( diff.isEmpty() ) {
               lrow.setState(StartRow.SyncState.SYNCED);
             }
-            else {
+            else if( lrow.state == StartRow.SyncState.SYNCING ) {
+              /* Set PENDING only to already sended rows */
               lrow.setState(StartRow.SyncState.PENDING);
             }
             changed = true;
