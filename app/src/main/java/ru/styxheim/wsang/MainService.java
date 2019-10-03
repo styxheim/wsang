@@ -373,82 +373,39 @@ public class MainService extends Service
     });
   }
 
-  /*
-  private EventMessage.TimeSync __timesync() {
+  private void _sync_time()
+  {
     String url = String.format(TIME_URL,
                                settings.getString("server_addr", Default.server_addr),
                                System.currentTimeMillis());
-    HttpClient client = _build_client();
-    HttpGet rq = new HttpGet(url);
-    HttpResponse rs;
-    EventMessage.TimeSync msg = null;
-    int rs_code;
-
-    rq.setHeader("User-Agent", "wsa-ng/1.0");
-
-    try {
-      rs = client.execute(rq);
-    } catch( ClientProtocolException|IOException e ) {
-      Log.e("wsa-ng", _("tsync failed: " + e.getMessage()));
-      return null;
-    }
-
-    rs_code = rs.getStatusLine().getStatusCode();
-
-    if( rs_code != 200 ) {
-      Log.e("wsa-ng", _("tsync failed: server return code " + Integer.toString(rs_code)));
-      return null;
-    }
-
-    try {
-      String result;
-      String[] data;
-
-      result = EntityUtils.toString(rs.getEntity(), "UTF-8");
-      data = result.split(":", 3);
-
-      Long T1 = Long.parseLong(data[0]);
-      Long T2 = Long.parseLong(data[1]);
-      Long T3 = Long.parseLong(data[2]);
-      Long T4 = new Long(System.currentTimeMillis());
-
-      msg = new EventMessage.TimeSync(T1, T2, T3, T4);
-
-      Log.d("wsa-ng", _("tsync: response=" + result + " " + msg.toString()));
-    } catch( IOException e ) {
-      Log.e("wsa-ng", _("tsync failed string decode: " + e.getMessage()));
-    }
-
-    return msg;
-  }
-
-  private void _sync_time()
-  {
-
-    if( isTimeSyncNow ) {
-      Log.e("wsa-ng", _("tsync: another sync in progress now"));
-      // FIXME: cancel current query
-      return;
-    }
-
-    isTimeSyncNow = true;
-
-
-    Thread thread = new Thread(new Runnable() {
-      public void run() {
-        ArrayList<Long> r = new ArrayList<Long>();
-        Long rs;
+    Request request = new Request.Builder().url(url).build();
+    http_client.newCall(request).enqueue(new Callback() {
+      public void onResponse(Call call, Response response) throws IOException
+      {
+        String[] data;
         EventMessage.TimeSync msg;
+        String body = response.body().string();
+        
+        Log.d("wsa-ng", _("tsync: response code == %d, data = %s",
+                          response.code(), body));
+        
+        data = body.split(":", 3);
+        
+        Long T1 = Long.parseLong(data[0]);
+        Long T2 = Long.parseLong(data[1]);
+        Long T3 = Long.parseLong(data[2]);
+        Long T4 = new Long(System.currentTimeMillis());
 
-        msg = __timesync();
+        msg = new EventMessage.TimeSync(T1, T2, T3, T4);
         EventBus.getDefault().post(msg);
       }
+      public void onFailure(Call call, IOException e)
+      {
+        Log.e("wsa-ng", _("tsync: failed: %s", e.getMessage()));
+      }
     });
-
-    thread.setDaemon(true);
-    thread.start();
+    
   }
-  */
 
   @Subscribe(threadMode = ThreadMode.MAIN)
   public void onTimeSync(EventMessage.TimeSync msg)
@@ -702,7 +659,7 @@ public class MainService extends Service
           ed.commit();
 
           /* sync time */
-          /*_sync_time();*/
+          _sync_time();
         }
 
         if ( status.raceStatus.timestamp > timestamp ) {
