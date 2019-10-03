@@ -11,7 +11,7 @@ import java.io.*;
 public class ServerStatus
 {
   RaceStatus raceStatus;
-  ArrayList<StartRow> lap = new ArrayList<StartRow>();
+  ArrayList<StartRow.SyncData> lap = new ArrayList<StartRow.SyncData>();
   ArrayList<TerminalStatus> terminalStatus = new ArrayList<TerminalStatus>();
 
   public ServerStatus()
@@ -48,7 +48,7 @@ public class ServerStatus
       case StartRow.CLASS_NAME:
         jr.beginArray();
         while( jr.hasNext() ) {
-          lap.add(new StartRow(jr));
+          lap.add(new StartRow.SyncData(jr));
         }
         jr.endArray();
         break;
@@ -82,7 +82,7 @@ public class ServerStatus
       jw.name(StartRow.CLASS_NAME);
       jw.beginArray();
       for( int i = 0; i < lap.size(); i++ ) {
-        lap.get(i).saveJSONServer(jw);
+        lap.get(i).toJSON(jw);
       }
       jw.endArray();
     }

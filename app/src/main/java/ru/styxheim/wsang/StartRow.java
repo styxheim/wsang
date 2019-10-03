@@ -29,7 +29,8 @@ public class StartRow
     public Gate clone()
     {
       Gate n = new Gate();
-      n.update(this);
+      n.gate = this.gate;
+      n.penalty = this.penalty;
       return n;
     }
 
@@ -37,12 +38,6 @@ public class StartRow
     {
       this.gate = gate;
       this.penalty = penalty;
-    }
-
-    public void update(Gate other)
-    {
-      this.gate = other.gate;
-      this.penalty = other.penalty;
     }
 
     public Gate(JsonReader jr) throws IOException, IllegalStateException
@@ -91,11 +86,6 @@ public class StartRow
     }
   };
 
-  public boolean updateLapId;
-  public boolean updateCrewId;
-  public boolean updateStartAt;
-  public boolean updateFinishAt;
-
   public static enum SyncState {
     NONE,
     PENDING,
@@ -104,7 +94,8 @@ public class StartRow
     SYNCED,
   };
 
-  protected class SyncData {
+  protected static class SyncData {
+    public Long timestamp;
     public Integer rowId;
     public Integer crewId;
     public Integer lapId;
@@ -167,6 +158,9 @@ public class StartRow
             }
             jr.endArray();
             break;
+          case RaceStatus.TIMESTAMP:
+            this.timestamp = new Long(jr.nextLong());
+            break;
           default:
             Log.d("wsa-ng", "StartRow.SyncData: Unknown field '" + name + "'");
             jr.skipValue();
@@ -175,9 +169,21 @@ public class StartRow
       jr.endObject();
     }
 
+    public boolean isEmpty()
+    {
+      return ( timestamp == null &&
+               rowId == null && crewId == null && lapId == null &&
+               finishTime == null && startTime == null &&
+               gates.size() == 0 );
+    }
+
     public void toJSON(JsonWriter jw) throws IOException
     {
       jw.beginObject();
+
+      if( this.timestamp != null ) {
+        jw.name(RaceStatus.TIMESTAMP).value(this.timestamp);
+      }
 
       if( this.rowId != null ) {
         jw.name("LapId").value(this.rowId);
@@ -233,7 +239,7 @@ public class StartRow
 
         for( Gate lgate : this.gates ) {
           if( lgate.gate == ogate.gate ) {
-            lgate.update(ogate);
+            lgate.penalty = ogate.penalty;
             found = true;
             break;
           }
@@ -252,6 +258,7 @@ public class StartRow
   };
 
   protected ArrayList<SyncData> syncList = new ArrayList<SyncData>();
+  protected ArrayList<SyncData> syncedList = new ArrayList<SyncData>();
 
   public SyncState state = SyncState.NONE;
 
@@ -313,23 +320,139 @@ public class StartRow
     this.syncList.add(new SyncData(rgate));
   }
 
+  /*
   public void setState(SyncState state, int inprintCount)
   {
     if( state == SyncState.SYNCED ) {
       for( int i = 0; i < inprintCount; i++ ) {
+        syncedList.add(syncList.get(0));
         syncList.remove(0);
       }
 
       if( syncList.size() != 0 ) {
-        /* set state to pending when queue is not empty */
+        // set state to pending when queue is not empty
         state = SyncState.PENDING;
       }
     }
     else if( state == SyncState.ERROR && inprintCount != syncList.size() ) {
-      /* retry when not all changes applied */
+      // retry when not all changes applied
       state = SyncState.PENDING;
     }
 
+    this.state = state;
+  }
+  */
+
+  public void updateNotPendingFields(SyncData received,
+                                     SyncData previous,
+                                     SyncData diff)
+  {
+    // update StartRow for fields what not overlayed
+    // by data present in syncList
+    // return syncData with fields whant not updated
+    // when `previous` is null, no changes in `this`
+    SyncData overlay = new SyncData();
+
+    for( SyncData ndata : syncList ) {
+      overlay.inprint(ndata);
+    }
+
+    // timestamp not used in this case
+    // rowId not used in this case
+
+    if( received.crewId != null ) {
+      if( overlay.crewId != null ) {
+        if( received.crewId.compareTo(overlay.crewId) != 0 ) {
+          if( diff != null )
+            diff.crewId = received.crewId;
+        }
+      }
+      else if( previous != null && received.crewId.compareTo(this.crewId) != 0 ) {
+        previous.crewId = this.crewId;
+        this.crewId = received.crewId;
+      }
+    }
+
+    if( received.lapId != null ) {
+      if( overlay.lapId != null ) {
+        if( received.lapId.compareTo(overlay.lapId) != 0 ) {
+          if( diff != null )
+            diff.lapId = received.lapId;
+        }
+      }
+      else if( previous != null && received.lapId.compareTo(this.lapId) != 0 ) {
+        previous.lapId = this.lapId;
+        this.lapId = received.lapId;
+      }
+    }
+
+    if( received.finishTime != null ) {
+      if( overlay.finishTime != null ) {
+        if( received.finishTime.compareTo(overlay.finishTime) != 0 ) {
+          if( diff != null )
+            diff.finishTime = received.finishTime;
+        }
+      }
+      else if( previous != null && received.finishTime.compareTo(this.finishAt) != 0 ) {
+        previous.finishTime = this.finishAt;
+        this.finishAt = received.finishTime;
+      }
+    }
+
+    if( received.startTime != null ) {
+      if( overlay.startTime != null ) {
+        // found in overlay
+        if( received.startTime.compareTo(overlay.startTime) != 0 ) {
+          // store differ value
+          if( diff != null )
+            diff.startTime = received.startTime;
+        }
+        // value is equal to overlay: nothing
+      }
+      else if( previous != null ) {
+        previous.startTime = this.startAt;
+        this.startAt = received.startTime;
+      }
+    }
+
+    for( Gate rgate : received.gates ) {
+      boolean found_in_overlay = false;
+      for( Gate ogate : overlay.gates ) {
+        if( ogate.gate == rgate.gate ) {
+          // gate found in overlay
+          found_in_overlay = true;
+          if( ogate.penalty != rgate.penalty ) {
+            // value is differ
+            if( diff != null )
+              diff.gates.add(rgate);
+          }
+          break;
+          // value is equal to overlay: nothing
+        }
+      }
+      if( !found_in_overlay && previous != null ) {
+        for( Gate lgate : gates ) {
+          if( lgate.gate == rgate.gate ) {
+            if( lgate.penalty != rgate.penalty ) {
+              // value not equal
+              previous.gates.add(lgate.clone());
+              lgate.penalty = rgate.penalty;
+              break;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  public void setState(SyncState state)
+  {
+    if( state == SyncState.SYNCED ) {
+      for( SyncData sd : syncList ) {
+        syncedList.add(sd);
+      }
+      syncList.clear();
+    }
     this.state = state;
   }
 
@@ -344,6 +467,7 @@ public class StartRow
            " finishTime='" + Default.millisecondsToString(this.finishAt) + "'" +
            " gates=" + Integer.toString(this.gates.size()) +
            " syncPending=" + Integer.toString(this.syncList.size()) +
+           " synced=" + Integer.toString(this.syncedList.size()) +
            " " + state.name() +
            ">";
   }
@@ -362,25 +486,27 @@ public class StartRow
     for( SyncData sdata : syncList ) {
       r.syncList.add(sdata.clone());
     }
+    for( SyncData sdata : syncedList ) {
+      r.syncedList.add(sdata.clone());
+    }
     r.state = state;
     return r;
   }
 
-  public void update(StartRow newData)
+  public void update(SyncData newData)
   {
-    this.timestamp = newData.timestamp;
-
-    if( newData.updateLapId ) {
+    if( newData.timestamp != null )
+      this.timestamp = newData.timestamp;
+    if( newData.lapId != null )
       this.lapId = newData.lapId;
-    }
-    if( newData.updateCrewId ) {
+    if( newData.crewId != null ) {
       this.crewId = newData.crewId;
     }
-    if( newData.updateStartAt ) {
-      this.startAt = newData.startAt;
+    if( newData.startTime != null ) {
+      this.startAt = newData.startTime;
     }
-    if( newData.updateFinishAt) {
-      this.finishAt = newData.finishAt;
+    if( newData.finishTime != null ) {
+      this.finishAt = newData.finishTime;
     }
     for( Gate rgate : newData.gates )
     {
@@ -409,14 +535,14 @@ public class StartRow
 
   public void saveJSON(JsonWriter w) throws IOException
   {
-    SyncState state = this.state;
+    SyncState _state = this.state;
 
     /* SYNCING and PENDING state is equal:
      *  SYNCING for UI
      *  PENDING for configs
      */
-    if( state == SyncState.SYNCING )
-      state = SyncState.PENDING;
+    if( _state == SyncState.SYNCING )
+      _state = SyncState.PENDING;
 
     w.beginObject();
     /* confusing names: for compatable with old WSA application */
@@ -425,7 +551,7 @@ public class StartRow
     w.name("crewNumber").value(this.crewId);
     w.name("startTimeMs").value(this.startAt);
     w.name("finishTimeMs").value(this.finishAt);
-    w.name("_state_name").value(this.state.name());
+    w.name("_state_name").value(_state.name());
 
     if( this.gates.size() != 0 ) {
       w.name("Gates");
@@ -440,6 +566,14 @@ public class StartRow
       w.name("syncList");
       w.beginArray();
       for( SyncData sd : this.syncList ) {
+        sd.toJSON(w);
+      }
+      w.endArray();
+    }
+    if( this.syncedList.size() != 0 ) {
+      w.name("syncedList");
+      w.beginArray();
+      for( SyncData sd : this.syncedList ) {
         sd.toJSON(w);
       }
       w.endArray();
@@ -469,7 +603,7 @@ public class StartRow
   boolean updateGate(Gate rgate) {
     for( Gate lgate : gates ) {
       if( lgate.gate == rgate.gate ) {
-        lgate.update(rgate);
+        lgate.penalty = rgate.penalty;
         return true;
       }
     }
@@ -492,19 +626,15 @@ public class StartRow
         this.rowId = r.nextInt();
         break;
       case "LapNumber":
-        this.updateLapId = true;
         this.lapId = r.nextInt();
         break;
       case "CrewNumber":
-        this.updateCrewId = true;
         this.crewId = r.nextInt();
         break;
       case "StartTime":
-        this.updateStartAt = true;
         this.startAt = r.nextLong();
         break;
       case "FinishTime":
-        this.updateFinishAt = true;
         this.finishAt = r.nextLong();
         break;
       case "Gates":
@@ -527,6 +657,7 @@ public class StartRow
   public void loadJSON(JsonReader r) throws IllegalStateException, IOException
   {
     this.syncList.clear();
+    this.syncedList.clear();
     this.gates.clear();
 
     if( !r.hasNext() )
@@ -564,6 +695,13 @@ public class StartRow
         r.beginArray();
         while( r.hasNext() ) {
           syncList.add(new SyncData(r));
+        }
+        r.endArray();
+        break;
+      case "syncedList":
+        r.beginArray();
+        while( r.hasNext() ) {
+          syncedList.add(new SyncData(r));
         }
         r.endArray();
         break;

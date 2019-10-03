@@ -107,6 +107,36 @@ public class EventMessage
   {
   }
 
+  public static class RSyncResult
+  {
+    public ServerStatus serverStatus;
+
+    public RSyncResult(ServerStatus ss) {
+      this.serverStatus = ss;
+    }
+  }
+
+  public static class SyncSuccess
+  {
+    public ArrayList<StartRow> rows;
+
+    public SyncSuccess(ArrayList<StartRow> rows)
+    {
+      this.rows = rows;
+    }
+  }
+
+
+  public static class SyncFailure
+  {
+    public ArrayList<StartRow> rows;
+
+    public SyncFailure(ArrayList<StartRow> rows)
+    {
+      this.rows = rows;
+    }
+  }
+
   public static class TimeSync
   {
     boolean isEmpty = true;

@@ -9,16 +9,14 @@ import android.util.JsonWriter;
 import java.io.*;
 import android.widget.Toast;
 
-import org.apache.http.HttpResponse;
-import org.apache.http.entity.ByteArrayEntity;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.util.EntityUtils;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+import okhttp3.Call;
+import okhttp3.Callback;
+
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 
@@ -47,6 +45,7 @@ public class MainService extends Service
   private static final String SET_URL = "http://%s/api/update/%d/%s";
   private static final String GET_URL = "http://%s/api/data/%d/%d/%s";
   private static final String TIME_URL = "http://%s/api/timesync/%d";
+  private OkHttpClient http_client = new OkHttpClient();
 
   private long timestamp = 0;
 
@@ -88,8 +87,19 @@ public class MainService extends Service
 
   private boolean isTimeSyncNow = false;
 
+  private Handler _sync_handler = new Handler();
+
   public String _(String format, Object ... args) {
     return "[" + android.os.Process.myTid() + "] " + String.format(format, args);
+  }
+
+  public String e2trace(Exception e)
+  {
+    StringWriter psw = new StringWriter();
+    PrintWriter pw = new PrintWriter(psw);
+
+    e.printStackTrace(pw);
+    return psw.toString();
   }
 
   private void _updateTimeStamp(long newTimeStamp)
@@ -101,18 +111,114 @@ public class MainService extends Service
     ed.apply();
   }
 
-  private void _sync_next_row() {
-    /* sync next row in queue */
-    for( StartRow row : starts ) {
-      if( row.state == StartRow.SyncState.PENDING ) {
-        _sync_row(row);
+  private void _sync_all_rows()
+  {
+    final String url;
+    final ArrayList<StartRow> rows = new ArrayList<StartRow>();
+    StringWriter sw = new StringWriter();
+    JsonWriter jw = new JsonWriter(sw);
 
-        /* allow only one sync thread at time
-           note: for disable find all usages `isSyncNow`
-        */
-        break;
-      }
+    if( !settings.contains("server_addr") ) {
+      Log.d("wsa-ng", _("sync: `server_addr` is not defined: rows not synced"));
+      /* FIXME: why need restart sync when server address not defined */
+      _sync_sched();
+      return;
     }
+
+    try {
+    jw.beginArray();
+      for( StartRow row : starts ) {
+        if( row.state == StartRow.SyncState.PENDING ) {
+          int inprint = 0;
+          try {
+            inprint = row.prepareJSON(jw);
+          } catch( Exception e ) {
+            Log.e("wsa-ng", _("sync rowId #%d error: %s ->\n%s",
+                              row.getRowId(), e.getMessage(), e2trace(e)));
+            row.setState(StartRow.SyncState.ERROR);
+            continue;
+          }
+          Log.d("wsa-ng", _("sync: prepare row %s -> inprint=%d",
+                            row.toString(), inprint));
+          rows.add(row);
+          row.setState(StartRow.SyncState.SYNCING);
+        }
+      }
+      jw.endArray();
+    } catch( IOException e ) {
+      Log.e("wsa-ng", _("sync array error: %s ->\n%s",
+                        e.getMessage(), e2trace(e)));
+      _sync_sched();
+      return;
+    }
+
+    if( rows.size() == 0 ) {
+      _sync_sched();
+      return;
+    }
+
+    /* event about change state of rows */
+    EventBus.getDefault().post(rows);
+
+    /* tell to server */
+    url = String.format(SET_URL,
+                        settings.getString("server_addr", Default.server_addr),
+                        raceStatus.competitionId,
+                        terminalStatus.terminalId);
+
+    Log.d("wsa-ng", _("sync: push %d rows to %s", rows.size(), url));
+    final MediaType MIME_JSON = MediaType.get("application/json; charset=utf-8");
+    RequestBody body = RequestBody.create(MIME_JSON, sw.toString());
+    Request request = new Request.Builder().url(url).post(body).build();
+    Call call = http_client.newCall(request);
+
+    call.enqueue(new Callback() {
+      public void onResponse(Call call, Response response) throws IOException
+      {
+        int code = response.code();
+        String body = response.body().string();
+
+        if( code == 200 && body.compareTo("true") == 0 ) {
+          /* sync ok */
+          Log.d("wsa-ng", _("sync: %d rows pushed to server", rows.size()));
+          EventBus.getDefault().post(new EventMessage.SyncSuccess(rows));
+          return;
+        }
+
+        Log.e("wsa-ng", _("sync: %d rows not pushed: code == %d (%s)",
+                          rows.size(), code, body));
+        EventBus.getDefault().post(new EventMessage.SyncFailure(rows));
+      }
+
+      public void onFailure(Call call, IOException e)
+      {
+        Log.e("wsa-ng", _("sync: failed: %s", e.getMessage()));
+        EventBus.getDefault().post(new EventMessage.SyncFailure(rows));
+      }
+    });
+  }
+
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  public void _event_sync_success(EventMessage.SyncSuccess ss)
+  {
+    _sync_sched();
+
+    /* set SENDED status? */
+  }
+
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  public void _event_sync_failure(EventMessage.SyncFailure sf)
+  {
+    _sync_sched();
+
+    if( sf.rows == null )
+      return;
+
+    for( StartRow row : sf.rows ) {
+      row.setState(StartRow.SyncState.PENDING);
+    }
+
+    EventBus.getDefault().post(sf.rows);
   }
 
   public void onScreen(boolean is_on)
@@ -122,9 +228,26 @@ public class MainService extends Service
     }
     else {
       this.syncTimeout = 3000;
+      _sync_handler.removeCallbacks(_sync_runnable);
+      // TODO: fix raise conditional
+      Log.d("wsa-ng", _("sync: Urgent sync call"));
       _sync_receive();
     }
-    Log.d("wsa-ng", _("Set syncTimeout to '%d'", syncTimeout));
+    Log.d("wsa-ng", _("sync: Set syncTimeout to '%d'", syncTimeout));
+  }
+
+  protected Runnable _sync_runnable = new Runnable()
+  {
+    public void run() {
+      _sync_receive();
+    }
+  };
+
+  protected void _sync_sched()
+  {
+    Log.d("wsa-ng", _("sync: delay next event at %d seconds", syncTimeout));
+    _sync_handler.postDelayed(_sync_runnable, syncTimeout);
+
   }
 
   @Override
@@ -151,20 +274,14 @@ public class MainService extends Service
 
     Log.i("wsa-ng", _("TerminalId=" + this.terminalStatus.terminalId));
 
-    /* TODO: disable sync when apllication no visible */
-    _sync_handler.post(new Runnable() {
-      public void run() {
-        _sync_receive();
-        _sync_handler.postDelayed(this, syncTimeout);
-      }
-    });
-
     IntentFilter filter;
     filter = new IntentFilter(Intent.ACTION_SCREEN_ON);
     registerReceiver(new ScreenIntent(true, this), filter);
     filter = new IntentFilter(Intent.ACTION_SCREEN_OFF);
     registerReceiver(new ScreenIntent(false, this), filter);
 
+    // sync: first step: receive race data
+    _sync_receive();
   }
 
   @Override
@@ -217,219 +334,46 @@ public class MainService extends Service
     Log.i("wsa-ng", _("Boot End"));
   }
 
-  private HttpClient _build_client()
-  {
-    RequestConfig config = RequestConfig.custom()
-                           .setConnectTimeout(30000)
-                           .setConnectionRequestTimeout(30000)
-                           .setSocketTimeout(30000)
-                           .build();
-    return HttpClientBuilder.create()
-                            .setDefaultRequestConfig(config)
-                            .build();
-  }
-
-  private Handler _sync_handler = new Handler() {
-    @Override
-    public void handleMessage(Message msg) {
-      Bundle data = msg.getData();
-      int rowId = data.getInt("rowId");
-      int inprintCount = data.get("inprintCount");
-      StartRow row = starts.getRecord(rowId);
-      StartRow.SyncState state = StartRow.SyncState.values()[data.getInt("state")];
-
-      if( row == null ) {
-        Log.e("wsa-ng", _("unknown rowId #" + rowId + " from sync service"));
-        return;
-      }
-
-      row.setState(state, inprintCount);
-
-      Log.d("wsa-ng", _("publish sync result for rowId #" + rowId + " new state: " + state.name()));
-      EventBus.getDefault().post(row);
-
-      isSyncNow = false;
-      if( state == StartRow.SyncState.SYNCED ) {
-        starts.Save(getApplicationContext());
-        _sync_next_row();
-      }
-    }
-  };
-
-  /* send row to server */
-  private void _sync_row(StartRow row)
-  {
-    final int inprintCount;
-    final Launcher.Mode mode;
-    final byte[] body;
-    final String url;
-    final int rowId = row.getRowId();
-
-    if( isSyncNow )
-      return;
-
-    if( !settings.contains("server_addr") ) {
-      Log.d("wsa-ng", _("`server_addr` is not defined: row not synced"));
-      return;
-    }
-
-    StringWriter sw = new StringWriter();
-    JsonWriter jw = new JsonWriter(sw);
-
-    try {
-      jw.beginArray();
-      url = String.format(SET_URL,
-                          settings.getString("server_addr", Default.server_addr),
-                          raceStatus.competitionId,
-                          terminalStatus.terminalId);
-      inprintCount = row.prepareJSON(jw);
-      jw.endArray();
-      body = sw.toString().getBytes("utf-8");
-    } catch( Exception e ) {
-      StringWriter psw = new StringWriter();
-      PrintWriter pw = new PrintWriter(psw);
-
-      e.printStackTrace(pw);
-      Log.e("wsa-ng", _("sync rowId #" + Integer.toString(rowId) + " error: " + e.getMessage() + " ->\n" + psw.toString()));
-      row.setState(StartRow.SyncState.ERROR, 0);
-      return;
-    }
-
-    Log.d("wsa-ng", _("sync rowId #" + Integer.toString(rowId) + " going to new thread: inprint=" + Integer.toString(inprintCount)));
-
-    isSyncNow = true;
-
-    row.setState(StartRow.SyncState.SYNCING, 0);
-    /* publish status */
-    EventBus.getDefault().post(row);
-
-    /* run sync */
-    Thread thread = new Thread(new Runnable() {
-      public void run() {
-        HttpClient client = _build_client();
-        Message msg;
-        Bundle data;
-        StartRow.SyncState state = StartRow.SyncState.PENDING;
-        HttpPost rq = new HttpPost(url);
-
-        rq.setHeader("User-Agent", "wsa-ng/1.0");
-        rq.setEntity(new ByteArrayEntity(body));
-
-        HttpResponse rs;
-        do {
-          Log.i("wsa-ng", _("sync rowId #" + Integer.toString(rowId) + " url: " + url));
-          try {
-            rs = client.execute(rq);
-          } catch( ClientProtocolException e ) {
-            Log.e("wsa-ng", _("sync rowId #" + Integer.toString(rowId) + " error: " + e.getMessage()));
-            break;
-          } catch( IOException e ) {
-            Log.e("wsa-ng", _("sync rowId #" + Integer.toString(rowId) + " error: " + e.getMessage()));
-            break;
-          }
-          int rs_code = rs.getStatusLine().getStatusCode();
-
-          if( rs_code == 200 ) {
-            String result;
-            try {
-              result = EntityUtils.toString(rs.getEntity(), "UTF-8");
-              if( result.compareTo("true") == 0 ) {
-                state = StartRow.SyncState.SYNCED;
-                Log.d("wsa-ng", _("sync rowId #" + Integer.toString(rowId) + " complete"));
-              }
-              else {
-                state = StartRow.SyncState.ERROR;
-                Log.d("wsa-ng", _("sync rowId #" + Integer.toString(rowId) + " server not return 'true': " + result));
-              }
-            }
-            catch( IOException e ) {
-              Log.e("wsa-ng", _("sync rowId #" + Integer.toString(rowId) + " unpack result from server failed: " + e.getMessage()));
-            }
-          }
-          else {
-            Log.d("wsa-ng", _("sync rowId #" + Integer.toString(rowId) + " invalid code: " + Integer.toString(rs_code)));
-          }
-        } while( false );
-
-        data = new Bundle();
-        data.putInt("rowId", rowId);
-        data.putInt("state", state.ordinal());
-        data.putInt("inprintCount", inprintCount);
-
-        msg = _sync_handler.obtainMessage();
-        msg.setData(data);
-        _sync_handler.sendMessage(msg);
-      }
-    });
-
-    thread.setDaemon(true);
-    thread.start();
-  }
-
-  private boolean isSyncNow = false;
-
   /* receive and sync data from server */
   private void _sync_receive()
   {
     final String url;
+    final ServerStatus serverStatus = new ServerStatus();
+    Request request;
+    Call call;
 
-    if( isSyncNow )
-      return;
-
-    isSyncNow = true;
     url = String.format(GET_URL,
                         settings.getString("server_addr", Default.server_addr),
                         this.raceStatus.competitionId,
                         this.timestamp,
                         this.terminalStatus.terminalId);
 
-    Thread thread = new Thread(new Runnable() {
-      public void run() {
-        HttpClient client = _build_client();
-        HttpGet rq = new HttpGet(url);
-        ServerStatus serverStatus = new ServerStatus();
+    Log.d("wsa-ng", _("rsync: query url %s", url));
+    request = new Request.Builder().url(url).build();
+    call = http_client.newCall(request);
+    call.enqueue(new Callback() {
+      public void onResponse(Call call, Response response) throws IOException
+      {
+        Log.d("wsa-ng", _("rsync: result code == %d", response.code()));
 
-        Log.d("wsa-ng", _("rsync addr: %s", url));
-        rq.setHeader("User-Agent", "wsa-ng/1.0");
-
-        HttpResponse rs;
-        try {
-          try {
-            rs = client.execute(rq);
-          } catch( ClientProtocolException|IOException e) {
-            Log.e("wsa-ng", _("rsync failed: " + e.getMessage()));
-            return;
-          }
-          int rs_code = rs.getStatusLine().getStatusCode();
-
-          if( rs_code == 200 ) {
-            String result;
-            try {
-              result = EntityUtils.toString(rs.getEntity(), "UTF-8");
-              Log.d("wsa-ng", _("rsync response: " + result));
-
-              JsonReader jr = new JsonReader(new StringReader(result));
-              serverStatus.loadJSON(jr);
-            }
-            catch( IOException|IllegalStateException e ) {
-              Log.e("wsa-ng", _("rsync decoding exception: " + e.getMessage()));
-              return;
-            }
-          }
-          else {
-            Log.e("wsa-ng", _("rsync code: " + Integer.toString(rs_code)));
+        if( response.code() == 200 ) {
+          try ( StringReader sr = new StringReader(response.body().string());
+                JsonReader jr = new JsonReader(sr) ) {
+            serverStatus.loadJSON(jr);
           }
         }
-        finally {
-          EventBus.getDefault().post(serverStatus);
-        }
+        EventBus.getDefault().post(new EventMessage.RSyncResult(serverStatus));
+      }
+
+      public void onFailure(Call call, IOException e)
+      {
+        Log.e("wsa-ng", _("rsync: failed: %s", e.getMessage()));
+        EventBus.getDefault().post(new EventMessage.RSyncResult(serverStatus));
       }
     });
-
-    thread.setDaemon(true);
-    thread.start();
   }
 
+  /*
   private EventMessage.TimeSync __timesync() {
     String url = String.format(TIME_URL,
                                settings.getString("server_addr", Default.server_addr),
@@ -478,13 +422,12 @@ public class MainService extends Service
     return msg;
   }
 
-
   private void _sync_time()
   {
 
     if( isTimeSyncNow ) {
       Log.e("wsa-ng", _("tsync: another sync in progress now"));
-      /* FIXME: cancel current query */
+      // FIXME: cancel current query
       return;
     }
 
@@ -505,6 +448,7 @@ public class MainService extends Service
     thread.setDaemon(true);
     thread.start();
   }
+  */
 
   @Subscribe(threadMode = ThreadMode.MAIN)
   public void onTimeSync(EventMessage.TimeSync msg)
@@ -681,19 +625,12 @@ public class MainService extends Service
       Log.d("wsa-ng", _("Got message " + msg.type.name() + " for rowId #" +
                         Integer.toString(msg.rowId)));
 
-      if( !row.changePossible() ) {
-        Log.e("wsa-ng", _("update rowId #" +
-                          Integer.toString(msg.rowId) + ": msg " + msg.type.name() +
-                          " -> update not possible: row in SYNCING"));
-        return;
-      }
-
       switch( msg.type ){
       case CONFIRM:
         /* instant update */
         /* FIXME: not possible until messages send without LapId in server mode */
         /*_sync_row(row);*/
-        row.setState(StartRow.SyncState.PENDING, 0);
+        row.setState(StartRow.SyncState.PENDING);
         break;
       case FINISH:
         row.setFinishData(msg.time);
@@ -719,9 +656,18 @@ public class MainService extends Service
   }
 
   @Subscribe(threadMode = ThreadMode.MAIN)
-  public void _event_receive(ServerStatus status)
+  public void _event_receive(EventMessage.RSyncResult rstatus)
   {
-    isSyncNow = false;
+    /* process received data from server
+     * when server return error or not reached -> status is empty
+     */
+    ServerStatus status = rstatus.serverStatus;
+
+    if( status == null ) {
+      Log.d("wsa-ng", _("[RECEIVE] Empty ServerStatus, sched next sync"));
+      _sync_sched();
+      return;
+    }
 
     Log.d("wsa-ng", _("[RECEIVE] process ServerStatus -> [ " +
                       (status.raceStatus == null ? "" : "RaceStatus ") +
@@ -756,7 +702,7 @@ public class MainService extends Service
           ed.commit();
 
           /* sync time */
-          _sync_time();
+          /*_sync_time();*/
         }
 
         if ( status.raceStatus.timestamp > timestamp ) {
@@ -795,17 +741,50 @@ public class MainService extends Service
 
       /* check laps data */
       for( int i = 0; i < status.lap.size(); i++ ) {
-        StartRow rrow = status.lap.get(i);
-        StartRow lrow = starts.getRecord(rrow.getRowId());
+        StartRow.SyncData rrow = status.lap.get(i);
+        StartRow lrow;
 
-        changed = true;
+        if( rrow.rowId == null ) {
+          Log.e("wsa-ng", _("[RECEIVE]: Sync row without rowId, skip"));
+          continue;
+        }
+
+        if( rrow.timestamp == null ) {
+          Log.e("wsa-ng", _("[RECEIVE]: not timestamp in lap data, skip"));
+          continue;
+        }
+
+        lrow = starts.getRecord(rrow.rowId);
+
         if( lrow == null ) {
-          starts.addRecord(rrow);
-          rrow.setState(StartRow.SyncState.SYNCED, 0);
-          EventBus.getDefault().post(rrow.clone());
+          lrow = starts.addRecord(rrow);
+          lrow.setState(StartRow.SyncState.SYNCED);
+          EventBus.getDefault().post(lrow.clone());
+          changed = true;
         }
         else {
-          lrow.update(rrow);
+          StartRow.SyncData previous = new StartRow.SyncData();
+          StartRow.SyncData diff = new StartRow.SyncData();
+
+          lrow.updateNotPendingFields(rrow, previous, diff);
+
+          if( lrow.state == StartRow.SyncState.SYNCED ) {
+            if( !previous.isEmpty() )
+              changed = true;
+            if( diff.isEmpty() )
+              Log.e("wsa-ng", _("rsync: diff is not empty"));
+          }
+          else if( lrow.state != StartRow.SyncState.SYNCED ) {
+            if( diff.isEmpty() ) {
+              lrow.setState(StartRow.SyncState.SYNCED);
+            }
+            else {
+              lrow.setState(StartRow.SyncState.PENDING);
+            }
+            changed = true;
+          }
+
+          /* event UI */
           EventBus.getDefault().post(lrow.clone());
         }
 
@@ -820,14 +799,12 @@ public class MainService extends Service
       if( changed )
         starts.Save(getApplicationContext());
     } catch( Exception e ) {
-      StringWriter sw = new StringWriter();
-      PrintWriter pw = new PrintWriter(sw);
-
-      e.printStackTrace(pw);
-      Log.e("wsa-ng", _("[RECEIVE] Got error: %s ->\n%s", e.getMessage(), sw.toString()));
+      Log.e("wsa-ng", _("[RECEIVE] Got error: %s ->\n%s",
+                        e.getMessage(), e2trace(e)));
     }
 
-    _sync_next_row();
+    // sync: next step: send local rows to server
+    _sync_all_rows();
   }
 
   @Subscribe(threadMode = ThreadMode.MAIN)

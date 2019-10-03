@@ -67,6 +67,27 @@ public class StartList implements Iterable<StartRow>
     return row;
   }
 
+  public StartRow addRecord(StartRow.SyncData data)
+  {
+    final int rowId;
+    StartRow row;
+
+    if( data.rowId != null && data.rowId >= genId ) {
+      genId = data.rowId + 1;
+      rowId = data.rowId;
+    }
+    else {
+      rowId = genId;
+      genId++;
+    }
+
+    row = new StartRow(rowId);
+    row.update(data);
+    Log.d("wsa-ng", "load record id from SyncData: " + Integer.toString(rowId));
+    Rows.add(row);
+    return row;
+  }
+
   /* Get record by Id
    * @param rowId when -1 return last row or null
    */
