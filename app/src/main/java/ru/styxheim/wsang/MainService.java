@@ -246,6 +246,7 @@ public class MainService extends Service
   protected void _sync_sched()
   {
     Log.d("wsa-ng", _("sync: delay next event at %d seconds", syncTimeout));
+    _sync_handler.removeCallbacks(_sync_runnable);
     _sync_handler.postDelayed(_sync_runnable, syncTimeout);
 
   }
