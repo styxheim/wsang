@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
 	xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/MainPage"
+	android:id="@+id/MainPage"
 	android:orientation="vertical"
 	android:layout_width="fill_parent"
 	android:layout_height="fill_parent"
@@ -22,15 +22,6 @@
 				android:src="@mipmap/ic_launcher"
 				android:layout_width="wrap_content"
 				android:layout_height="match_parent"/>
-
-      <Button
-        android:id="@+id/new_crew"
-				android:layout_width="wrap_content"
-				style="?android:attr/buttonBarButtonStyle"
-				android:layout_height="wrap_content"
-				android:text="Новый"
-        android:onClick="startOnClick"
-        android:visibility="gone"/>
 
 			<TextView
 				android:layout_width="wrap_content"
@@ -91,44 +82,70 @@
 	</LinearLayout>
 
 	<LinearLayout
-        android:id="@+id/scroll_container"
+		android:id="@+id/scroll_container"
 		android:orientation="vertical"
 		android:layout_width="match_parent"
 		android:layout_height="match_parent">
 
-		<ScrollView
-			android:layout_width="match_parent"
-			android:layout_height="match_parent"
-			android:id="@+id/vscroll"
-            android:fillViewport="true">
+		<RelativeLayout
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content">
 
-			<HorizontalScrollView
+			<ScrollView
 				android:layout_width="match_parent"
-				android:layout_height="match_parent">
+				android:layout_height="match_parent"
+				android:id="@+id/vscroll"
+				android:fillViewport="true">
 
-				<LinearLayout
-					android:orientation="vertical"
+				<HorizontalScrollView
+					android:layout_width="match_parent"
+					android:layout_height="match_parent">
+
+					<LinearLayout
+						android:orientation="vertical"
+						android:layout_width="wrap_content"
+						android:layout_height="wrap_content"
+						android:fillViewport="true">
+
+						<TableLayout
+							android:layout_width="match_parent"
+							android:layout_height="match_parent"
+							android:id="@+id/table">
+
+						</TableLayout>
+
+						<View
+							android:layout_width="match_parent"
+							android:layout_height="150dp"
+							android:id="@+id/spacer"/>
+
+					</LinearLayout>
+
+				</HorizontalScrollView>
+
+			</ScrollView>
+
+			<LinearLayout
+				android:orientation="vertical"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:layout_alignParentBottom="true"
+				android:paddingRight="23dp"
+				android:paddingBottom="23dp"
+				android:gravity="right">
+
+				<ImageButton
+					android:id="@+id/new_crew"
 					android:layout_width="wrap_content"
 					android:layout_height="wrap_content"
-                  android:fillViewport="true">
+					style="?android:attr/buttonBarButtonStyle"
+					android:src="@mipmap/ic_plus"
+					android:onClick="startOnClick"
+					android:visibility="gone"/>
 
-					<TableLayout
-						android:layout_width="match_parent"
-						android:layout_height="match_parent"
-						android:id="@+id/table">
+			</LinearLayout>
 
-					</TableLayout>
-
-					<View
-						android:layout_width="match_parent"
-						android:layout_height="100dp"
-						android:id="@+id/spacer"/>
-
-				</LinearLayout>
-
-			</HorizontalScrollView>
-
-		</ScrollView>
+		</RelativeLayout>
 
 	</LinearLayout>
 
