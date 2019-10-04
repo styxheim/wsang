@@ -128,7 +128,11 @@ public class MainService extends Service
     try {
     jw.beginArray();
       for( StartRow row : starts ) {
-        if( row.state == StartRow.SyncState.PENDING ) {
+        // sync all PENDING and SYNCING rows
+        // this block run after receive data from server and all previous
+        // sended rows should be already received and marked as `SYNCED`
+        if( row.state == StartRow.SyncState.PENDING ||
+            row.state == StartRow.SyncState.SYNCING ) {
           int inprint = 0;
           try {
             inprint = row.prepareJSON(jw);
