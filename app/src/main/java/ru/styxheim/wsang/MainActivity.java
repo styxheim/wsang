@@ -876,6 +876,7 @@ public class MainActivity extends Activity
     dswitch.removeAllViews();
 
     Collections.sort(term.gates);
+    Collections.sort(race.crews);
 
     TableRow header = (TableRow)_newDataCol(R.layout.data_row);
     header.removeAllViews();
