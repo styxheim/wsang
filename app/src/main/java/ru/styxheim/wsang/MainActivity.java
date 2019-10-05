@@ -16,6 +16,7 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.Collections;
 
+import org.greenrobot.eventbus.SubscriberExceptionEvent;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
@@ -29,8 +30,10 @@ public class MainActivity extends Activity
   protected SharedPreferences settings;
   protected SharedPreferences settingsRace;
   protected SharedPreferences settingsChrono;
-  protected TerminalStatus term;
   protected RaceStatus race;
+  protected TerminalStatus term;
+  protected TerminalStatus.Discipline disp;
+
   protected Chrono chrono;
 
   protected int selectedRowId = -1;
@@ -42,6 +45,21 @@ public class MainActivity extends Activity
   protected long countDownLap;
   protected long countDownEndAt;
   protected long countDownStartAt;
+
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  public void onEvent(SubscriberExceptionEvent exceptionEvent)
+  {
+    Log.e("wsa-ng-ui", "Catch exception");
+    StringWriter psw = new StringWriter();
+    PrintWriter pw = new PrintWriter(psw);
+
+    exceptionEvent.throwable.printStackTrace(pw);
+
+    Log.e("wsa-ng-ui", "Exception: " + psw.toString());
+
+    Toast.makeText(MainActivity.this,
+           "Look to logcat 'wsa-ng-ui'", Toast.LENGTH_SHORT).show();
+  }
 
   @Override
   protected void onCreate(Bundle savedInstanceState)
@@ -132,7 +150,7 @@ public class MainActivity extends Activity
   @Override
   public boolean onKeyDown(int keyCode, KeyEvent event)
   {
-    if( chrono != null && term.hasFinishGate() ) {
+    if( chrono != null && disp.finishGate ) {
       if( chrono.onKeyDown(keyCode, event) )
         return true;
     }
@@ -207,8 +225,15 @@ public class MainActivity extends Activity
   @Subscribe(threadMode = ThreadMode.MAIN)
   public void _event_terminalStatus(TerminalStatus new_term)
   {
+    Log.d("wsa-ng-ui", "Receive new TerminalStatus: " + new_term.toString());
     if( term == null || term.timestamp != new_term.timestamp ) {
+      Log.d("wsa-ng-ui", "Apply new TerminalStatus");
       term = new_term;
+      /* get current discipline from new term info */
+      if( disp != null )
+        disp = new_term.getDiscipline(disp.id);
+      else
+        disp = new_term.getDiscipline();
       _tableSetup();
     }
   }
@@ -216,11 +241,14 @@ public class MainActivity extends Activity
   @Subscribe(threadMode = ThreadMode.MAIN)
   public void _event_raceStatus(RaceStatus new_race)
   {
+    Log.d("wsa-ng-ui", "Receive new RaceStatus");
     if( race == null || (race.timestamp != new_race.timestamp ||
                          race.competitionId != new_race.competitionId) ) {
+      Log.d("wsa-ng-ui", "Apply new RaceStatus");
       race = new_race;
       _tableSetup();
-      chrono.reload();
+      if( chrono != null )
+        chrono.reload();
     }
   }
 
@@ -445,8 +473,8 @@ public class MainActivity extends Activity
       start = row.startAt;
 
       gates.clear();
-      for( int i = 0; i < term.gates.size(); i++ ) {
-        int gateId = term.gates.get(i);
+      for( int i = 0; i < disp.gates.size(); i++ ) {
+        int gateId = disp.gates.get(i);
         gates.add(0);
         for( StartRow.Gate lgate : row.gates ) {
           if( lgate.gate == gateId ) {
@@ -572,7 +600,7 @@ public class MainActivity extends Activity
                 else
                   crewId = crewNum;
 
-                Log.i("wsa-ng", "Set new lap/crew for row #" + Integer.toString(rowId) +
+                Log.i("wsa-ng-ui", "Set new lap/crew for row #" + Integer.toString(rowId) +
                                 " crew=" + Integer.toString(crewId) + " lap=" + Integer.toString(lapId) );
                 req = new EventMessage.ProposeMsg(crewId, lapId);
 
@@ -704,7 +732,7 @@ public class MainActivity extends Activity
           extras.putInt("lap", lap);
           extras.putInt("crew", crew);
 
-          extras.putIntegerArrayList("gates", term.gates);
+          extras.putIntegerArrayList("gates", disp.gates);
           extras.putIntegerArrayList("penalties", race.penalties);
           extras.putIntegerArrayList("values", gates);
 
@@ -805,18 +833,18 @@ public class MainActivity extends Activity
       tCrew.setOnClickListener(lapcrewListener);
       tLap.setOnClickListener(lapcrewListener);
 
-      if( term.hasStartGate() ) {
+      if( disp.startGate ) {
         tStart = tRow.findViewById(R.id.start_gate);
       }
 
-      for( int i = 0; i < term.gates.size(); i++ ) {
+      for( int i = 0; i < disp.gates.size(); i++ ) {
         TextView tGate = (TextView)_newDataCol(R.id.any_gate);
 
         tGate.setOnClickListener(gateListener);
         tGates.add(tGate);
       }
 
-      if( term.hasFinishGate() ) {
+      if( disp.finishGate ) {
         tFinish = tRow.findViewById(R.id.finish_gate);
       }
 
@@ -868,14 +896,28 @@ public class MainActivity extends Activity
     LinearLayout dswitch = findViewById(R.id.discipline_switch);
     TableLayout table = findViewById(R.id.table);
 
-    if( term == null || race == null )
+    Log.d("wsa-ng-ui", "Table setup");
+
+    if( term == null || race == null || disp == null ) {
+      Log.d("wsa-ng-ui", "Table not setuped");
+      if( term == null )
+        Log.d("wsa-ng-ui", "Table not setuped: term == null");
+
+      if( disp == null )
+        Log.d("wsa-ng-ui", "Table not setuped: disp == null");
+
+      if( disp == null )
+        Log.d("wsa-ng-ui", "Table not setuped: disp == null");
+
       return;
+    }
+
+    Log.d("wsa-ng-ui", "Table setup continue");
 
     dataList.clear();
     table.removeAllViews();
     dswitch.removeAllViews();
 
-    Collections.sort(term.gates);
     Collections.sort(race.crews);
 
     TableRow header = (TableRow)_newDataCol(R.layout.data_row);
@@ -893,7 +935,7 @@ public class MainActivity extends Activity
     header.addView(crew);
     header.addView(_build_spacer());
 
-    if( term.hasStartGate() ) {
+    if( disp.startGate ) {
       findViewById(R.id.new_crew).setVisibility(View.VISIBLE);
       TextView start = (TextView)_newDataCol(R.id.start_gate);
       start.setTypeface(null, Typeface.BOLD);
@@ -904,16 +946,16 @@ public class MainActivity extends Activity
       findViewById(R.id.new_crew).setVisibility(View.GONE);
     }
 
-    for( int i = 0; i < term.gates.size(); i++ ) {
+    for( int i = 0; i < disp.gates.size(); i++ ) {
       TextView gate = (TextView)_newDataCol(R.id.any_gate);
 
       gate.setTypeface(null, Typeface.BOLD);
-      gate.setText(Integer.toString(term.gates.get(i)));
+      gate.setText(Integer.toString(disp.gates.get(i)));
       header.addView(gate);
       header.addView(_build_spacer());
     }
 
-    if( term.hasFinishGate() ) {
+    if( disp.finishGate ) {
       TextView finish = (TextView)_newDataCol(R.id.finish_gate);
       finish.setTypeface(null, Typeface.BOLD);
       header.addView(finish);

@@ -13,6 +13,7 @@ public class RaceStatus
 {
   final static String CLASS_NAME = "RaceStatus";
 
+  final static int INVALID_GATE = -1;
   final static int GATE_START = -2;
   final static int GATE_FINISH = -3;
 
@@ -36,8 +37,9 @@ public class RaceStatus
 
   public class Discipline
   {
-    public int id = 0;
-    public String name = "";
+    public Integer id;
+    public String name;
+    public ArrayList<Integer> gates = new ArrayList<Integer>();
 
     public Discipline(JsonReader jr) throws IOException, IllegalStateException
     {
@@ -46,6 +48,10 @@ public class RaceStatus
 
     public void fromJSON(JsonReader jr) throws IOException, IllegalStateException
     {
+      this.id = null;
+      this.name = null;
+      this.gates.clear();
+
       if( !jr.hasNext() )
         return;
 
@@ -58,6 +64,13 @@ public class RaceStatus
         case ID:
           this.id = jr.nextInt();
           break;
+        case GATES:
+          jr.beginArray();
+          while( jr.hasNext() ) {
+           this.gates.add(jr.nextInt());
+          }
+          jr.endArray();
+          break;
         default:
           jr.skipValue();
           break;
@@ -69,8 +82,18 @@ public class RaceStatus
     public void toJSON(JsonWriter jw) throws IOException
     {
       jw.beginObject();
-      jw.name(ID).value(this.id);
-      jw.name(NAME).value(this.name);
+      if( this.id != null )
+        jw.name(ID).value(this.id);
+      if( this.name != null )
+        jw.name(NAME).value(this.name);
+      if( this.gates.size() != 0 ) {
+        jw.name(GATES);
+        jw.beginArray();
+        for( int gate : this.gates ) {
+          jw.value(gate);
+        }
+        jw.endArray();
+      }
       jw.endObject();
     }
   }

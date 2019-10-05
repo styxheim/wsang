@@ -22,6 +22,7 @@ import java.util.ArrayList;
 
 import android.media.MediaPlayer;
 
+import org.greenrobot.eventbus.SubscriberExceptionEvent;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
@@ -109,6 +110,15 @@ public class MainService extends Service
     SharedPreferences.Editor ed = settings.edit();
     ed.putLong(RaceStatus.TIMESTAMP, this.timestamp);
     ed.apply();
+  }
+
+  @Subscribe(threadMode = ThreadMode.MAIN)
+  public void onEvent(SubscriberExceptionEvent exceptionEvent)
+  {
+    Log.e("wsa-ng", "Exception: " + e2trace((Exception)exceptionEvent.throwable));
+
+    Toast.makeText(MainService.this,
+           "Look to logcat 'wsa-ng'", Toast.LENGTH_SHORT).show();
   }
 
   private void _sync_all_rows()
