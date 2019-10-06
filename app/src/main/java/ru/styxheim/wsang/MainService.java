@@ -495,6 +495,7 @@ public class MainService extends Service
   {
     final int lapId = msg.lapId;
     final long timeout = msg.leftMs;
+    final int disciplineId = msg.disciplineId;
     final int sound_id;
     final int signal_offset; /* time in ms from start of sound for signal */
 
@@ -543,7 +544,7 @@ public class MainService extends Service
         mp.start();
         Log.d("wsa-ng", _("MediaPlayer: prepared at " + Long.toString(millis)));
         startCountDownAt = millis;
-        cdmsg = new EventMessage.CountDownMsg(lapId, millis, millis + signal_offset);
+        cdmsg = new EventMessage.CountDownMsg(lapId, disciplineId, millis, millis + signal_offset);
         EventBus.getDefault().post(cdmsg);
       }
     });
@@ -556,7 +557,7 @@ public class MainService extends Service
 
         long endAt = startCountDownAt - chrono_settings.getLong("offset", Default.chrono_offset) + signal_offset;
 
-        EventMessage.CountDownMsg smsg = new EventMessage.CountDownMsg(lapId, 0, endAt);
+        EventMessage.CountDownMsg smsg = new EventMessage.CountDownMsg(lapId, disciplineId, 0, endAt);
         EventBus.getDefault().post(new EventMessage(EventMessage.EventType.COUNTDOWN_END, smsg));
         
         _countdown_cleanup();
@@ -571,7 +572,7 @@ public class MainService extends Service
     time = Default.millisecondsToString(msg.endAtMs);
 
     for( StartRow row : starts ) {
-      if( row.lapId != msg.lapId )
+      if( row.lapId != msg.lapId || row.disciplineId != msg.disciplineId )
         continue;
       Log.d("wsa-ng", _("Set time to " + time + " (" + msg.endAtMs + ") for row #" + row.getRowId()));
       row.setStartData(msg.endAtMs);

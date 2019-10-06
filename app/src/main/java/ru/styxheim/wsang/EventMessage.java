@@ -66,22 +66,25 @@ public class EventMessage
 
   public static class CountDownMsg
   {
+    public int disciplineId;
     public long startAt;
     public long leftMs;
     public int lapId;
     public long endAtMs;
     
-    public CountDownMsg(int lapId, long leftMs)
+    public CountDownMsg(int lapId, int disciplineId, long leftMs)
     {
       this.lapId = lapId;
       this.leftMs = leftMs;
+      this.disciplineId = disciplineId;
     }
 
-    public CountDownMsg(int lapId, long startAt, long endAtMs)
+    public CountDownMsg(int lapId, int disciplineId, long startAt, long endAtMs)
     {
       this.startAt = startAt;
       this.lapId = lapId;
       this.endAtMs = endAtMs;
+      this.disciplineId = disciplineId;
     }
   }
 

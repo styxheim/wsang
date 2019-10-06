@@ -904,7 +904,7 @@ public class MainActivity extends Activity
                 long seconds = item.getItemId();
                 EventMessage.CountDownMsg msg;
 
-                msg = new EventMessage.CountDownMsg(lap, seconds * 1000);
+                msg = new EventMessage.CountDownMsg(lap, disp.id, seconds * 1000);
                 EventBus.getDefault().post(new EventMessage(EventMessage.EventType.COUNTDOWN_START, msg));
                 break;
               default:
