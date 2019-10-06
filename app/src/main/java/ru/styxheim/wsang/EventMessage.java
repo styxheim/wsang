@@ -101,6 +101,17 @@ public class EventMessage
   public static class Boot
   {
     /* Request boot */
+    
+    Integer disciplineId;
+    
+    public Boot()
+    {
+    }
+    
+    public Boot(int disciplineId)
+    {
+      this.disciplineId = disciplineId;
+    }
   }
   
   public static class CountDownCancelled

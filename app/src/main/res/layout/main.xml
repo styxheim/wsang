@@ -68,20 +68,6 @@
 		android:id="@+id/start_progress"/>
 
 	<LinearLayout
-		android:orientation="horizontal"
-		android:layout_width="match_parent"
-		android:layout_height="wrap_content"
-		android:id="@+id/discipline_switch"
-		android:gravity="center">
-
-		<ProgressBar
-			android:layout_width="wrap_content"
-			style="?android:attr/progressBarStyleLarge"
-			android:layout_height="wrap_content"/>
-
-	</LinearLayout>
-
-	<LinearLayout
 		android:id="@+id/scroll_container"
 		android:orientation="vertical"
 		android:layout_width="match_parent"
@@ -124,6 +110,27 @@
 				</HorizontalScrollView>
 
 			</ScrollView>
+    
+  <LinearLayout
+		android:orientation="vertical"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:id="@+id/discipline_panel"
+    android:layout_alignParentBottom="true"
+    android:paddingLeft="23dp"
+    android:paddingBottom="23dp"
+		android:gravity="left">
+
+    <Button
+      android:id="@+id/discipline_title"
+      style="?android:attr/buttonBarButtonStyle"
+      android:visibility="visible"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:text="- Discipline -"
+      android:onClick="disciplineOnClick"/>
+
+  </LinearLayout>
 
 			<LinearLayout
 				android:orientation="vertical"

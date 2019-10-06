@@ -35,7 +35,17 @@ public class RaceStatus
   public ArrayList<Integer> crews = new ArrayList<Integer>();
   public ArrayList<Discipline> disciplines = new ArrayList<Discipline>();
 
-  public class Discipline
+  public Discipline getDiscipline(int disciplineId)
+  {
+    for( Discipline disp : disciplines ) {
+      if( disp.id == disciplineId )
+        return disp;
+    }
+
+    return null;
+  }
+
+  public static class Discipline
   {
     public Integer id;
     public String name;

@@ -29,7 +29,7 @@ public class TerminalStatus
       }
     }
 
-    return getDiscipline();
+    return null;
   }
 
   public Discipline getDiscipline()
@@ -37,8 +37,8 @@ public class TerminalStatus
     if( disciplines.size() != 0 ) {
       return disciplines.get(0);
     }
-    // return invalid discipline
-    return new Discipline();
+
+    return null;
   }
 
   public String toString()

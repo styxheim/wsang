@@ -139,6 +139,52 @@ public class MainActivity extends Activity
     super.onStop();
   }
 
+  public void disciplineOnClick(View v)
+  {
+    AlertDialog.Builder builder = new AlertDialog.Builder(this);
+    final ArrayList<String> names = new ArrayList<String>();
+    final ArrayList<Integer> ids = new ArrayList<Integer>();
+    final String[] names_array;
+    final int selected;
+    int _selected = -1;
+
+    if( race == null || disp == null )
+      return;
+
+    for( int i = 0; i < race.disciplines.size(); i++ ) {
+      RaceStatus.Discipline d = race.disciplines.get(i);
+      if( term.getDiscipline(d.id) == null )
+        continue;
+      if( d.id == disp.id )
+        _selected = i;
+      names.add(d.name);
+      ids.add(d.id);
+    }
+    
+    selected = _selected;
+
+    names_array = names.toArray(new String[0]);
+
+    builder.setTitle(R.string.disciplines);
+    builder.setIcon(R.mipmap.ic_launcher);
+    builder.setSingleChoiceItems(names_array,
+                                 selected,
+                                 new DialogInterface.OnClickListener() {
+      @Override
+      public void onClick(DialogInterface dialog, int item)
+      {
+        if( item != selected ) {
+          Log.d("wsa-ng-ui", "Select new discipline id#" + ids.get(item).toString());
+          disp = term.getDiscipline(ids.get(item));
+          _tableSetup();
+        }
+        dialog.dismiss();
+      }
+    });
+
+    builder.create().show();
+  }
+
   public void settingsOnClick(View v)
   {
     v.setEnabled(false);
@@ -274,7 +320,7 @@ public class MainActivity extends Activity
       /* add new row */
       final TableLayout table = findViewById(R.id.table);
       final View v;
-      vd = new ViewData(row.getRowId(), term, this);
+      vd = new ViewData(row.getRowId());
       v = vd.getView();
       if( table.getChildCount() % 2 == 0 )
         v.setBackgroundResource(R.color.rowEven);
@@ -372,11 +418,10 @@ public class MainActivity extends Activity
 
     protected TerminalStatus term;
 
-    public ViewData(int id, TerminalStatus term, Context context)
+    public ViewData(int id)
     {
-      this.term = term;
       this.rowId = id;
-      this.context = context;
+      this.context = MainActivity.this;
     }
 
     public void select()
@@ -520,7 +565,6 @@ public class MainActivity extends Activity
           /* pass previous and next lap data */
           int cpos = dataList.indexOf(ViewData.this);
           int pos = cpos;
-          int lap_cur_pos;
 
           if( start == 0 ) {
             /* previous lap */
@@ -893,9 +937,17 @@ public class MainActivity extends Activity
 
   protected void _tableSetup()
   {
-    LinearLayout dswitch = findViewById(R.id.discipline_switch);
     TableLayout table = findViewById(R.id.table);
+    Button disp_btn = findViewById(R.id.discipline_title);
+    RaceStatus.Discipline rdisp;
 
+    if( disp == null || (rdisp = race.getDiscipline(disp.id)) == null ) {
+      disp_btn.setVisibility(View.GONE);
+    }
+    else {
+      disp_btn.setVisibility(View.VISIBLE);
+      disp_btn.setText(rdisp.name);
+    }
     Log.d("wsa-ng-ui", "Table setup");
 
     if( term == null || race == null || disp == null ) {
@@ -916,7 +968,6 @@ public class MainActivity extends Activity
 
     dataList.clear();
     table.removeAllViews();
-    dswitch.removeAllViews();
 
     Collections.sort(race.crews);
 
@@ -970,7 +1021,7 @@ public class MainActivity extends Activity
 
     table.post(new Runnable() {
       public void run() {
-        EventBus.getDefault().post(new EventMessage.Boot());
+        EventBus.getDefault().post(new EventMessage.Boot(disp.id));
       }
     });
   }
