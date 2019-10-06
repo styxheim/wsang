@@ -215,6 +215,17 @@ public class MainActivity extends Activity
     ViewData vd;
     int lastLapId = 0;
 
+    if( race == null )
+      Log.e("wsa-ng-ui", "RaceStatus is empty, cannot add new row");
+    if( term == null )
+      Log.e("wsa-ng-ui", "Discipline is empty, cannot add new row");
+    if( term == null || race == null ) {
+      Toast.makeText(MainActivity.this,
+                     "Look to logcat 'wsa-ng-ui'",
+                     Toast.LENGTH_SHORT).show();
+      return;
+    }
+
     if( dataList.size() > 0 ) {
       vd = dataList.get(dataList.size() - 1);
       lastLapId = vd.lap;
@@ -249,7 +260,7 @@ public class MainActivity extends Activity
 
       lastCrewId = crewId;
 
-      req = new EventMessage.ProposeMsg(crewId, lapId);
+      req = new EventMessage.ProposeMsg(crewId, lapId, disp.id);
 
       Log.d("wsa-ng-ui", "Propose new: crew=" + Integer.toString(crewId) + " lap=" + Integer.toString(lapId));
       EventBus.getDefault().post(new EventMessage(req));
@@ -309,11 +320,25 @@ public class MainActivity extends Activity
   @Subscribe(threadMode = ThreadMode.MAIN)
   public void _update_StartRow(StartRow row)
   {
+    String skip_reason = null;
     /* Update or add new data */
     ViewData vd = _getViewDataById(row.getRowId());
 
+    if( disp == null ) {
+      skip_reason = "No active discipline";
+    }
+
+    if( disp.id != row.disciplineId ) {
+      skip_reason = String.format("Mismatch disciplineId (%d)", disp.id);
+    }
+
     Log.d("wsa-ng-ui",
-          "got " + row.toString() + ", visible=" + (vd == null ? "false" : "true"));
+          "got " + row.toString() +
+          ", visible=" + (vd == null ? "false" : "true") +
+          ( skip_reason == null ? "" : ", skip: " + skip_reason ) );
+
+    if( skip_reason != null )
+      return;
 
     if( vd == null ) {
       final ScrollView sv = findViewById(R.id.vscroll);
@@ -646,7 +671,7 @@ public class MainActivity extends Activity
 
                 Log.i("wsa-ng-ui", "Set new lap/crew for row #" + Integer.toString(rowId) +
                                 " crew=" + Integer.toString(crewId) + " lap=" + Integer.toString(lapId) );
-                req = new EventMessage.ProposeMsg(crewId, lapId);
+                req = new EventMessage.ProposeMsg(crewId, lapId, disp.id);
 
                 req.setRowId(rowId);
 

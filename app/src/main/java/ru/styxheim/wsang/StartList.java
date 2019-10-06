@@ -46,11 +46,11 @@ public class StartList implements Iterable<StartRow>
 
   /* Add new record to list
    */
-  public StartRow addRecord(int crewId, int lapId)
+  public StartRow addRecord(int crewId, int lapId, int disciplineId)
   {
     StartRow row = new StartRow(genId);
     genId++;
-    row.setIdentify(crewId, lapId);
+    row.setIdentify(crewId, lapId, disciplineId);
     Rows.add(row);
     return row;
   }
@@ -63,7 +63,9 @@ public class StartList implements Iterable<StartRow>
       genId = row.getRowId() + 1;
     }
     Rows.add(row);
-    Log.d("wsa-ng", "load record id: " + Integer.toString(row.getRowId()));
+    Log.d("wsa-ng", String.format("load record id#%d -> %s",
+                                  row.getRowId(),
+                                  row.toString()));
     return row;
   }
 

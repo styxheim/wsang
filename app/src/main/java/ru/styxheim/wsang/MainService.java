@@ -329,7 +329,7 @@ public class MainService extends Service
     super.onDestroy();
   }
 
-  private void _boot()
+  private void _boot(Integer disciplineId)
   {
     Log.i("wsa-ng", _("Begin boot"));
     ArrayList<StartRow> row_list = new ArrayList<StartRow>();
@@ -337,11 +337,15 @@ public class MainService extends Service
     EventBus.getDefault().post(raceStatus);
     EventBus.getDefault().post(terminalStatus);
 
-    for( StartRow row : starts ) {
-      row_list.add(row.clone());
-    }
+    if( disciplineId != null ) {
+      for( StartRow row : starts ) {
+        if( row.disciplineId == disciplineId ) {
+          row_list.add(row.clone());
+        }
+      }
 
-    EventBus.getDefault().post(row_list);
+      EventBus.getDefault().post(row_list);
+    }
 
     if( cdmsg != null )
       EventBus.getDefault().post(cdmsg);
@@ -584,7 +588,7 @@ public class MainService extends Service
       /* new record */
       Log.d("wsa-ng", _("Add new StartRow record"));
 
-      row = starts.addRecord(msg.crewId, msg.lapId);
+      row = starts.addRecord(msg.crewId, msg.lapId, msg.disciplineId);
     }
     else {
       row = starts.getRecord(msg.rowId);
@@ -608,7 +612,7 @@ public class MainService extends Service
         row.setFinishData(msg.time);
         break;
       case IDENTIFY:
-        row.setIdentify(msg.crewId, msg.lapId);
+        row.setIdentify(msg.crewId, msg.lapId, msg.disciplineId);
         break;
       case START:
         row.setStartData(msg.time);
@@ -813,7 +817,7 @@ public class MainService extends Service
   @Subscribe(threadMode = ThreadMode.MAIN)
   public void _event_boot(EventMessage.Boot msg)
   {
-    _boot();
+    _boot(msg.disciplineId);
   }
   
 }

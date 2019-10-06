@@ -8,12 +8,13 @@ public class StartRow
 {
   final static String CLASS_NAME = "Lap";
 
-  private int rowId;
+  private int rowId = -1;
 
   public long timestamp = 0;
 
-  public int crewId;
-  public int lapId;
+  public int disciplineId = -1;
+  public int crewId = -1;
+  public int lapId = -1;
   public long startAt = 0;
   public long finishAt = 0;
   public ArrayList<Gate>gates = new ArrayList<Gate>();
@@ -96,6 +97,8 @@ public class StartRow
 
   protected static class SyncData {
     public Long timestamp;
+
+    public Integer disciplineId;
     public Integer rowId;
     public Integer crewId;
     public Integer lapId;
@@ -112,10 +115,11 @@ public class StartRow
       this.gates.add(gate.clone());
     }
 
-    public SyncData(int crewId, int lapId)
+    public SyncData(int crewId, int lapId, int disciplineId)
     {
       this.crewId = new Integer(crewId);
       this.lapId = new Integer(lapId);
+      this.disciplineId = new Integer(disciplineId);
     }
 
     public SyncData(long startTime, long finishTime)
@@ -150,6 +154,9 @@ public class StartRow
           case "StartTime":
             this.startTime = new Long(jr.nextLong());
             break;
+          case "DisciplineId":
+            this.disciplineId = new Integer(jr.nextInt());
+            break;
           case "Gates":
             this.gates.clear();
             jr.beginArray();
@@ -172,7 +179,8 @@ public class StartRow
     public boolean isEmpty()
     {
       return ( timestamp == null &&
-               rowId == null && crewId == null && lapId == null &&
+               disciplineId == null && rowId == null &&
+               crewId == null && lapId == null &&
                finishTime == null && startTime == null &&
                gates.size() == 0 );
     }
@@ -183,6 +191,10 @@ public class StartRow
 
       if( this.timestamp != null ) {
         jw.name(RaceStatus.TIMESTAMP).value(this.timestamp);
+      }
+
+      if( this.disciplineId != null ) {
+        jw.name("DisciplineId").value(this.disciplineId);
       }
 
       if( this.rowId != null ) {
@@ -221,6 +233,9 @@ public class StartRow
     {
       if( other.timestamp != null )
         this.timestamp = other.timestamp;
+
+      if( other.disciplineId != null )
+        this.disciplineId = other.disciplineId;
 
       if( other.rowId != null )
         this.rowId = other.rowId;
@@ -265,11 +280,6 @@ public class StartRow
 
   public SyncState state = SyncState.NONE;
 
-  public StartRow(JsonReader jr) throws IllegalStateException, IOException
-  {
-    loadJSONServer(jr);
-  }
-
   public StartRow(int rowId)
   {
     this.rowId = rowId;
@@ -304,12 +314,13 @@ public class StartRow
     this.syncList.add(new SyncData(-1, finishAt));
   }
 
-  public void setIdentify(int crewId, int lapId)
+  public void setIdentify(int crewId, int lapId, int disciplineId)
   {
     this.crewId = crewId;
     this.lapId = lapId;
+    this.disciplineId = disciplineId;
     this.state = SyncState.NONE;
-    this.syncList.add(new SyncData(crewId, lapId));
+    this.syncList.add(new SyncData(crewId, lapId, disciplineId));
   }
 
   public void setGateData(int gate, int penalty)
@@ -322,29 +333,6 @@ public class StartRow
     this.state = SyncState.NONE;
     this.syncList.add(new SyncData(rgate));
   }
-
-  /*
-  public void setState(SyncState state, int inprintCount)
-  {
-    if( state == SyncState.SYNCED ) {
-      for( int i = 0; i < inprintCount; i++ ) {
-        syncedList.add(syncList.get(0));
-        syncList.remove(0);
-      }
-
-      if( syncList.size() != 0 ) {
-        // set state to pending when queue is not empty
-        state = SyncState.PENDING;
-      }
-    }
-    else if( state == SyncState.ERROR && inprintCount != syncList.size() ) {
-      // retry when not all changes applied
-      state = SyncState.PENDING;
-    }
-
-    this.state = state;
-  }
-  */
 
   public void updateNotPendingFields(SyncData received,
                                      SyncData previous,
@@ -362,6 +350,7 @@ public class StartRow
 
     // timestamp not used in this case
     // rowId not used in this case
+    // disciplineId not used in this case
 
     if( received.crewId != null ) {
       if( overlay.crewId != null ) {
@@ -462,6 +451,7 @@ public class StartRow
   public String toString()
   {
     return "<Start " + 
+           " disciplineId='" + Integer.toString(this.disciplineId) + "'" +
            " id='" + Integer.toString(this.rowId) + "'" +
            " ts='" + Long.toString(this.timestamp) + "'" +
            " lapId='" + Integer.toString(this.lapId) + "'" +
@@ -483,6 +473,7 @@ public class StartRow
     r.startAt = startAt;
     r.finishAt = finishAt;
     r.timestamp = timestamp;
+    r.disciplineId = disciplineId;
     for( Gate gate : gates ) {
       r.gates.add(gate.clone());
     }
@@ -504,6 +495,9 @@ public class StartRow
       this.lapId = newData.lapId;
     if( newData.crewId != null ) {
       this.crewId = newData.crewId;
+    }
+    if( newData.disciplineId != null ) {
+      this.disciplineId = newData.disciplineId;
     }
     if( newData.startTime != null ) {
       this.startAt = newData.startTime;
@@ -549,6 +543,7 @@ public class StartRow
 
     w.beginObject();
     /* confusing names: for compatable with old WSA application */
+    w.name("disciplineId").value(this.disciplineId);
     w.name("lapId").value(this.rowId);
     w.name("lapNumber").value(this.lapId);
     w.name("crewNumber").value(this.crewId);
@@ -584,25 +579,6 @@ public class StartRow
     w.endObject();
   }
 
-  public void saveJSONServer(JsonWriter w) throws IOException
-  {
-    w.beginObject();
-    /* confusing names: for compatable with old WSA application */
-    w.name(RaceStatus.TIMESTAMP).value(this.timestamp);
-    w.name("lapId").value(this.rowId);
-    w.name("lapNumber").value(this.lapId);
-    w.name("crewNumber").value(this.crewId);
-    w.name("startTimeMs").value(this.startAt);
-    w.name("finishTimeMs").value(this.finishAt);
-    w.name("Gates");
-    w.beginArray();
-    for( Gate gate : this.gates ) {
-      gate.toJSON(w);
-    }
-    w.endArray();
-    w.endObject();
-  }
-
   boolean updateGate(Gate rgate) {
     for( Gate lgate : gates ) {
       if( lgate.gate == rgate.gate ) {
@@ -613,55 +589,20 @@ public class StartRow
     return false;
   }
 
-  public void loadJSONServer(JsonReader r) throws IllegalStateException, IOException
-  {
-    if( !r.hasNext() )
-      return;
-
-    r.beginObject();
-    while( r.hasNext() ) {
-      String name = r.nextName();
-      switch( name ) {
-      case RaceStatus.TIMESTAMP:
-        this.timestamp = r.nextLong();
-        break;
-      case "LapId":
-        this.rowId = r.nextInt();
-        break;
-      case "LapNumber":
-        this.lapId = r.nextInt();
-        break;
-      case "CrewNumber":
-        this.crewId = r.nextInt();
-        break;
-      case "StartTime":
-        this.startAt = r.nextLong();
-        break;
-      case "FinishTime":
-        this.finishAt = r.nextLong();
-        break;
-      case "Gates":
-        r.beginArray();
-        while( r.hasNext() ) {
-          Gate gate = new Gate(r);
-          if( !updateGate(gate) )
-            this.gates.add(gate);
-        }
-        r.endArray();
-        break;
-      default:
-        Log.d("wsa-ng", "StartRow: Unknown field '" + name + "'");
-        r.skipValue();
-      }
-    }
-    r.endObject();
-  }
-
   public void loadJSON(JsonReader r) throws IllegalStateException, IOException
   {
+    this.rowId = -1;
+
+    this.timestamp = 0;
+    this.disciplineId = -1;
+    this.crewId = -1;
+    this.lapId = -1;
+    this.startAt = 0;
+    this.finishAt = 0;
+    this.gates.clear();
+
     this.syncList.clear();
     this.syncedList.clear();
-    this.gates.clear();
 
     if( !r.hasNext() )
       return;
@@ -670,6 +611,9 @@ public class StartRow
     while( r.hasNext() ) {
       String name = r.nextName();
       switch( name ) {
+      case "disciplineId":
+        this.disciplineId = r.nextInt();
+        break;
       case "lapId":
         this.rowId = r.nextInt();
         break;

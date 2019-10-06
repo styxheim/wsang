@@ -23,6 +23,7 @@ public class EventMessage
     public int crewId; /* crewId and lapId used together */
     public int lapId;
     public int rowId = -1;
+    public int disciplineId;
 
     public int gate;
     public int penalty;
@@ -38,10 +39,11 @@ public class EventMessage
 
     Type type = Type.UNK;
 
-    public ProposeMsg(int crewId, int lapId)
+    public ProposeMsg(int crewId, int lapId, int disciplineId)
     {
       this.crewId = crewId;
       this.lapId = lapId;
+      this.disciplineId = disciplineId;
       this.type = Type.IDENTIFY;
     }
 
