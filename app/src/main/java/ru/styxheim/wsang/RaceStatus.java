@@ -47,9 +47,12 @@ public class RaceStatus
 
   public static class Discipline
   {
+    public boolean parallel = true; // parallel starts
     public Integer id;
     public String name;
     public ArrayList<Integer> gates = new ArrayList<Integer>();
+
+    static final String PARALLELSTART = "AllowParallel";
 
     public Discipline(JsonReader jr) throws IOException, IllegalStateException
     {
@@ -81,6 +84,8 @@ public class RaceStatus
           }
           jr.endArray();
           break;
+        case PARALLELSTART:
+          this.parallel = jr.nextBoolean();
         default:
           jr.skipValue();
           break;
@@ -103,6 +108,9 @@ public class RaceStatus
           jw.value(gate);
         }
         jw.endArray();
+      }
+      if( this.parallel ) {
+        jw.name(PARALLELSTART).value(this.parallel);
       }
       jw.endObject();
     }

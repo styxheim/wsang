@@ -160,7 +160,7 @@ public class MainActivity extends Activity
       names.add(d.name);
       ids.add(d.id);
     }
-    
+
     selected = _selected;
 
     names_array = names.toArray(new String[0]);
@@ -173,9 +173,13 @@ public class MainActivity extends Activity
       @Override
       public void onClick(DialogInterface dialog, int item)
       {
+        SharedPreferences.Editor edit = settings.edit();
+
         if( item != selected ) {
           Log.d("wsa-ng-ui", "Select new discipline id#" + ids.get(item).toString());
           disp = term.getDiscipline(ids.get(item));
+          edit.putInt("DisciplineId", disp.id);
+          edit.apply();
           _tableSetup();
         }
         dialog.dismiss();
@@ -212,13 +216,17 @@ public class MainActivity extends Activity
   {
     StartLineEditDialog sled;
     final ArrayList<Integer> lap_values = new ArrayList<Integer>();
+    RaceStatus.Discipline rdisp;
     ViewData vd;
     int lastLapId = 0;
 
     if( race == null )
       Log.e("wsa-ng-ui", "RaceStatus is empty, cannot add new row");
     if( term == null )
+      Log.e("wsa-ng-ui", "TerminalStatus is empty, cannot add new row");
+    if( disp == null )
       Log.e("wsa-ng-ui", "Discipline is empty, cannot add new row");
+
     if( term == null || race == null ) {
       Toast.makeText(MainActivity.this,
                      "Look to logcat 'wsa-ng-ui'",
@@ -226,10 +234,15 @@ public class MainActivity extends Activity
       return;
     }
 
+    rdisp = race.getDiscipline(disp.id);
+
     if( dataList.size() > 0 ) {
       vd = dataList.get(dataList.size() - 1);
       lastLapId = vd.lap;
-      if( vd.start == 0 ) {
+      // allow attach to last lap in 2 cases:
+      // lap not started
+      // parallel start is allowed
+      if( vd.start == 0 && (rdisp == null || rdisp.parallel) ) {
         lap_values.add(vd.lap);
       }
     }
@@ -287,10 +300,17 @@ public class MainActivity extends Activity
       Log.d("wsa-ng-ui", "Apply new TerminalStatus");
       term = new_term;
       /* get current discipline from new term info */
-      if( disp != null )
+      if( disp != null ) {
         disp = new_term.getDiscipline(disp.id);
-      else
+      }
+      else {
+        int disciplineId = settings.getInt("DisciplineId", Default.disciplineId);
+        disp = new_term.getDiscipline(disciplineId);
+      }
+
+      if( disp == null )
         disp = new_term.getDiscipline();
+
       _tableSetup();
     }
   }
@@ -441,8 +461,6 @@ public class MainActivity extends Activity
     protected TextView tFinish;
     protected ArrayList<TextView> tGates = new ArrayList<TextView>();
 
-    protected TerminalStatus term;
-
     public ViewData(int id)
     {
       this.rowId = id;
@@ -586,6 +604,7 @@ public class MainActivity extends Activity
         {
           StartLineEditDialog sled;
           final ArrayList<Integer> lap_values = new ArrayList<Integer>();
+          RaceStatus.Discipline rdisp = race.getDiscipline(disp.id);
 
           /* pass previous and next lap data */
           int cpos = dataList.indexOf(ViewData.this);
@@ -597,7 +616,7 @@ public class MainActivity extends Activity
               ViewData prev = dataList.get(cpos);
 
               if( prev.lap != lap && lap_values.indexOf(prev.lap) == -1 ) {
-                if( prev.start == 0 ) {
+                if( prev.start == 0 && (rdisp == null || rdisp.parallel) ) {
                   /* not add when prev started */
                   lap_values.add(prev.lap);
                 }
@@ -619,7 +638,7 @@ public class MainActivity extends Activity
 
               if( !found ) {
                 if( lap_values.indexOf(next.lap) == -1 ) {
-                  if( next.start == 0 ) {
+                  if( next.start == 0 && (rdisp == null || rdisp.parallel) ) {
                     lap_values.add(next.lap);
                   }
                   found = true;;
@@ -966,13 +985,16 @@ public class MainActivity extends Activity
     Button disp_btn = findViewById(R.id.discipline_title);
     RaceStatus.Discipline rdisp;
 
-    if( disp == null || (rdisp = race.getDiscipline(disp.id)) == null ) {
+    if( disp == null ||
+        (rdisp = race.getDiscipline(disp.id)) == null ||
+        race.disciplines.size() <= 1 ) {
       disp_btn.setVisibility(View.GONE);
     }
     else {
       disp_btn.setVisibility(View.VISIBLE);
       disp_btn.setText(rdisp.name);
     }
+
     Log.d("wsa-ng-ui", "Table setup");
 
     if( term == null || race == null || disp == null ) {

@@ -6,6 +6,7 @@ import java.util.Calendar;
 import java.util.TimeZone;
 
 public class Default {
+  final static public int disciplineId = -1;
   final static public String mode = Launcher.Mode.START.name();
   final static public String server_addr = "127.0.0.1";
   final static public String CHRONO_PREFS = "chrono";
