@@ -127,7 +127,15 @@ public class MainActivity extends Activity
     /* FIXME: sleep for wait service - bad idea */
     tv.postDelayed(new Runnable() {
       public void run() {
-        EventBus.getDefault().post(new EventMessage.Boot());
+        EventMessage.Boot boot_msg;
+
+        if( disp != null ) {
+          boot_msg = new EventMessage.Boot(disp.id);
+        }
+        else {
+          boot_msg = new EventMessage.Boot();
+        }
+        EventBus.getDefault().post(boot_msg);
       }
     }, 1000);
   }
