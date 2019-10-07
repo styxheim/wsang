@@ -779,6 +779,10 @@ public class MainService extends Service
     } catch( Exception e ) {
       Log.e("wsa-ng", _("[RECEIVE] Got error: %s ->\n%s",
                         e.getMessage(), e2trace(e)));
+
+      Toast.makeText(MainService.this,
+                     "Sync error: Look to logcat 'wsa-ng'",
+                     Toast.LENGTH_SHORT).show();
     }
 
     // sync: next step: send local rows to server

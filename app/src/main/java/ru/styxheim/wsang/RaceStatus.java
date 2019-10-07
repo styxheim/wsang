@@ -59,6 +59,13 @@ public class RaceStatus
       this.fromJSON(jr);
     }
 
+    public String toString()
+    {
+      return String.format("<Discipline id#%d name='%s' gates=%d parralel=%s>",
+                           this.id, this.name, this.gates.size(),
+                           this.parallel ? "true" : "false");
+    }
+
     public void fromJSON(JsonReader jr) throws IOException, IllegalStateException
     {
       this.id = null;
@@ -86,6 +93,7 @@ public class RaceStatus
           break;
         case PARALLELSTART:
           this.parallel = jr.nextBoolean();
+          break;
         default:
           jr.skipValue();
           break;
@@ -254,8 +262,8 @@ public class RaceStatus
 
     jw.name(DISCIPLINES);
     jw.beginArray();
-    for( int i = 0; i < this.disciplines.size(); i++ ) {
-      this.disciplines.get(i).toJSON(jw);
+    for( Discipline d : this.disciplines ) {
+      d.toJSON(jw);
     }
     jw.endArray();
     jw.endObject();
