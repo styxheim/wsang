@@ -1,5 +1,6 @@
 package ru.styxheim.wsang;
 
+import android.util.JsonWriter;
 import android.app.*;
 import android.os.*;
 import android.widget.*;
@@ -196,53 +197,16 @@ public class SettingsActivity extends Activity
     });
   }
 
-  public void importOnClick(View v) {
-    String jsonf;
-    final Launcher.Mode mode = Launcher.Mode.valueOf(settings.getString("mode", Default.mode));
+  public void importOnClick(View v)
+  {
+   Toast.makeText(SettingsActivity.this,
+                 "Unimplemented",
+                 Toast.LENGTH_SHORT).show();
 
-    switch( mode ) {
-      case FINISH:
-        jsonf = "START";
-        break;
-      case START:
-        jsonf = "FINISH";
-        break;
-      default:
-        jsonf = "UNK";
-    }
-
-    jsonf = "funny_starts." + jsonf + ".json";
-    final File file_starts = new File(Environment.getExternalStorageDirectory(), jsonf);
-    
-    if( !file_starts.canRead() ) {
-      Toast.makeText(SettingsActivity.this,
-                     "Невозможно прочесть " + file_starts.getAbsolutePath(),
-                     Toast.LENGTH_SHORT).show();
-      return;
-    }
-    
-    AlertDialog.Builder builder = new AlertDialog.Builder(this);
-    builder.setTitle("Импорт");
-    builder.setMessage("Попытаться импортировать данные? В случае ошибки всё потерять всё. После импорта приложение остановится.");
-    builder.setPositiveButton("Выполнить", new DialogInterface.OnClickListener() {
-        @Override
-        public void onClick(DialogInterface dialog, int id) {
-          _import(mode, file_starts);
-
-          moveTaskToBack(true);
-          android.os.Process.killProcess(android.os.Process.myPid());
-          System.exit(1);
-        }
-      });
-    builder.setNegativeButton("Одуматься", new DialogInterface.OnClickListener() {
-        @Override
-        public void onClick(DialogInterface dialog, int id) {
-        }
-      });
-    builder.create().show();
   }
 
-  public void resetOnClick(View v) {
+  public void resetOnClick(View v)
+  {
     AlertDialog.Builder builder = new AlertDialog.Builder(this);
     builder.setTitle("Выход");
     builder.setMessage("Удалить все данные и остановить приложение?");
@@ -322,110 +286,37 @@ public class SettingsActivity extends Activity
 
   public void exportOnClick(View v)
   {
-    AlertDialog.Builder builder = new AlertDialog.Builder(this);
-    final String[] keys = {",", ";"};
-
-    builder.setTitle("Тип разделителя:");
-    builder.setItems(keys, new DialogInterface.OnClickListener() {
-      @Override
-      public void onClick(DialogInterface dialog, int item)
-      {
-        _export(keys[item]);
-      }
-    });
-    builder.create().show();
-  }
-  
-  public void _import(Launcher.Mode mode, File file_starts)
-  {
-     StartList lstarts = new StartList();
-     StartList rstarts = new StartList();
-     StartRow lrow;
-     
-     lstarts.Load(getApplicationContext());
-     rstarts.setOutput(file_starts.getAbsolutePath());
-     rstarts.Load(getApplicationContext());
-     
-     for( StartRow rrow : rstarts ) {
-       lrow = lstarts.getRecord(rrow.getRowId());
-       if( lrow == null ) {
-         if( mode == Launcher.Mode.FINISH )
-           rrow.finishAt = 0;
-         else
-           rrow.startAt = 0;
-           
-         lstarts.addRecord(rrow);
-       }
-       else {
-         if( mode == Launcher.Mode.FINISH )
-           lrow.startAt = rrow.startAt;
-         else
-           lrow.finishAt = rrow.finishAt;
-       }
-     }
-     lstarts.Save(getApplicationContext());
-  }
-
-  public void _export(String separator)
-  {
-    StartList starts = new StartList();
-
-    starts.Load(getApplicationContext());
-
-    File file = new File(Environment.getExternalStorageDirectory(), "funny_starts.csv");
-    FileOutputStream fos;
+    File file = new File(Environment.getExternalStorageDirectory(), "funny.json");
+    ServerStatus ss = new ServerStatus();
+    SharedPreferences race_settings = getSharedPreferences("race", Context.MODE_PRIVATE);
+    ss.terminalStatus.add(new TerminalStatus(race_settings));
+    ss.raceStatus = new RaceStatus(race_settings);
 
     try {
-      fos = new FileOutputStream(file);
-    } catch( FileNotFoundException e ) {
-     Toast.makeText(SettingsActivity.this,
-                   "Ошибка экспорта: " + e.getMessage(),
-                   Toast.LENGTH_SHORT).show();
-     return;
-    }
+      try( StringWriter sw = new StringWriter();
+           JsonWriter jw = new JsonWriter(sw) ) {
 
-    try {
-      fos.write(String.format("lap%screw%s\"start time\"%s\"finish time\"%sdelta\n",
-                              separator, separator, separator, separator).getBytes());
-      for( StartRow row : starts ) {
-        String finishAt = Default.millisecondsToString(row.finishAt);
-        String startAt = Default.millisecondsToString(row.startAt);
-        String timeDelta = "";
+        jw.setIndent("  ");
+        ss.saveJSON(jw);
 
-        if( row.finishAt != 0 && row.startAt != 0 ) {
-          timeDelta = Default.millisecondsToString((row.finishAt / 10 - row.startAt / 10) * 10);
+        try( FileOutputStream fos = new FileOutputStream(file) ) {
+          fos.write(sw.toString().getBytes());
         }
-
-        if( separator.compareTo(";") == 0 ) {
-          finishAt = finishAt.replace('.', ',');
-          startAt = startAt.replace('.', ',');
-          timeDelta = timeDelta.replace('.', ',');
-        }
-
-        String s = String.format("%d%s%d%s\"%s\"%s\"%s\"%s\"%s\"\n",
-                                 row.lapId, separator,
-                                 row.crewId, separator,
-                                 startAt, separator,
-                                 finishAt, separator,
-                                 timeDelta);
-        fos.write(s.getBytes());
       }
-      fos.close();
-    } catch( IOException e ) {
-     Toast.makeText(SettingsActivity.this,
-                   "Ошибка экспорта: " + e.getMessage(),
-                   Toast.LENGTH_SHORT).show();
-    }
-   
-    String jsonf = "funny_starts." + settings.getString("mode", Default.mode) + ".json";
-    
-    File file_starts = new File(Environment.getExternalStorageDirectory(), jsonf);
-    starts.setOutput(file_starts.getAbsolutePath());
-    starts.Save(getApplicationContext());
+    } catch( Exception e ) {
+      StringWriter psw = new StringWriter();
+      PrintWriter pw = new PrintWriter(psw);
 
+      e.printStackTrace(pw);
+
+      Toast.makeText(SettingsActivity.this,
+                     "Dump error: " + e.getMessage(),
+                     Toast.LENGTH_SHORT).show();
+      Log.e("wsa-ng", "Dump error: " + psw.toString());
+      return;
+    }
     Toast.makeText(SettingsActivity.this,
-                   "Сохранено в " + file.getAbsolutePath(),
+                   "Dumped to: " + file.getAbsolutePath(),
                    Toast.LENGTH_SHORT).show();
-
   }
 }

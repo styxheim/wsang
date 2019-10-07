@@ -994,8 +994,7 @@ public class MainActivity extends Activity
     RaceStatus.Discipline rdisp;
 
     if( disp == null ||
-        (rdisp = race.getDiscipline(disp.id)) == null ||
-        race.disciplines.size() <= 1 ) {
+        (rdisp = race.getDiscipline(disp.id)) == null ) {
       disp_btn.setVisibility(View.GONE);
     }
     else {

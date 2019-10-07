@@ -87,6 +87,6 @@ public class ServerStatus
       jw.endArray();
     }
 
-    jw.beginObject();
+    jw.endObject();
   }
 }
