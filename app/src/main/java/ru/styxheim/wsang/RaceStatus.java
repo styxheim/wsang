@@ -117,9 +117,7 @@ public class RaceStatus
         }
         jw.endArray();
       }
-      if( this.parallel ) {
-        jw.name(PARALLELSTART).value(this.parallel);
-      }
+      jw.name(PARALLELSTART).value(this.parallel);
       jw.endObject();
     }
   }
