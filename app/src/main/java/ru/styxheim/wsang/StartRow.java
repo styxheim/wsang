@@ -19,6 +19,8 @@ public class StartRow
   public long finishAt = 0;
   public ArrayList<Gate>gates = new ArrayList<Gate>();
 
+  public boolean strike = false;
+
   public static class Gate {
     public int gate;
     public int penalty;
@@ -98,6 +100,7 @@ public class StartRow
   protected static class SyncData {
     public Long timestamp;
 
+    public Boolean strike;
     public Integer disciplineId;
     public Integer rowId;
     public Integer crewId;
@@ -135,6 +138,8 @@ public class StartRow
 
     public SyncData(JsonReader jr) throws IOException
     {
+      this.gates.clear();
+
       jr.beginObject();
       while( jr.hasNext() ) {
         String name = jr.nextName();
@@ -158,7 +163,6 @@ public class StartRow
             this.disciplineId = new Integer(jr.nextInt());
             break;
           case "Gates":
-            this.gates.clear();
             jr.beginArray();
             while( jr.hasNext() ) {
               this.gates.add(new Gate(jr));
@@ -167,6 +171,9 @@ public class StartRow
             break;
           case RaceStatus.TIMESTAMP:
             this.timestamp = new Long(jr.nextLong());
+            break;
+          case "Strike":
+            this.strike = new Boolean(jr.nextBoolean());
             break;
           default:
             Log.d("wsa-ng", "StartRow.SyncData: Unknown field '" + name + "'");
@@ -182,6 +189,7 @@ public class StartRow
                disciplineId == null && rowId == null &&
                crewId == null && lapId == null &&
                finishTime == null && startTime == null &&
+               strike == null &&
                gates.size() == 0 );
     }
 
@@ -215,6 +223,10 @@ public class StartRow
 
       if( this.startTime != null ) {
         jw.name("StartTime").value(this.startTime);
+      }
+
+      if( this.strike != null ) {
+        jw.name("Strike").value(this.strike);
       }
 
       if( this.gates.size() != 0 ) {
@@ -251,6 +263,9 @@ public class StartRow
 
       if( other.startTime != null )
         this.startTime = other.startTime;
+
+      if( other.strike != null )
+        this.strike = other.strike;
 
       for( Gate ogate : other.gates ) {
         boolean found = false;
@@ -298,6 +313,15 @@ public class StartRow
   public boolean changePossible()
   {
     return this.state != StartRow.SyncState.SYNCING;
+  }
+
+  public void setStrike(boolean strike)
+  {
+    SyncData sd = new SyncData();
+
+    sd.strike = strike;
+    this.state = SyncState.NONE;
+    this.syncList.add(sd);
   }
 
   public void setStartData(long startAt)
@@ -351,6 +375,19 @@ public class StartRow
     // timestamp not used in this case
     // rowId not used in this case
     // disciplineId not used in this case
+
+    if( received.strike != null ) {
+      if( overlay.strike != null ) {
+        if( received.strike.compareTo(overlay.strike) != 0 ) {
+          if( diff != null )
+            diff.strike = received.strike;
+        }
+      }
+      else if( previous != null && received.strike.compareTo(this.strike) != 0 ) {
+        previous.strike = this.strike;
+        this.strike = received.strike;
+      }
+    }
 
     if( received.crewId != null ) {
       if( overlay.crewId != null ) {
@@ -459,6 +496,7 @@ public class StartRow
            " startTime='" + Default.millisecondsToString(this.startAt) + "'" +
            " finishTime='" + Default.millisecondsToString(this.finishAt) + "'" +
            " gates=" + Integer.toString(this.gates.size()) +
+           "[ " + (this.strike ? " strike" : "") + " ]" +
            " syncPending=" + Integer.toString(this.syncList.size()) +
            " synced=" + Integer.toString(this.syncedList.size()) +
            " " + state.name() +
@@ -474,6 +512,7 @@ public class StartRow
     r.finishAt = finishAt;
     r.timestamp = timestamp;
     r.disciplineId = disciplineId;
+    r.strike = strike;
     for( Gate gate : gates ) {
       r.gates.add(gate.clone());
     }
@@ -491,6 +530,8 @@ public class StartRow
   {
     if( newData.timestamp != null )
       this.timestamp = newData.timestamp;
+    if( newData.strike != null )
+      this.strike = newData.strike;
     if( newData.lapId != null )
       this.lapId = newData.lapId;
     if( newData.crewId != null ) {
@@ -549,6 +590,7 @@ public class StartRow
     w.name("crewNumber").value(this.crewId);
     w.name("startTimeMs").value(this.startAt);
     w.name("finishTimeMs").value(this.finishAt);
+    w.name("strike").value(this.strike);
     w.name("_state_name").value(_state.name());
 
     if( this.gates.size() != 0 ) {
@@ -593,6 +635,7 @@ public class StartRow
   {
     this.rowId = -1;
 
+    this.strike = false;
     this.timestamp = 0;
     this.disciplineId = -1;
     this.crewId = -1;
@@ -611,6 +654,9 @@ public class StartRow
     while( r.hasNext() ) {
       String name = r.nextName();
       switch( name ) {
+      case "strike":
+        this.strike = r.nextBoolean();
+        break;
       case "disciplineId":
         this.disciplineId = r.nextInt();
         break;
