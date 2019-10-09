@@ -24,12 +24,14 @@ public class EventMessage
     public int lapId;
     public int rowId = -1;
     public int disciplineId;
+    public boolean strike;
 
     public int gate;
     public int penalty;
 
     public enum Type {
       UNK,
+      STRIKE,   /* update strike flag */
       IDENTIFY, /* update identify */
       START,    /* update start time */
       FINISH,   /* update finish time */
@@ -38,6 +40,17 @@ public class EventMessage
     };
 
     Type type = Type.UNK;
+
+    public ProposeMsg()
+    {
+    }
+
+    public ProposeMsg setStrike(boolean strike)
+    {
+      this.type = Type.STRIKE;
+      this.strike = strike;
+      return this;
+    }
 
     public ProposeMsg(int crewId, int lapId, int disciplineId)
     {
@@ -58,9 +71,10 @@ public class EventMessage
       this.type = type;
     }
 
-    public void setRowId(int rowId)
+    public ProposeMsg setRowId(int rowId)
     {
       this.rowId = rowId;
+      return this;
     }
   }
 

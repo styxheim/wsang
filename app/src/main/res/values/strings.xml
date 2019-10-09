@@ -28,4 +28,10 @@
   <string name="apply_title">Применить</string>
 
   <string name="disciplines">Дисциплины</string>
+
+  <string name="edit_lapcrew">Редактировать заезд</string>
+  <string name="set_strike">Экипаж сошёл с трассы</string>
+
+  <string name="yes">Да</string>
+  <string name="no">Нет</string>
 </resources>

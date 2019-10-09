@@ -609,6 +609,9 @@ public class MainService extends Service
         /*_sync_row(row);*/
         row.setState(StartRow.SyncState.PENDING);
         break;
+      case STRIKE:
+        row.setStrike(msg.strike);
+        break;
       case FINISH:
         row.setFinishData(msg.time);
         break;

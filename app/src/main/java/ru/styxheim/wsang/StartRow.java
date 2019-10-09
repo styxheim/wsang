@@ -319,6 +319,7 @@ public class StartRow
   {
     SyncData sd = new SyncData();
 
+    this.strike = strike;
     sd.strike = strike;
     this.state = SyncState.NONE;
     this.syncList.add(sd);

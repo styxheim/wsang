@@ -9,6 +9,7 @@ import android.text.TextWatcher;
 import android.text.Editable;
 import android.util.Log;
 
+import android.graphics.Paint;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 
@@ -457,6 +458,7 @@ public class MainActivity extends Activity
     public int crew;
     public long finish;
     public long start;
+    public boolean strike;
     public ArrayList<Integer> gates = new ArrayList<Integer>();
 
     protected Context context;
@@ -498,6 +500,17 @@ public class MainActivity extends Activity
       tRow.setBackground((Drawable)tRow.getTag(R.id.tag_background));
     }
 
+    protected void _strikeTextView(TextView v)
+    {
+      if( strike ) {
+        v.setPaintFlags(v.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
+        v.setTextColor(R.color.strike_text);
+      }
+      else {
+        v.setPaintFlags(v.getPaintFlags() & (~Paint.STRIKE_THRU_TEXT_FLAG));
+      }
+    }
+
     protected void _update()
     {
       switch( state ) {
@@ -520,14 +533,17 @@ public class MainActivity extends Activity
 
       if( tLap != null ) {
         tLap.setText(Integer.toString(lap));
+        _strikeTextView(tLap);
       }
 
       if( tCrew != null ) {
         tCrew.setText(Integer.toString(crew));
+        _strikeTextView(tCrew);
       }
 
       if( tStart != null ) {
         tStart.setText(Default.millisecondsToString(start));
+        _strikeTextView(tStart);
       }
 
       for( int i = 0; i < gates.size(); i++ ) {
@@ -535,19 +551,21 @@ public class MainActivity extends Activity
         int pvalue = 0;
         TextView tGate = tGates.get(i);
 
+        _strikeTextView(tGate);
         if( gatePenaltyId >= race.penalties.size() || gatePenaltyId < 0 )
           Log.e("wsa-ng-ui", String.format("Invalid penalty id#%d", gatePenaltyId));
         else
           pvalue = race.penalties.get(gatePenaltyId);
 
         if( gatePenaltyId == 0 )
-          tGate.setText("");
+          tGate.setText("  ");
         else
           tGate.setText(Integer.toString(pvalue));
       }
 
       if( tFinish != null ) {
         tFinish.setText(Default.millisecondsToString(finish));
+        _strikeTextView(tFinish);
       }
     }
 
@@ -567,6 +585,7 @@ public class MainActivity extends Activity
       crew = row.crewId;
       finish = row.finishAt;
       start = row.startAt;
+      strike = row.strike;
 
       gates.clear();
       for( int i = 0; i < disp.gates.size(); i++ ) {
@@ -596,6 +615,117 @@ public class MainActivity extends Activity
       }
     }
 
+    protected void _show_strike_dialog()
+    {
+      AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+      builder.setMessage(String.format("Закрыть заезд %d экипажа %d?", lap, crew));
+      builder.setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
+        @Override
+        public void onClick(DialogInterface dialog, int id) {
+          EventMessage.ProposeMsg req;
+
+          req = new EventMessage.ProposeMsg().setRowId(rowId).setStrike(true);
+          EventBus.getDefault().post(new EventMessage(req));
+        }
+      });
+      builder.setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
+        @Override
+        public void onClick(DialogInterface dialog, int id) {
+        }
+      });
+      builder.create().show();
+    }
+
+    protected void _show_edit_dialog()
+    {
+      StartLineEditDialog sled;
+      final ArrayList<Integer> lap_values = new ArrayList<Integer>();
+      RaceStatus.Discipline rdisp = race.getDiscipline(disp.id);
+
+      /* pass previous and next lap data */
+      int cpos = dataList.indexOf(ViewData.this);
+      int pos = cpos;
+
+      if( start == 0 ) {
+        /* previous lap */
+        while ( --cpos >= 0 ) {
+          ViewData prev = dataList.get(cpos);
+
+          if( prev.lap != lap && lap_values.indexOf(prev.lap) == -1 ) {
+            if( prev.start == 0 && (rdisp == null || rdisp.parallel) ) {
+              /* not add when prev started */
+              lap_values.add(prev.lap);
+            }
+            break;
+          }
+        }
+      }
+
+      lap_values.add(lap);
+      cpos = pos;
+
+      if( start == 0 ) {
+        int lastLapId = lap;
+        boolean found = false;
+        /* next lap */
+        while( ++cpos < dataList.size() ) {
+          ViewData next = dataList.get(cpos);
+
+          if( !found ) {
+            if( lap_values.indexOf(next.lap) == -1 ) {
+              if( next.start == 0 && (rdisp == null || rdisp.parallel) ) {
+                lap_values.add(next.lap);
+              }
+              found = true;;
+            }
+          }
+          lastLapId = next.lap;
+        }
+        lap_values.add(lastLapId + 1);
+      }
+
+      Log.d("wsa-ng-ui", String.format("<LAPS[%d] %s>", lap_values.size(), lap_values.toString()));
+
+      if( race.crews.size() != 0 ) {
+        sled = new StartLineEditDialog(race.crews.indexOf(crew), lap_values.indexOf(lap), true);
+        sled.setCrewValues(race.crews);
+      }
+      else {
+        sled = new StartLineEditDialog(crew, lap_values.indexOf(lap), true);
+      }
+      sled.setLapValues(lap_values);
+
+      if( countDownMode && countDownLap == lap ) {
+        Toast.makeText(MainActivity.this,
+                       "Идёт отсчёт",
+                       Toast.LENGTH_SHORT).show();
+        return;
+      }
+
+      sled.setStartLineEditDialogListener(new StartLineEditDialog.StartLineEditDialogListener() {
+          @Override
+          public void onStartLineEditDialogResult(StartLineEditDialog sled, int crewNum, int lapNum) {
+            EventMessage.ProposeMsg req;
+            int crewId;
+            int lapId = lap_values.get(lapNum);
+
+            if( race.crews.size() != 0 )
+              crewId = race.crews.get(crewNum);
+            else
+              crewId = crewNum;
+
+            Log.i("wsa-ng-ui", "Set new lap/crew for row #" + Integer.toString(rowId) +
+                            " crew=" + Integer.toString(crewId) + " lap=" + Integer.toString(lapId) );
+            req = new EventMessage.ProposeMsg(crewId, lapId, disp.id);
+
+            req.setRowId(rowId);
+
+            EventBus.getDefault().post(new EventMessage(EventMessage.EventType.PROPOSE, req));
+          }
+        });
+      sled.show(getFragmentManager(), sled.getClass().getCanonicalName());
+    }
+
     public View getView()
     {
       tRow = (TableRow)LayoutInflater.from(this.context).inflate(R.layout.data_row, null);
@@ -610,63 +740,7 @@ public class MainActivity extends Activity
         @Override
         public void onClick(View v)
         {
-          StartLineEditDialog sled;
-          final ArrayList<Integer> lap_values = new ArrayList<Integer>();
-          RaceStatus.Discipline rdisp = race.getDiscipline(disp.id);
-
-          /* pass previous and next lap data */
-          int cpos = dataList.indexOf(ViewData.this);
-          int pos = cpos;
-
-          if( start == 0 ) {
-            /* previous lap */
-            while ( --cpos >= 0 ) {
-              ViewData prev = dataList.get(cpos);
-
-              if( prev.lap != lap && lap_values.indexOf(prev.lap) == -1 ) {
-                if( prev.start == 0 && (rdisp == null || rdisp.parallel) ) {
-                  /* not add when prev started */
-                  lap_values.add(prev.lap);
-                }
-                break;
-              }
-            }
-          }
-
-          lap_values.add(lap);
-          cpos = pos;
-
-
-          if( start == 0 ) {
-            int lastLapId = lap;
-            boolean found = false;
-            /* next lap */
-            while( ++cpos < dataList.size() ) {
-              ViewData next = dataList.get(cpos);
-
-              if( !found ) {
-                if( lap_values.indexOf(next.lap) == -1 ) {
-                  if( next.start == 0 && (rdisp == null || rdisp.parallel) ) {
-                    lap_values.add(next.lap);
-                  }
-                  found = true;;
-                }
-              }
-              lastLapId = next.lap;
-            }
-            lap_values.add(lastLapId + 1);
-          }
-
-          Log.d("wsa-ng-ui", String.format("<LAPS[%d] %s>", lap_values.size(), lap_values.toString()));
-
-          if( race.crews.size() != 0 ) {
-            sled = new StartLineEditDialog(race.crews.indexOf(crew), lap_values.indexOf(lap), true);
-            sled.setCrewValues(race.crews);
-          }
-          else {
-            sled = new StartLineEditDialog(crew, lap_values.indexOf(lap), true);
-          }
-          sled.setLapValues(lap_values);
+          PopupMenu popup;
 
           for( ViewData vd : dataList ) {
             if( vd.rowId == rowId )
@@ -677,35 +751,44 @@ public class MainActivity extends Activity
           selectedRowId = rowId;
           selectedLapId = -1;
 
-          if( countDownMode && countDownLap == lap ) {
-            Toast.makeText(MainActivity.this,
-                           "Идёт отсчёт",
-                           Toast.LENGTH_SHORT).show();
+          if( disp.startGate && ((disp.gates.size() == 0) ||
+                                 (disp.gates.size() != 0 && strike)) ) {
+            // instand dialog: when only start gate
+            // or not striked on linear judge
+            _show_edit_dialog();
             return;
           }
 
-          sled.setStartLineEditDialogListener(new StartLineEditDialog.StartLineEditDialogListener() {
-              @Override
-              public void onStartLineEditDialogResult(StartLineEditDialog sled, int crewNum, int lapNum) {
-                EventMessage.ProposeMsg req;
-                int crewId;
-                int lapId = lap_values.get(lapNum);
+          popup = new PopupMenu(MainActivity.this, v);
 
-                if( race.crews.size() != 0 )
-                  crewId = race.crews.get(crewNum);
-                else
-                  crewId = crewNum;
+          if( disp.gates.size() == 0 || strike )
+            return;
 
-                Log.i("wsa-ng-ui", "Set new lap/crew for row #" + Integer.toString(rowId) +
-                                " crew=" + Integer.toString(crewId) + " lap=" + Integer.toString(lapId) );
-                req = new EventMessage.ProposeMsg(crewId, lapId, disp.id);
+          // show menu only for linear judge (and not striked)
 
-                req.setRowId(rowId);
+          if( disp.startGate )
+            popup.getMenu().add(1, 3, 3, R.string.edit_lapcrew);
+          popup.getMenu().add(1, 4, 4, R.string.set_strike);
 
-                EventBus.getDefault().post(new EventMessage(EventMessage.EventType.PROPOSE, req));
+          popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item)
+            {
+              switch( item.getItemId() ) {
+              case 3:
+                _show_edit_dialog();
+                break;
+              case 4:
+                _show_strike_dialog();
+                break;
+              default:
+                return false;
               }
-            });
-          sled.show(getFragmentManager(), sled.getClass().getCanonicalName());
+              return true;
+            }
+          });
+
+          popup.show();
         }
       };
 
