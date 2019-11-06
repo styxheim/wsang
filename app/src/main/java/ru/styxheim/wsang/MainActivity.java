@@ -71,6 +71,7 @@ public class MainActivity extends Activity
     settingsRace = getSharedPreferences("race", Context.MODE_PRIVATE);
     settingsChrono = getSharedPreferences("chrono", Context.MODE_PRIVATE);
     setContentView(R.layout.main);
+    setShowWhenLocked(true);
   }
 
   @Override

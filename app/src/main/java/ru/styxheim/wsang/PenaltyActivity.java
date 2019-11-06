@@ -57,6 +57,7 @@ public class PenaltyActivity extends Activity
     }
 
     _setupPenalties();
+    setShowWhenLocked(true);
   }
 
   protected void _setupPenalties()
