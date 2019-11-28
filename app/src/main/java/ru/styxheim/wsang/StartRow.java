@@ -150,7 +150,7 @@ public class StartRow
           case "LapNumber":
             this.lapId = new Integer(jr.nextInt());
             break;
-          case "CrewNumber":
+          case "CrewId":
             this.crewId = new Integer(jr.nextInt());
             break;
           case "FinishTime":
