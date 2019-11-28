@@ -356,10 +356,10 @@ public class MainActivity extends Activity
 
     if( disp == null ) {
       skip_reason = "No active discipline";
-    }
-
-    if( disp.id != row.disciplineId ) {
-      skip_reason = String.format("Mismatch disciplineId (%d)", disp.id);
+    } else {
+      if( disp.id != row.disciplineId ) {
+        skip_reason = String.format("Mismatch disciplineId (%d)", disp.id);
+      }
     }
 
     Log.d("wsa-ng-ui",

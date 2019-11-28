@@ -95,6 +95,7 @@ public class RaceStatus
           this.parallel = jr.nextBoolean();
           break;
         default:
+          Log.d("wsa-ng", "RaceStatus.Disciplines: Unknown field '" + name + "'");
           jr.skipValue();
           break;
         }
