@@ -210,7 +210,7 @@ public class StartRow
       }
 
       if( this.crewId != null ) {
-        jw.name("CrewNumber").value(this.crewId);
+        jw.name("CrewId").value(this.crewId);
       }
 
       if( this.lapId != null ) {
@@ -588,7 +588,7 @@ public class StartRow
     w.name("disciplineId").value(this.disciplineId);
     w.name("lapId").value(this.rowId);
     w.name("lapNumber").value(this.lapId);
-    w.name("crewNumber").value(this.crewId);
+    w.name("crewId").value(this.crewId);
     w.name("startTimeMs").value(this.startAt);
     w.name("finishTimeMs").value(this.finishAt);
     w.name("strike").value(this.strike);
@@ -667,7 +667,7 @@ public class StartRow
       case "lapNumber":
         this.lapId = r.nextInt();
         break;
-      case "crewNumber":
+      case "crewId":
         this.crewId = r.nextInt();
         break;
       case "startTime":
