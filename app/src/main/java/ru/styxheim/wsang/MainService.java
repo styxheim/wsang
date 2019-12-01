@@ -378,7 +378,17 @@ public class MainService extends Service
         if( response.code() == 200 ) {
           try ( StringReader sr = new StringReader(response.body().string());
                 JsonReader jr = new JsonReader(sr) ) {
-            serverStatus.loadJSON(jr);
+            try {
+              serverStatus.loadJSON(jr);
+            } catch ( Exception e ) {
+              Log.e("wsa-ng", _("[RECEIVE] Got error: %s ->\n%s",
+                                e.getMessage(), e2trace(e)));
+
+              Toast.makeText(MainService.this,
+                             "Sync error: Look to logcat 'wsa-ng'",
+                             Toast.LENGTH_SHORT).show();
+
+            }
           }
         }
         EventBus.getDefault().post(new EventMessage.RSyncResult(serverStatus));
@@ -653,6 +663,7 @@ public class MainService extends Service
                       (status.raceStatus == null ? "" : "RaceStatus ") +
                       (status.terminalStatus.size() == 0 ? "" : " T" + Integer.toString(status.terminalStatus.size())) +
                       (status.lap.size() == 0 ? "" : " L" + Integer.toString(status.lap.size())) +
+                      (status.error == null ? "" : " E") +
                       "]"));
 
     try {

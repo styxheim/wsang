@@ -10,9 +10,45 @@ import java.io.*;
 
 public class ServerStatus
 {
+  public Error error;
   RaceStatus raceStatus;
   ArrayList<StartRow.SyncData> lap = new ArrayList<StartRow.SyncData>();
   ArrayList<TerminalStatus> terminalStatus = new ArrayList<TerminalStatus>();
+  final static String ERROR = "Error";
+
+  public class Error
+  {
+    public String text;
+
+    final static String TEXT = "Text";
+
+    public Error()
+    {
+    }
+
+    public Error(JsonReader jr) throws IOException
+    {
+      loadJSON(jr);
+    }
+
+    public void loadJSON(JsonReader jr) throws IOException, IllegalStateException
+    {
+      text = null;
+
+      jr.beginObject();
+      while( jr.hasNext() ) {
+        switch( jr.nextName() ) {
+        case TEXT:
+          text = jr.nextString();
+          break;
+        default:
+          jr.skipValue();
+          break;
+        }
+      }
+      jr.endObject();
+    }
+  }
 
   public ServerStatus()
   {
@@ -51,6 +87,9 @@ public class ServerStatus
           lap.add(new StartRow.SyncData(jr));
         }
         jr.endArray();
+        break;
+      case ERROR:
+        error = new Error(jr);
         break;
       default:
         jr.skipValue();

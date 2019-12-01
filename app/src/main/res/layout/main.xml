@@ -73,6 +73,26 @@
 		android:layout_width="match_parent"
 		android:layout_height="match_parent">
 
+		<LinearLayout
+			android:orientation="horizontal"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:id="@+id/error_layout"
+			android:gravity="center"
+			android:visibility="gone">
+
+			<TextView
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:text="Loading..."
+				android:textAppearance="?android:attr/textAppearanceLarge"
+				android:gravity="center"
+				android:layout_gravity="center_horizontal"
+				android:id="@+id/error_text"
+				android:textColor="#FF0F00"/>
+
+		</LinearLayout>
+
 		<RelativeLayout
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content">
@@ -110,27 +130,27 @@
 				</HorizontalScrollView>
 
 			</ScrollView>
-    
-  <LinearLayout
-		android:orientation="vertical"
-		android:layout_width="match_parent"
-		android:layout_height="wrap_content"
-		android:id="@+id/discipline_panel"
-    android:layout_alignParentBottom="true"
-    android:paddingLeft="23dp"
-    android:paddingBottom="23dp"
-		android:gravity="left">
 
-    <Button
-      android:id="@+id/discipline_title"
-      style="?android:attr/buttonBarButtonStyle"
-      android:visibility="visible"
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content"
-      android:text="- Discipline -"
-      android:onClick="disciplineOnClick"/>
+			<LinearLayout
+				android:orientation="vertical"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:id="@+id/discipline_panel"
+				android:layout_alignParentBottom="true"
+				android:paddingLeft="23dp"
+				android:paddingBottom="23dp"
+				android:gravity="left">
 
-  </LinearLayout>
+				<Button
+					android:id="@+id/discipline_title"
+					style="?android:attr/buttonBarButtonStyle"
+					android:visibility="visible"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:text="- Discipline -"
+					android:onClick="disciplineOnClick"/>
+
+			</LinearLayout>
 
 			<LinearLayout
 				android:orientation="vertical"

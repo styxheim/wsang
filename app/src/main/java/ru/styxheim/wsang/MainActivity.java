@@ -303,6 +303,22 @@ public class MainActivity extends Activity
   }
 
   @Subscribe(threadMode = ThreadMode.MAIN)
+  public void _event_receive(EventMessage.RSyncResult rstatus)
+  {
+    final View errorView = findViewById(R.id.error_layout);
+    final TextView errorText = findViewById(R.id.error_text);
+    final ServerStatus status = rstatus.serverStatus;
+
+    if( status.error == null ) {
+      errorView.setVisibility(View.GONE);
+      return;
+    }
+
+    errorText.setText(status.error.text);
+    errorView.setVisibility(View.VISIBLE);
+  }
+
+  @Subscribe(threadMode = ThreadMode.MAIN)
   public void _event_terminalStatus(TerminalStatus new_term)
   {
     Log.d("wsa-ng-ui", "Receive new TerminalStatus: " + new_term.toString());
