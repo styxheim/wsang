@@ -8,8 +8,8 @@ android {
         applicationId "ru.styxheim.wsang"
         minSdkVersion 14
         targetSdkVersion 22
-        versionCode 3
-        versionName "2.1"
+        versionCode 2020
+        versionName "2.2"
     }
     buildTypes {
         release {
