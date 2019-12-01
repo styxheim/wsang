@@ -309,7 +309,7 @@ public class MainActivity extends Activity
     final TextView errorText = findViewById(R.id.error_text);
     final ServerStatus status = rstatus.serverStatus;
 
-    if( status.error == null ) {
+    if( (status != null && status.error == null) || status == null ) {
       errorView.setVisibility(View.GONE);
       return;
     }
