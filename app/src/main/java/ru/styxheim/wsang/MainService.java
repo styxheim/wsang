@@ -692,6 +692,9 @@ public class MainService extends Service
           ed.putLong("offset", 0L);
           ed.commit();
 
+        }
+
+        if( status.raceStatus.syncPoint != raceStatus.syncPoint ) {
           /* sync time */
           _sync_time();
         }
