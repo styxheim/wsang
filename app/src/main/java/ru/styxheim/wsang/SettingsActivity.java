@@ -84,6 +84,7 @@ public class SettingsActivity extends Activity
 
     _setup_mode();
     _setup_server_addr();
+    _update_race_info();
     _update_terminal_id();
     _update_chrono_key_title();
     _update_chrono_offset_title();
@@ -166,6 +167,20 @@ public class SettingsActivity extends Activity
         v.setVisibility(v.INVISIBLE);
       }
     });
+  }
+
+  public void _update_race_info()
+  {
+    final TextView tv = findViewById(R.id.settings_race_id);
+    final TextView tv_t = findViewById(R.id.settings_race_title);
+    SharedPreferences race_settings = getSharedPreferences("race", Context.MODE_PRIVATE);
+    RaceStatus raceStatus = new RaceStatus(race_settings);
+
+    tv.setText(Long.toString(raceStatus.competitionId));
+    if( raceStatus.competitionName != null )
+      tv_t.setText(raceStatus.competitionName);
+    else
+      tv_t.setText("");
   }
 
   public void _update_terminal_id()

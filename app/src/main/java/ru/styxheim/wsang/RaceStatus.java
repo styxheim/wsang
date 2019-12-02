@@ -18,6 +18,7 @@ public class RaceStatus
   final static int GATE_FINISH = -3;
 
   final static String COMPETITION_ID = "CompetitionId";
+  final static String COMPETITION_NAME = "CompetitionName";
   final static String TIMESTAMP = "TimeStamp";
   final static String SYNCPOINT = "SyncPoint";
   final static String CREWS = "Crews";
@@ -27,6 +28,7 @@ public class RaceStatus
   final static String ID = "Id";
   final static String NAME = "Name";
 
+  public String competitionName;
   public long syncPoint;
   public long competitionId;
   public long timestamp;
@@ -184,6 +186,9 @@ public class RaceStatus
       case COMPETITION_ID:
         this.competitionId = jr.nextLong();
         break;
+      case COMPETITION_NAME:
+        this.competitionName = jr.nextString();
+        break;
       case SYNCPOINT:
         this.syncPoint = jr.nextLong();
         break;
@@ -235,6 +240,7 @@ public class RaceStatus
     jw.beginObject();
 
     jw.name(COMPETITION_ID).value(this.competitionId);
+    jw.name(COMPETITION_NAME).value(this.competitionName);
     jw.name(TIMESTAMP).value(this.timestamp);
     jw.name(SYNCPOINT).value(this.syncPoint);
 
