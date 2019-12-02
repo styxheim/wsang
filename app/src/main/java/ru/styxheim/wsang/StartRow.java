@@ -363,14 +363,14 @@ public class StartRow
                                      SyncData previous,
                                      SyncData diff)
   {
-    // update StartRow for fields what not overlayed
+    // update StartRow for fields what not pending send
     // by data present in syncList
     // return syncData with fields whant not updated
     // when `previous` is null, no changes in `this`
-    SyncData overlay = new SyncData();
+    SyncData pending = new SyncData();
 
     for( SyncData ndata : syncList ) {
-      overlay.inprint(ndata);
+      pending.inprint(ndata);
     }
 
     // timestamp not used in this case
@@ -378,10 +378,10 @@ public class StartRow
     // disciplineId not used in this case
 
     if( received.strike != null ) {
-      if( overlay.strike != null ) {
-        if( received.strike.compareTo(overlay.strike) != 0 ) {
+      if( pending.strike != null ) {
+        if( received.strike.compareTo(pending.strike) != 0 ) {
           if( diff != null )
-            diff.strike = received.strike;
+            diff.strike = pending.strike;
         }
       }
       else if( previous != null && received.strike.compareTo(this.strike) != 0 ) {
@@ -389,12 +389,15 @@ public class StartRow
         this.strike = received.strike;
       }
     }
+    else if( diff != null ) {
+      diff.strike = pending.strike;
+    }
 
     if( received.crewId != null ) {
-      if( overlay.crewId != null ) {
-        if( received.crewId.compareTo(overlay.crewId) != 0 ) {
+      if( pending.crewId != null ) {
+        if( received.crewId.compareTo(pending.crewId) != 0 ) {
           if( diff != null )
-            diff.crewId = received.crewId;
+            diff.crewId = pending.crewId;
         }
       }
       else if( previous != null && received.crewId.compareTo(this.crewId) != 0 ) {
@@ -402,25 +405,31 @@ public class StartRow
         this.crewId = received.crewId;
       }
     }
+    else if( diff != null ) {
+      diff.crewId = pending.crewId;
+    }
 
     if( received.lapId != null ) {
-      if( overlay.lapId != null ) {
-        if( received.lapId.compareTo(overlay.lapId) != 0 ) {
+      if( pending.lapId != null ) {
+        if( received.lapId.compareTo(pending.lapId) != 0 ) {
           if( diff != null )
-            diff.lapId = received.lapId;
+            diff.lapId = pending.lapId;
         }
       }
       else if( previous != null && received.lapId.compareTo(this.lapId) != 0 ) {
         previous.lapId = this.lapId;
-        this.lapId = received.lapId;
+        this.lapId = pending.lapId;
       }
+    }
+    else if( diff != null ) {
+      diff.lapId = pending.lapId;
     }
 
     if( received.finishTime != null ) {
-      if( overlay.finishTime != null ) {
-        if( received.finishTime.compareTo(overlay.finishTime) != 0 ) {
+      if( pending.finishTime != null ) {
+        if( received.finishTime.compareTo(pending.finishTime) != 0 ) {
           if( diff != null )
-            diff.finishTime = received.finishTime;
+            diff.finishTime = pending.finishTime;
         }
       }
       else if( previous != null && received.finishTime.compareTo(this.finishAt) != 0 ) {
@@ -428,49 +437,64 @@ public class StartRow
         this.finishAt = received.finishTime;
       }
     }
+    else if( diff != null ) {
+      diff.finishTime = pending.finishTime;
+    }
 
     if( received.startTime != null ) {
-      if( overlay.startTime != null ) {
-        // found in overlay
-        if( received.startTime.compareTo(overlay.startTime) != 0 ) {
+      if( pending.startTime != null ) {
+        // found in pending
+        if( received.startTime.compareTo(pending.startTime) != 0 ) {
           // store differ value
           if( diff != null )
-            diff.startTime = received.startTime;
+            diff.startTime = pending.startTime;
         }
-        // value is equal to overlay: nothing
+        // value is equal to pending: nothing
       }
       else if( previous != null ) {
         previous.startTime = this.startAt;
         this.startAt = received.startTime;
       }
     }
+    else if( diff != null ) {
+      // value is pending but received not contain this field
+      diff.startTime = pending.startTime;
+    }
 
-    for( Gate rgate : received.gates ) {
-      boolean found_in_overlay = false;
-      for( Gate ogate : overlay.gates ) {
-        if( ogate.gate == rgate.gate ) {
-          // gate found in overlay
-          found_in_overlay = true;
-          if( ogate.penalty != rgate.penalty ) {
-            // value is differ
-            if( diff != null )
-              diff.gates.add(rgate);
+    if( received.gates.size() != 0 ) {
+      for( Gate rgate : received.gates ) {
+        boolean found_in_pending = false;
+        for( Gate ogate : pending.gates ) {
+          if( ogate.gate == rgate.gate ) {
+            // gate found in pending
+            found_in_pending = true;
+            if( ogate.penalty != rgate.penalty ) {
+              // value is differ
+              if( diff != null )
+                diff.gates.add(rgate);
+            }
+            break;
+            // value is equal to pending: nothing
           }
-          break;
-          // value is equal to overlay: nothing
         }
-      }
-      if( !found_in_overlay && previous != null ) {
-        for( Gate lgate : gates ) {
-          if( lgate.gate == rgate.gate ) {
-            if( lgate.penalty != rgate.penalty ) {
-              // value not equal
-              previous.gates.add(lgate.clone());
-              lgate.penalty = rgate.penalty;
-              break;
+        if( !found_in_pending && previous != null ) {
+          for( Gate lgate : gates ) {
+            if( lgate.gate == rgate.gate ) {
+              if( lgate.penalty != rgate.penalty ) {
+                // value not equal
+                previous.gates.add(lgate.clone());
+                lgate.penalty = rgate.penalty;
+                break;
+              }
             }
           }
         }
+      }
+    }
+    else if( diff != null ) {
+      // received not have pending values
+      for( Gate ogate : pending.gates ) {
+        diff.gates.add(ogate.clone());
       }
     }
   }
