@@ -286,11 +286,16 @@ public class SettingsActivity extends Activity
 
   public void exportOnClick(View v)
   {
+    StartList starts;
     File file = new File(Environment.getExternalStorageDirectory(), "funny.json");
     ServerStatus ss = new ServerStatus();
     SharedPreferences race_settings = getSharedPreferences("race", Context.MODE_PRIVATE);
     ss.terminalStatus.add(new TerminalStatus(race_settings));
     ss.raceStatus = new RaceStatus(race_settings);
+
+    starts.Load(getApplicationContext());
+    starts.setOutput((new File(Environment.getExternalStorageDirectory(), "laps.json")).getPath());
+    starts.Save(getApplicationContext());
 
     try {
       try( StringWriter sw = new StringWriter();
