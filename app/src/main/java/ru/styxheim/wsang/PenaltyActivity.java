@@ -1,6 +1,7 @@
 package ru.styxheim.wsang;
 
 import android.os.Bundle;
+import android.os.Build;
 import android.widget.TextView;
 import android.widget.RadioGroup;
 import android.widget.RadioButton;
@@ -10,6 +11,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.view.LayoutInflater;
 import android.app.Activity;
 import android.app.Dialog;
@@ -57,7 +59,11 @@ public class PenaltyActivity extends Activity
     }
 
     _setupPenalties();
-    setShowWhenLocked(true);
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+      setShowWhenLocked(true);
+    } else {
+      this.getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED);
+    }
   }
 
   protected void _setupPenalties()
