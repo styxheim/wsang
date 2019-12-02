@@ -765,7 +765,7 @@ public class MainService extends Service
           if( lrow.state == StartRow.SyncState.SYNCED ) {
             if( !previous.isEmpty() )
               changed = true;
-            if( diff.isEmpty() )
+            if( !diff.isEmpty() )
               Log.e("wsa-ng", _("rsync: diff is not empty"));
           }
           else {
