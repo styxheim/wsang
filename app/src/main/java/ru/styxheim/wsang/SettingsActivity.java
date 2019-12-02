@@ -286,7 +286,7 @@ public class SettingsActivity extends Activity
 
   public void exportOnClick(View v)
   {
-    StartList starts;
+    StartList starts = new StartList();
     File file = new File(Environment.getExternalStorageDirectory(), "funny.json");
     ServerStatus ss = new ServerStatus();
     SharedPreferences race_settings = getSharedPreferences("race", Context.MODE_PRIVATE);
@@ -321,7 +321,7 @@ public class SettingsActivity extends Activity
       return;
     }
     Toast.makeText(SettingsActivity.this,
-                   "Dumped to: " + file.getAbsolutePath(),
+                   "See result in: " + Environment.getExternalStorageDirectory().getAbsolutePath(),
                    Toast.LENGTH_SHORT).show();
   }
 }
