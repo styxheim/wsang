@@ -8,6 +8,7 @@ import android.util.Log;
 import android.util.JsonWriter;
 import java.io.*;
 import android.widget.Toast;
+import android.content.pm.PackageManager;
 
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -49,6 +50,7 @@ public class MainService extends Service
   private OkHttpClient http_client = new OkHttpClient();
 
   private long timestamp = 0;
+  private String Version;
 
   private enum CountDownMode {
     NONE,
@@ -295,6 +297,13 @@ public class MainService extends Service
     filter = new IntentFilter(Intent.ACTION_SCREEN_OFF);
     registerReceiver(new ScreenIntent(false, this), filter);
 
+    try {
+      Version = this.getPackageManager().getPackageInfo(this.getPackageName(), 0).versionName;
+    } catch( PackageManager.NameNotFoundException e ) {
+      Log.e("wsa-ng", _("Version get error ->\n%s",
+                        e.getMessage(), e2trace(e)));
+      Version = "";
+    }
     // sync: first step: receive race data
     _sync_receive();
   }
@@ -357,6 +366,7 @@ public class MainService extends Service
   private void _sync_receive()
   {
     final String url;
+    final String post_body;
     Request request;
     Call call;
 
@@ -366,8 +376,13 @@ public class MainService extends Service
                         this.timestamp,
                         this.terminalStatus.terminalId);
 
+    post_body = String.format("{ \"Version\": \"%s\" }", Version);
+
     Log.d("wsa-ng", _("rsync: query url %s", url));
-    request = new Request.Builder().url(url).build();
+    request = new Request.Builder()
+                  .url(url)
+                  .post(RequestBody.create(MediaType.parse("application/json"),
+                                           post_body)).build();
     call = http_client.newCall(request);
     call.enqueue(new Callback() {
       public void onResponse(Call call, Response response) throws IOException
