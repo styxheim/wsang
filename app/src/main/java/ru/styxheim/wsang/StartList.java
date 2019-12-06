@@ -108,6 +108,15 @@ public class StartList implements Iterable<StartRow>
     return null;
   }
 
+  public void saveJSON(JsonWriter jw) throws IOException
+  {
+    jw.beginArray();
+    for( StartRow row: Rows ) {
+      row.saveJSON(jw);
+    }
+    jw.endArray();
+  }
+
   /* Save data to file
    */
   public void Save(Context ctx)
@@ -119,11 +128,7 @@ public class StartList implements Iterable<StartRow>
 
     try {
       jw.setIndent("  ");
-      jw.beginArray();
-      for( StartRow row: Rows ) {
-        row.saveJSON(jw);
-      }
-      jw.endArray();
+      saveJSON(jw);
     } catch( Exception e ) {
       e.printStackTrace();
       /* TODO: print exception to UI */
