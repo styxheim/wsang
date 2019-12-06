@@ -11,7 +11,11 @@ import android.text.Editable;
 import android.util.Log;
 import android.media.MediaPlayer;
 
+import android.net.Uri;
+
 import java.io.*;
+
+import java.util.ArrayList;
 
 public class SettingsActivity extends Activity
 {
@@ -302,24 +306,27 @@ public class SettingsActivity extends Activity
   public void exportOnClick(View v)
   {
     StartList starts = new StartList();
-    File file = new File(Environment.getExternalStorageDirectory(), "funny.json");
     ServerStatus ss = new ServerStatus();
+    File raceFile;
     SharedPreferences race_settings = getSharedPreferences("race", Context.MODE_PRIVATE);
     ss.terminalStatus.add(new TerminalStatus(race_settings));
     ss.raceStatus = new RaceStatus(race_settings);
-
+    raceFile = new File(Environment.getExternalStorageDirectory(), "tid_" + ss.terminalStatus.get(0).terminalId + ".json");
     starts.Load(getApplicationContext());
-    starts.setOutput((new File(Environment.getExternalStorageDirectory(), "laps.json")).getPath());
-    starts.Save(getApplicationContext());
 
     try {
       try( StringWriter sw = new StringWriter();
            JsonWriter jw = new JsonWriter(sw) ) {
 
         jw.setIndent("  ");
+        jw.beginObject();
+        jw.name("Configuration");
         ss.saveJSON(jw);
+        jw.name("Lap");
+        starts.saveJSON(jw);
+        jw.endObject();
 
-        try( FileOutputStream fos = new FileOutputStream(file) ) {
+        try( FileOutputStream fos = new FileOutputStream(raceFile) ) {
           fos.write(sw.toString().getBytes());
         }
       }
@@ -335,8 +342,14 @@ public class SettingsActivity extends Activity
       Log.e("wsa-ng", "Dump error: " + psw.toString());
       return;
     }
+
+    Intent intent = new Intent(Intent.ACTION_SEND);
+    intent.setType("text/*");
+    intent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(raceFile));
+    this.startActivity(Intent.createChooser(intent, "Send to"));
+
     Toast.makeText(SettingsActivity.this,
-                   "See result in: " + Environment.getExternalStorageDirectory().getAbsolutePath(),
+                   "See result in: " + raceFile.getPath().toString(),
                    Toast.LENGTH_SHORT).show();
   }
 }
