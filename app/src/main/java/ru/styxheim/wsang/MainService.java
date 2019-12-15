@@ -338,7 +338,7 @@ public class MainService extends Service
     super.onDestroy();
   }
 
-  private void _boot(Integer disciplineId)
+  private void _boot()
   {
     Log.i("wsa-ng", _("Begin boot"));
     ArrayList<StartRow> row_list = new ArrayList<StartRow>();
@@ -346,18 +346,14 @@ public class MainService extends Service
     EventBus.getDefault().post(raceStatus);
     EventBus.getDefault().post(terminalStatus);
 
-    if( disciplineId != null ) {
-      for( StartRow row : starts ) {
-        if( row.disciplineId == disciplineId ) {
-          row_list.add(row.clone());
-        }
-      }
-
-      EventBus.getDefault().post(row_list);
-    }
-
     if( cdmsg != null )
       EventBus.getDefault().post(cdmsg);
+
+    for( StartRow row : starts ) {
+      row_list.add(row.clone());
+    }
+
+    EventBus.getDefault().post(row_list);
 
     Log.i("wsa-ng", _("Boot End"));
   }
@@ -854,7 +850,7 @@ public class MainService extends Service
   @Subscribe(threadMode = ThreadMode.MAIN)
   public void _event_boot(EventMessage.Boot msg)
   {
-    _boot(msg.disciplineId);
+    _boot();
   }
   
 }

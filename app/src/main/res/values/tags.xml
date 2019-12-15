@@ -4,4 +4,5 @@
 
   <item name="tag_gate_id" type="id"/>
   <item name="tag_penalty_id" type="id"/>
+
 </resources>

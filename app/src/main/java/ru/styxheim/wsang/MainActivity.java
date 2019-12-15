@@ -41,6 +41,7 @@ public class MainActivity extends Activity
   protected int selectedLapId = -1;
 
   protected ArrayList<ViewData> dataList = new ArrayList<ViewData>();
+  protected ArrayList<TableData> tableList = new ArrayList<TableData>();
 
   protected boolean countDownMode = false;
   protected long countDownLap;
@@ -135,12 +136,7 @@ public class MainActivity extends Activity
       public void run() {
         EventMessage.Boot boot_msg;
 
-        if( disp != null ) {
-          boot_msg = new EventMessage.Boot(disp.id);
-        }
-        else {
-          boot_msg = new EventMessage.Boot();
-        }
+        boot_msg = new EventMessage.Boot();
         EventBus.getDefault().post(boot_msg);
       }
     }, 1000);
@@ -155,52 +151,7 @@ public class MainActivity extends Activity
 
   public void disciplineOnClick(View v)
   {
-    AlertDialog.Builder builder = new AlertDialog.Builder(this);
-    final ArrayList<String> names = new ArrayList<String>();
-    final ArrayList<Integer> ids = new ArrayList<Integer>();
-    final String[] names_array;
-    final int selected;
-    int _selected = -1;
-
-    if( race == null || disp == null )
-      return;
-
-    for( int i = 0; i < race.disciplines.size(); i++ ) {
-      RaceStatus.Discipline d = race.disciplines.get(i);
-      if( term.getDiscipline(d.id) == null )
-        continue;
-      if( d.id == disp.id )
-        _selected = i;
-      names.add(d.name);
-      ids.add(d.id);
-    }
-
-    selected = _selected;
-
-    names_array = names.toArray(new String[0]);
-
-    builder.setTitle(R.string.disciplines);
-    builder.setIcon(R.mipmap.ic_launcher);
-    builder.setSingleChoiceItems(names_array,
-                                 selected,
-                                 new DialogInterface.OnClickListener() {
-      @Override
-      public void onClick(DialogInterface dialog, int item)
-      {
-        SharedPreferences.Editor edit = settings.edit();
-
-        if( item != selected ) {
-          Log.d("wsa-ng-ui", "Select new discipline id#" + ids.get(item).toString());
-          disp = term.getDiscipline(ids.get(item));
-          edit.putInt("DisciplineId", disp.id);
-          edit.apply();
-          _tableSetup();
-        }
-        dialog.dismiss();
-      }
-    });
-
-    builder.create().show();
+    /* TODO: to remove */
   }
 
   public void settingsOnClick(View v)
@@ -238,8 +189,6 @@ public class MainActivity extends Activity
       Log.e("wsa-ng-ui", "RaceStatus is empty, cannot add new row");
     if( term == null )
       Log.e("wsa-ng-ui", "TerminalStatus is empty, cannot add new row");
-    if( disp == null )
-      Log.e("wsa-ng-ui", "Discipline is empty, cannot add new row");
 
     if( term == null || race == null ) {
       Toast.makeText(MainActivity.this,
@@ -296,6 +245,20 @@ public class MainActivity extends Activity
     sled.show(getFragmentManager(), sled.getClass().getCanonicalName());
   }
 
+  protected TableData _getTableDataByDisciplineId(int disciplineId)
+  {
+    TableData td;
+    /* get and check last table data by disciplineId */
+    if( tableList.size() > 0 ) {
+      td = tableList.get(tableList.size() - 1);
+      if( td.disciplineId == disciplineId ) {
+        return td;
+      }
+    }
+
+    return null;
+  }
+
   protected ViewData _getViewDataById(int rowId)
   {
     for( ViewData vd : dataList ) {
@@ -341,7 +304,7 @@ public class MainActivity extends Activity
       if( disp == null )
         disp = new_term.getDiscipline();
 
-      _tableSetup();
+      _buttonsSetup();
     }
   }
 
@@ -353,7 +316,7 @@ public class MainActivity extends Activity
                          race.competitionId != new_race.competitionId) ) {
       Log.d("wsa-ng-ui", "Apply new RaceStatus");
       race = new_race;
-      _tableSetup();
+      _buttonsSetup();
       if( chrono != null )
         chrono.reload();
     }
@@ -370,37 +333,29 @@ public class MainActivity extends Activity
   @Subscribe(threadMode = ThreadMode.MAIN)
   public void _update_StartRow(StartRow row)
   {
-    String skip_reason = null;
     /* Update or add new data */
     ViewData vd = _getViewDataById(row.getRowId());
 
-    if( disp == null ) {
-      skip_reason = "No active discipline";
-    } else {
-      if( disp.id != row.disciplineId ) {
-        skip_reason = String.format("Mismatch disciplineId (%d)", disp.id);
-      }
-    }
-
     Log.d("wsa-ng-ui",
           "got " + row.toString() +
-          ", visible=" + (vd == null ? "false" : "true") +
-          ( skip_reason == null ? "" : ", skip: " + skip_reason ) );
-
-    if( skip_reason != null )
-      return;
+          ", visible=" + (vd == null ? "false" : "true"));
 
     if( vd == null ) {
-      final ScrollView sv = findViewById(R.id.vscroll);
-      /* add new row */
-      final TableLayout table = findViewById(R.id.table);
-      final View v;
+      /* try to add new row */
       vd = new ViewData(row.getRowId());
-      v = vd.getView();
-      if( table.getChildCount() % 2 == 0 )
-        v.setBackgroundResource(R.color.rowEven);
+      TableData td = _getTableDataByDisciplineId(row.disciplineId);
+      final ScrollView sv = findViewById(R.id.vscroll);
 
-      table.addView(v);
+      if( td == null ) {
+        final LinearLayout tableListLayout = findViewById(R.id.table_list);
+        /* setup new table */
+
+        td = new TableData(row.disciplineId);
+        tableList.add(td);
+        tableListLayout.addView(td.getView());
+      }
+
+      td.addData(vd);
       dataList.add(vd);
 
       sv.post(new Runnable() {
@@ -470,12 +425,48 @@ public class MainActivity extends Activity
     _disableCountDownMode();
   }
 
+  private class TableData
+  {
+    public int disciplineId;
+    public ArrayList<ViewData> tableDataList = new ArrayList<ViewData>();
+    LinearLayout layout;
+    public int tableId;
+
+    public TableData(int disciplineId)
+    {
+      this.disciplineId = disciplineId;
+    }
+
+    public View getView()
+    {
+      TableLayout tl = new TableLayout(MainActivity.this);
+      TextView tv = new TextView(MainActivity.this);
+
+      tableId = View.generateViewId();
+      tl.setId(tableId);
+      tv.setText("discipline: " + Integer.toString(disciplineId));
+      layout = new LinearLayout(MainActivity.this);
+      layout.setOrientation(LinearLayout.VERTICAL);
+      layout.addView(tv);
+      layout.addView(tl);
+      return layout;
+    }
+
+    public void addData(ViewData vd)
+    {
+      if( layout != null ) {
+        ((ViewGroup)layout.findViewById(tableId)).addView(vd.getView());
+      }
+    }
+  }
+
   private class ViewData
   {
     public int rowId;
 
     public StartRow.SyncState state;
     public int lap;
+    public int disciplineId;
     public int crew;
     public long finish;
     public long start;
@@ -552,20 +543,14 @@ public class MainActivity extends Activity
         break;
       }
 
-      if( tLap != null ) {
-        tLap.setText(Integer.toString(lap));
-        _strikeTextView(tLap);
-      }
+      tLap.setText(Integer.toString(lap));
+      _strikeTextView(tLap);
 
-      if( tCrew != null ) {
-        tCrew.setText(Integer.toString(crew));
-        _strikeTextView(tCrew);
-      }
+      tCrew.setText(Integer.toString(crew));
+      _strikeTextView(tCrew);
 
-      if( tStart != null ) {
-        tStart.setText(Default.millisecondsToString(start));
-        _strikeTextView(tStart);
-      }
+      tStart.setText(Default.millisecondsToString(start));
+      _strikeTextView(tStart);
 
       for( int i = 0; i < gates.size(); i++ ) {
         int gatePenaltyId = gates.get(i);
@@ -584,10 +569,8 @@ public class MainActivity extends Activity
           tGate.setText(Integer.toString(pvalue));
       }
 
-      if( tFinish != null ) {
-        tFinish.setText(Default.millisecondsToString(finish));
-        _strikeTextView(tFinish);
-      }
+      tFinish.setText(Default.millisecondsToString(finish));
+      _strikeTextView(tFinish);
     }
 
     public void update(StartRow row)
@@ -607,10 +590,11 @@ public class MainActivity extends Activity
       finish = row.finishAt;
       start = row.startAt;
       strike = row.strike;
+      disciplineId = row.disciplineId;
 
       gates.clear();
-      for( int i = 0; i < disp.gates.size(); i++ ) {
-        int gateId = disp.gates.get(i);
+      for( int i = 0; i < race.gates.size(); i++ ) {
+        int gateId = race.gates.get(i);
         gates.add(0);
         for( StartRow.Gate lgate : row.gates ) {
           if( lgate.gate == gateId ) {
@@ -737,7 +721,7 @@ public class MainActivity extends Activity
 
             Log.i("wsa-ng-ui", "Set new lap/crew for row #" + Integer.toString(rowId) +
                             " crew=" + Integer.toString(crewId) + " lap=" + Integer.toString(lapId) );
-            req = new EventMessage.ProposeMsg(crewId, lapId, disp.id);
+            req = new EventMessage.ProposeMsg(crewId, lapId, ViewData.this.disciplineId);
 
             req.setRowId(rowId);
 
@@ -747,12 +731,34 @@ public class MainActivity extends Activity
       sled.show(getFragmentManager(), sled.getClass().getCanonicalName());
     }
 
+    public void _updateVisibilityByDisp()
+    {
+      TerminalStatus.Discipline disp = term.getDiscipline(disciplineId);
+
+      if( disp == null )
+        return;
+
+      if( disp.startGate ) {
+        tStart.setVisibility(View.VISIBLE);
+      } else {
+        tStart.setVisibility(View.GONE);
+      }
+
+      if( disp.finishGate ) {
+        tFinish.setVisibility(View.VISIBLE);
+      } else {
+        tStart.setVisibility(View.GONE);
+      }
+    }
+
     public View getView()
     {
       tRow = (TableRow)LayoutInflater.from(this.context).inflate(R.layout.data_row, null);
       tSyncer = tRow.findViewById(R.id.syncer);
       tCrew = tRow.findViewById(R.id.crew);
       tLap = tRow.findViewById(R.id.lap);
+      tStart = tRow.findViewById(R.id.start_gate);
+      tFinish = tRow.findViewById(R.id.finish_gate);
 
       tRow.setTag(R.id.tag_selected, false);
       tRow.setTag(R.id.tag_background, null);
@@ -761,6 +767,7 @@ public class MainActivity extends Activity
         @Override
         public void onClick(View v)
         {
+          TerminalStatus.Discipline disp = term.getDiscipline(disciplineId);
           PopupMenu popup;
 
           for( ViewData vd : dataList ) {
@@ -917,6 +924,7 @@ public class MainActivity extends Activity
         {
           Bundle extras = new Bundle();
           Intent intent = new Intent(MainActivity.this, PenaltyActivity.class);
+          TerminalStatus.Discipline disp = term.getDiscipline(disciplineId);
 
           for( ViewData vd : dataList ) {
             if( vd.rowId == rowId )
@@ -1016,7 +1024,7 @@ public class MainActivity extends Activity
                 long seconds = item.getItemId();
                 EventMessage.CountDownMsg msg;
 
-                msg = new EventMessage.CountDownMsg(lap, disp.id, seconds * 1000);
+                msg = new EventMessage.CountDownMsg(lap, disciplineId, seconds * 1000);
                 EventBus.getDefault().post(new EventMessage(EventMessage.EventType.COUNTDOWN_START, msg));
                 break;
               default:
@@ -1033,19 +1041,12 @@ public class MainActivity extends Activity
       tCrew.setOnClickListener(lapcrewListener);
       tLap.setOnClickListener(lapcrewListener);
 
-      if( disp.startGate ) {
-        tStart = tRow.findViewById(R.id.start_gate);
-      }
-
-      for( int i = 0; i < disp.gates.size(); i++ ) {
+      for( int i = 0; i < race.gates.size(); i++ ) {
         TextView tGate = (TextView)_newDataCol(R.id.any_gate);
 
+        tGate.setTag(R.id.tag_gate_id, race.gates.get(i));
         tGate.setOnClickListener(gateListener);
         tGates.add(tGate);
-      }
-
-      if( disp.finishGate ) {
-        tFinish = tRow.findViewById(R.id.finish_gate);
       }
 
       tRow.removeAllViews();
@@ -1055,22 +1056,19 @@ public class MainActivity extends Activity
       tRow.addView(tCrew);
       tRow.addView(_build_spacer());
 
-      if( tStart != null ) {
-        tStart.setOnClickListener(startListener);
-        tRow.addView(tStart);
-        tRow.addView(_build_spacer());
-      }
+      tStart.setOnClickListener(startListener);
+      tRow.addView(tStart);
+      tRow.addView(_build_spacer());
 
       for( TextView v : tGates ) {
         tRow.addView(v);
         tRow.addView(_build_spacer());
       }
 
-      if( tFinish != null ) {
-        tFinish.setOnClickListener(finishListener);
-        tRow.addView(tFinish);
-      }
+      tFinish.setOnClickListener(finishListener);
+      tRow.addView(tFinish);
 
+      _updateVisibilityByDisp();
       return tRow;
     }
   }
@@ -1091,96 +1089,39 @@ public class MainActivity extends Activity
     return _newDataCol(R.id.spacer);
   }
 
-  protected void _tableSetup()
+  protected void _buttonsSetup()
   {
-    TableLayout table = findViewById(R.id.table);
     Button disp_btn = findViewById(R.id.discipline_title);
-    RaceStatus.Discipline rdisp;
 
-    if( disp == null ||
-        (rdisp = race.getDiscipline(disp.id)) == null ) {
-      disp_btn.setVisibility(View.GONE);
-    }
-    else {
-      disp_btn.setVisibility(View.VISIBLE);
-      disp_btn.setText(rdisp.name);
-    }
+    disp_btn.setVisibility(View.GONE);
 
     Log.d("wsa-ng-ui", "Table setup");
 
-    if( term == null || race == null || disp == null ) {
+    if( term == null || race == null ) {
       Log.d("wsa-ng-ui", "Table not setuped");
       if( term == null )
         Log.d("wsa-ng-ui", "Table not setuped: term == null");
 
-      if( disp == null )
-        Log.d("wsa-ng-ui", "Table not setuped: disp == null");
-
-      if( disp == null )
-        Log.d("wsa-ng-ui", "Table not setuped: disp == null");
+      if( race == null )
+        Log.d("wsa-ng-ui", "Table not setuped: race == null");
 
       return;
     }
 
     Log.d("wsa-ng-ui", "Table setup continue");
 
-    dataList.clear();
-    table.removeAllViews();
+    findViewById(R.id.new_crew).setVisibility(View.GONE);
+    for( TerminalStatus.Discipline tdisp : term.disciplines ) {
+      if( tdisp.startGate ) {
+        findViewById(R.id.new_crew).setVisibility(View.VISIBLE);
+      }
+    }
 
     Collections.sort(race.crews);
-
-    TableRow header = (TableRow)_newDataCol(R.layout.data_row);
-    header.removeAllViews();
-
-    View syncer = _newDataCol(R.id.syncer);
-    TextView crew = (TextView)_newDataCol(R.id.crew);
-    TextView lap = (TextView)_newDataCol(R.id.lap);
-
-    crew.setTypeface(null, Typeface.BOLD);
-    lap.setTypeface(null, Typeface.BOLD);
-
-    header.addView(syncer);
-    header.addView(lap);
-    header.addView(crew);
-    header.addView(_build_spacer());
-
-    if( disp.startGate ) {
-      findViewById(R.id.new_crew).setVisibility(View.VISIBLE);
-      TextView start = (TextView)_newDataCol(R.id.start_gate);
-      start.setTypeface(null, Typeface.BOLD);
-      header.addView(start);
-      header.addView(_build_spacer());
-    }
-    else {
-      findViewById(R.id.new_crew).setVisibility(View.GONE);
-    }
-
-    for( int i = 0; i < disp.gates.size(); i++ ) {
-      TextView gate = (TextView)_newDataCol(R.id.any_gate);
-
-      gate.setTypeface(null, Typeface.BOLD);
-      gate.setText(Integer.toString(disp.gates.get(i)));
-      header.addView(gate);
-      header.addView(_build_spacer());
-    }
-
-    if( disp.finishGate ) {
-      TextView finish = (TextView)_newDataCol(R.id.finish_gate);
-      finish.setTypeface(null, Typeface.BOLD);
-      header.addView(finish);
-    }
-
-    table.addView(header);
 
     chrono = new Chrono(MainActivity.this,
                         getSharedPreferences("chrono", Context.MODE_PRIVATE),
                         getSharedPreferences("chrono_data", Context.MODE_PRIVATE),
                         (Vibrator)getSystemService(Context.VIBRATOR_SERVICE));
-
-    table.post(new Runnable() {
-      public void run() {
-        EventBus.getDefault().post(new EventMessage.Boot(disp.id));
-      }
-    });
   }
 }
