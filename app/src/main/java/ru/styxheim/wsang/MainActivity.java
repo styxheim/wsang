@@ -305,6 +305,7 @@ public class MainActivity extends Activity
         disp = new_term.getDiscipline();
 
       _buttonsSetup();
+      _tablesSetup();
     }
   }
 
@@ -342,7 +343,7 @@ public class MainActivity extends Activity
 
     if( vd == null ) {
       /* try to add new row */
-      vd = new ViewData(row.getRowId());
+      vd = new ViewData(row.getRowId(), row.disciplineId);
       TableData td = _getTableDataByDisciplineId(row.disciplineId);
       final ScrollView sv = findViewById(R.id.vscroll);
 
@@ -431,6 +432,7 @@ public class MainActivity extends Activity
     public ArrayList<ViewData> tableDataList = new ArrayList<ViewData>();
     LinearLayout layout;
     public int tableId;
+    public TextView title;
 
     public TableData(int disciplineId)
     {
@@ -440,16 +442,29 @@ public class MainActivity extends Activity
     public View getView()
     {
       TableLayout tl = new TableLayout(MainActivity.this);
-      TextView tv = new TextView(MainActivity.this);
+      title = new TextView(MainActivity.this);
 
       tableId = View.generateViewId();
       tl.setId(tableId);
-      tv.setText("discipline: " + Integer.toString(disciplineId));
       layout = new LinearLayout(MainActivity.this);
       layout.setOrientation(LinearLayout.VERTICAL);
-      layout.addView(tv);
+      layout.addView(title);
       layout.addView(tl);
+      update();
       return layout;
+    }
+
+    public void update()
+    {
+      RaceStatus.Discipline rdisp = race.getDiscipline(disciplineId);
+      TerminalStatus.Discipline tdisp = term.getDiscipline(disciplineId);
+
+      if( rdisp == null ) {
+        title.setText("discipline id #" + Integer.toString(disciplineId));
+      } else {
+        title.setText(rdisp.name);
+      }
+      /* TODO: update header visibility */
     }
 
     public void addData(ViewData vd)
@@ -483,9 +498,10 @@ public class MainActivity extends Activity
     protected TextView tFinish;
     protected ArrayList<TextView> tGates = new ArrayList<TextView>();
 
-    public ViewData(int id)
+    public ViewData(int id, int disciplineId)
     {
       this.rowId = id;
+      this.disciplineId = disciplineId;
       this.context = MainActivity.this;
     }
 
@@ -731,23 +747,46 @@ public class MainActivity extends Activity
       sled.show(getFragmentManager(), sled.getClass().getCanonicalName());
     }
 
-    public void _updateVisibilityByDisp()
+    public void updateVisibilityByDisp()
     {
       TerminalStatus.Discipline disp = term.getDiscipline(disciplineId);
+      ViewGroup parent = (ViewGroup)tStart.getParent();
+      View startSpacer = parent.getChildAt(parent.indexOfChild(tStart) + 1);
 
-      if( disp == null )
-        return;
-
-      if( disp.startGate ) {
+      if( disp != null && disp.startGate ) {
         tStart.setVisibility(View.VISIBLE);
+        startSpacer.setVisibility(View.VISIBLE);
       } else {
         tStart.setVisibility(View.GONE);
+        startSpacer.setVisibility(View.GONE);
       }
 
-      if( disp.finishGate ) {
+      for( TextView gateView : tGates ) {
+        boolean found = false;
+        int viewGateId = gateView.getTag(R.id.tag_gate_id);
+        View gateSpacer = parent.getChildAt(parent.indexOfChild(gateView) + 1);
+
+        if( disp != null ) {
+          for( Integer gateId : disp.gates ) {
+            if( gateId == viewGateId ) {
+              found = true;
+              break;
+            }
+          }
+        }
+        if( found ) {
+          gateView.setVisibility(View.VISIBLE);
+          gateSpacer.setVisibility(View.VISIBLE);
+        } else {
+          gateView.setVisibility(View.GONE);
+          gateSpacer.setVisibility(View.GONE);
+        }
+      }
+
+      if( disp != null && disp.finishGate ) {
         tFinish.setVisibility(View.VISIBLE);
       } else {
-        tStart.setVisibility(View.GONE);
+        tFinish.setVisibility(View.GONE);
       }
     }
 
@@ -1068,7 +1107,7 @@ public class MainActivity extends Activity
       tFinish.setOnClickListener(finishListener);
       tRow.addView(tFinish);
 
-      _updateVisibilityByDisp();
+      updateVisibilityByDisp();
       return tRow;
     }
   }
@@ -1087,6 +1126,17 @@ public class MainActivity extends Activity
   public View _build_spacer()
   {
     return _newDataCol(R.id.spacer);
+  }
+
+  protected void _tablesSetup()
+  {
+    for( TableData td : tableList ) {
+      td.update();
+    }
+
+    for( ViewData vd : dataList ) {
+      vd.updateVisibilityByDisp();
+    }
   }
 
   protected void _buttonsSetup()
