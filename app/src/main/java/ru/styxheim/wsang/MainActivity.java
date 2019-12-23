@@ -16,6 +16,7 @@ import android.graphics.drawable.Drawable;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 
 import org.greenrobot.eventbus.SubscriberExceptionEvent;
 import org.greenrobot.eventbus.EventBus;
@@ -324,10 +325,52 @@ public class MainActivity extends Activity
   }
 
   @Subscribe(threadMode = ThreadMode.MAIN)
-  public void _event_StartRowList(ArrayList<StartRow> rows)
+  public void _event_StartRowList(final ArrayList<StartRow> rows)
   {
+    final LinearLayout load = findViewById(R.id.load_container);
+    final TextView load_text = ((ViewGroup)load).findViewById(R.id.load_title);
+    final LinearLayout view = findViewById(R.id.scroll_container);
+    final Button settings_btn = findViewById(R.id.settings_button);
+    int to_insert = 0;
+
     for( StartRow row : rows ) {
-      _update_StartRow(row);
+      if( _getViewDataById(row.getRowId()) == null ) {
+        to_insert++;
+      }
+    }
+
+    if( to_insert > 3 ) {
+      final Iterator<StartRow> iter = rows.iterator();
+      final Runnable upd = new Runnable() {
+        private int count = 0;
+
+        public void run() {
+          if( iter.hasNext() ) {
+            StartRow nrow = iter.next();
+            load_text.setText(String.format("Loading %d/%d",
+                                            count,
+                                            rows.size()));
+            _update_StartRow(nrow);
+            load_text.post(this);
+          } else {
+            load.setVisibility(View.GONE);
+            view.setVisibility(View.VISIBLE);
+            settings_btn.setEnabled(true);
+          }
+          count++;
+        }
+      };
+
+      settings_btn.setEnabled(false);
+      view.setVisibility(View.GONE);
+      load.setVisibility(View.VISIBLE);
+      load_text.setText(String.format("Loading %d lines...", to_insert));
+
+      upd.run();
+    } else {
+      for( StartRow row : rows ) {
+        _update_StartRow(row);
+      }
     }
   }
 

@@ -68,6 +68,27 @@
 		android:id="@+id/start_progress"/>
 
 	<LinearLayout
+		android:orientation="horizontal"
+		android:layout_width="match_parent"
+		android:layout_height="match_parent"
+		android:id="@+id/load_container"
+		android:gravity="center"
+		android:visibility="gone">
+
+		<ProgressBar
+			android:layout_width="wrap_content"
+			style="?android:attr/progressBarStyleSmall"
+			android:layout_height="wrap_content"/>
+
+		<TextView
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="Text"
+			android:id="@+id/load_title"/>
+
+	</LinearLayout>
+
+	<LinearLayout
 		android:id="@+id/scroll_container"
 		android:orientation="vertical"
 		android:layout_width="match_parent"
@@ -111,16 +132,16 @@
 						android:orientation="vertical"
 						android:layout_width="wrap_content"
 						android:layout_height="wrap_content"
-            android:fillViewport="true">
+						android:fillViewport="true">
 
-            <LinearLayout
-              android:id="@+id/table_list"
-              android:orientation="vertical"
-              android:layout_width="wrap_content"
-              android:layout_height="wrap_content"
-              android:fillViewport="true">
+						<LinearLayout
+							android:id="@+id/table_list"
+							android:orientation="vertical"
+							android:layout_width="wrap_content"
+							android:layout_height="wrap_content"
+							android:fillViewport="true">
 
-            </LinearLayout>
+						</LinearLayout>
 
 						<View
 							android:layout_width="match_parent"
