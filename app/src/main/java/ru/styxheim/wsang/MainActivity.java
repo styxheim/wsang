@@ -34,7 +34,7 @@ public class MainActivity extends Activity
   protected SharedPreferences settingsChrono;
   protected RaceStatus race;
   protected TerminalStatus term;
-  protected TerminalStatus.Discipline disp;
+  protected boolean finishGate;
 
   protected Chrono chrono;
 
@@ -166,7 +166,7 @@ public class MainActivity extends Activity
   @Override
   public boolean onKeyDown(int keyCode, KeyEvent event)
   {
-    if( chrono != null && disp.finishGate ) {
+    if( chrono != null && finishGate ) {
       if( chrono.onKeyDown(keyCode, event) )
         return true;
     }
@@ -182,7 +182,6 @@ public class MainActivity extends Activity
   {
     StartLineEditDialog sled;
     final ArrayList<Integer> lap_values = new ArrayList<Integer>();
-    RaceStatus.Discipline rdisp;
     ViewData vd;
     int lastLapId = 0;
 
@@ -198,15 +197,13 @@ public class MainActivity extends Activity
       return;
     }
 
-    rdisp = race.getDiscipline(disp.id);
-
     if( dataList.size() > 0 ) {
       vd = dataList.get(dataList.size() - 1);
       lastLapId = vd.lap;
       // allow attach to last lap in 2 cases:
       // lap not started
-      // parallel start is allowed
-      if( vd.start == 0 && (rdisp == null || rdisp.parallel) ) {
+      // parallel start is allowed: TODO
+      if( vd.start == 0 ) {
         lap_values.add(vd.lap);
       }
     }
@@ -236,8 +233,11 @@ public class MainActivity extends Activity
         crewId = crewNum;
 
       lastCrewId = crewId;
-
-      req = new EventMessage.ProposeMsg(crewId, lapId, disp.id);
+      
+      Toast.makeText(MainActivity.this,
+                     "Discipline selector not work now. Use discipline id 1", Toast.LENGTH_SHORT).show();
+      
+      req = new EventMessage.ProposeMsg(crewId, lapId, 1);
 
       Log.d("wsa-ng-ui", "Propose new: crew=" + Integer.toString(crewId) + " lap=" + Integer.toString(lapId));
       EventBus.getDefault().post(new EventMessage(req));
@@ -293,17 +293,6 @@ public class MainActivity extends Activity
     if( term == null || term.timestamp != new_term.timestamp ) {
       Log.d("wsa-ng-ui", "Apply new TerminalStatus");
       term = new_term;
-      /* get current discipline from new term info */
-      if( disp != null ) {
-        disp = new_term.getDiscipline(disp.id);
-      }
-      else {
-        int disciplineId = settings.getInt("DisciplineId", Default.disciplineId);
-        disp = new_term.getDiscipline(disciplineId);
-      }
-
-      if( disp == null )
-        disp = new_term.getDiscipline();
 
       _buttonsSetup();
       _tablesSetup();
@@ -762,7 +751,7 @@ public class MainActivity extends Activity
     {
       StartLineEditDialog sled;
       final ArrayList<Integer> lap_values = new ArrayList<Integer>();
-      RaceStatus.Discipline rdisp = race.getDiscipline(disp.id);
+      RaceStatus.Discipline rdisp = race.getDiscipline(disciplineId);
 
       /* pass previous and next lap data */
       int cpos = dataList.indexOf(ViewData.this);
