@@ -1250,10 +1250,14 @@ public class MainActivity extends Activity
 
     Log.d("wsa-ng-ui", "Table setup continue");
 
+    finishGate = false;
     findViewById(R.id.new_crew).setVisibility(View.GONE);
     for( TerminalStatus.Discipline tdisp : term.disciplines ) {
       if( tdisp.startGate ) {
         findViewById(R.id.new_crew).setVisibility(View.VISIBLE);
+      }
+      if( tdisp.finishGate ) {
+        finishGate = true;
       }
     }
 
