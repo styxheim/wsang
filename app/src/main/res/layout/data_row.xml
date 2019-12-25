@@ -13,7 +13,7 @@
 	<TextView
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
-    android:text="@string/lap"
+    android:text="@string/lap_short"
 		android:textAppearance="?android:attr/textAppearanceLarge"
 		android:id="@+id/lap"
 		android:padding="6dp"
@@ -22,7 +22,7 @@
 	<TextView
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
-    android:text="@string/crew"
+    android:text="@string/crew_short"
 		android:textAppearance="?android:attr/textAppearanceLarge"
 		android:id="@+id/crew"
 		android:padding="6dp"
