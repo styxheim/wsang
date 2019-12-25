@@ -393,7 +393,7 @@ public class MainActivity extends Activity
 
       sv.post(new Runnable() {
         public void run() {
-          sv.scrollTo(0, findViewById(R.id.spacer).getBottom());
+          sv.scrollTo(0, findViewById(R.id.bottom_spacer).getBottom());
         }
       });
     }
