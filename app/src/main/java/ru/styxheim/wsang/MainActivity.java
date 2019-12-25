@@ -474,6 +474,7 @@ public class MainActivity extends Activity
     public int disciplineId;
     public ArrayList<ViewData> tableDataList = new ArrayList<ViewData>();
     LinearLayout layout;
+    TableRow header;
     public int tableId;
     public TextView title;
 
@@ -485,6 +486,9 @@ public class MainActivity extends Activity
     public View getView()
     {
       TableLayout tl = new TableLayout(MainActivity.this);
+      header = (TableRow)_newDataCol(R.layout.data_row);
+      TextView anyGate;
+      int index;
       title = new TextView(MainActivity.this);
 
       tableId = View.generateViewId();
@@ -493,10 +497,34 @@ public class MainActivity extends Activity
       layout.setOrientation(LinearLayout.VERTICAL);
       layout.addView(title);
       layout.addView(tl);
+
+      /* add table header */
+      header.findViewById(R.id.start_gate).setTag(R.id.tag_gate_id, RaceStatus.GATE_START);
+      header.findViewById(R.id.finish_gate).setTag(R.id.tag_gate_id, RaceStatus.GATE_FINISH);
+      index = header.indexOfChild(header.findViewById(R.id.finish_gate)) - 1;
+      anyGate = header.findViewById(R.id.any_gate);
+      header.removeView(anyGate);
+      for( int gateId : race.gates ) {
+        anyGate = (TextView)_newDataCol(R.id.any_gate);
+        anyGate.setText(Integer.toString(gateId));
+        anyGate.setTag(R.id.tag_gate_id, gateId);
+        header.addView(_build_spacer(), index);
+        header.addView(anyGate, index);
+        index += 2;
+      }
+      tl.addView(header);
+
       update();
       return layout;
     }
 
+    private int b2v(boolean val)
+    {
+      if( !val )
+        return View.GONE;
+      return View.VISIBLE;
+    }
+ 
     public void update()
     {
       RaceStatus.Discipline rdisp = race.getDiscipline(disciplineId);
@@ -507,7 +535,37 @@ public class MainActivity extends Activity
       } else {
         title.setText(rdisp.name);
       }
-      /* TODO: update header visibility */
+      for( int i = 0; i < header.getChildCount(); i++ ) {
+        View v = header.getChildAt(i);
+        if( v instanceof TextView ) {
+          boolean found = false;
+          Integer gateId = (Integer)v.getTag(R.id.tag_gate_id);
+          ((TextView)v).setTypeface(null, Typeface.BOLD);
+          
+          if( gateId == null )
+            continue;
+            
+          if( gateId.compareTo(RaceStatus.GATE_START) == 0 ) {
+            v.setVisibility(b2v(tdisp.startGate));
+            header.getChildAt(i + 1).setVisibility(b2v(tdisp.startGate));
+            continue;
+          }
+          
+          if( gateId.compareTo(RaceStatus.GATE_FINISH) == 0 ) {
+            v.setVisibility(b2v(tdisp.finishGate));
+            continue;
+          }
+          
+          for( int tgateId : tdisp.gates ) {
+            if( gateId.compareTo(tgateId) == 0 ) {
+              found = true;
+              break;
+            }
+          }
+          v.setVisibility(b2v(found));
+          header.getChildAt(i + 1).setVisibility(b2v(found));
+        }
+      }
     }
 
     public void addData(ViewData vd)
