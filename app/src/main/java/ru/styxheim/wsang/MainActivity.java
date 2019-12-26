@@ -132,15 +132,20 @@ public class MainActivity extends Activity
 
     findViewById(R.id.settings_button).setEnabled(true);
 
-    /* FIXME: sleep for wait service - bad idea */
-    tv.postDelayed(new Runnable() {
-      public void run() {
-        EventMessage.Boot boot_msg;
+    boot();
+  }
 
-        boot_msg = new EventMessage.Boot();
-        EventBus.getDefault().post(boot_msg);
-      }
-    }, 1000);
+  protected void boot()
+  {
+    /* FIXME: sleep for wait service - bad idea */
+    findViewById(R.id.bottom_spacer).postDelayed(new Runnable() {
+        public void run() {
+          EventMessage.Boot boot_msg;
+
+          boot_msg = new EventMessage.Boot();
+          EventBus.getDefault().post(boot_msg);
+        }
+      }, 500);
   }
 
   @Override
@@ -233,7 +238,7 @@ public class MainActivity extends Activity
         crewId = crewNum;
 
       lastCrewId = crewId;
-      
+
       Toast.makeText(MainActivity.this,
                      "Discipline selector not work now. Use discipline id 1", Toast.LENGTH_SHORT).show();
       
@@ -302,14 +307,32 @@ public class MainActivity extends Activity
   @Subscribe(threadMode = ThreadMode.MAIN)
   public void _event_raceStatus(RaceStatus new_race)
   {
+    boolean race_is_chanded = false;
+
     Log.d("wsa-ng-ui", "Receive new RaceStatus");
     if( race == null || (race.timestamp != new_race.timestamp ||
                          race.competitionId != new_race.competitionId) ) {
       Log.d("wsa-ng-ui", "Apply new RaceStatus");
-      race = new_race;
-      _buttonsSetup();
-      if( chrono != null )
-        chrono.reload();
+      if( race != null ) {
+        if( !race.gates.equals(new_race.gates) ) {
+          race_is_chanded = true;
+        }
+      }
+
+      if( !race_is_chanded ) {
+        race = new_race;
+        _buttonsSetup();
+        _tablesSetup();
+
+        if( chrono != null )
+          chrono.reload();
+      } else {
+        race = null;
+        ((ViewGroup)findViewById(R.id.table_list)).removeAllViews();
+        dataList.clear();
+        tableList.clear();
+        boot();
+      }
     }
   }
 
