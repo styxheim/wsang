@@ -49,6 +49,11 @@ public class MainActivity extends Activity
   protected long countDownEndAt;
   protected long countDownStartAt;
 
+  public void g(String format, Object ... args)
+  {
+    Toast.makeText(this, String.format(format, args), Toast.LENGTH_LONG).show();
+  }
+
   @Subscribe(threadMode = ThreadMode.MAIN)
   public void onEvent(SubscriberExceptionEvent exceptionEvent)
   {
@@ -187,8 +192,12 @@ public class MainActivity extends Activity
   {
     StartLineEditDialog sled;
     final ArrayList<Integer> lap_values = new ArrayList<Integer>();
+    final ArrayList<String> disp_names = new ArrayList<String>();
+    final ArrayList<Integer> disp_ids = new ArrayList<Integer>();
     ViewData vd;
     int lastLapId = 0;
+    int lastDisciplineId = -1;
+    int selectedDisciplineNum = 0;
 
     if( race == null )
       Log.e("wsa-ng-ui", "RaceStatus is empty, cannot add new row");
@@ -205,6 +214,7 @@ public class MainActivity extends Activity
     if( dataList.size() > 0 ) {
       vd = dataList.get(dataList.size() - 1);
       lastLapId = vd.lap;
+      lastDisciplineId = vd.disciplineId;
       // allow attach to last lap in 2 cases:
       // lap not started
       // parallel start is allowed: TODO
@@ -215,22 +225,40 @@ public class MainActivity extends Activity
 
     lap_values.add(lastLapId + 1);
 
+    /* fill disciplines */
+    for( TerminalStatus.Discipline tdisp : term.disciplines ) {
+      if( tdisp.startGate ) {
+        RaceStatus.Discipline rdisp = race.getDiscipline(tdisp.id);
+        if( lastDisciplineId == tdisp.id )
+          selectedDisciplineNum = disp_ids.size();
+        disp_ids.add(tdisp.id);
+        if( rdisp != null ) {
+          disp_names.add(rdisp.name);
+        } else {
+          disp_names.add(String.format("id %d", tdisp.id));
+        }
+      }
+    }
+    g("id=%d num=%d", lastDisciplineId, selectedDisciplineNum);
+
     if( race.crews.size() != 0 ) {
-      sled = new StartLineEditDialog(-1, lap_values.size() - 1);
+      sled = new StartLineEditDialog(-1, lap_values.size() - 1, selectedDisciplineNum);
       sled.setCrewValues(race.crews);
     }
     else {
-      sled = new StartLineEditDialog(this.lastCrewId + 1, lap_values.size() - 1);
+      sled = new StartLineEditDialog(this.lastCrewId + 1, lap_values.size() - 1, selectedDisciplineNum);
     }
 
     Log.d("wsa-ng-ui", "show sled");
     sled.setLapValues(lap_values);
+    sled.setDisciplines(disp_names);
     sled.setStartLineEditDialogListener(new StartLineEditDialog.StartLineEditDialogListener() {
     @Override
-    public void onStartLineEditDialogResult(StartLineEditDialog sled, int crewNum, int lapNum) {
+    public void onStartLineEditDialogResult(StartLineEditDialog sled, int crewNum, int lapNum, int dispNum) {
       EventMessage.ProposeMsg req;
       int crewId;
       int lapId = lap_values.get(lapNum);
+      int disciplineId = disp_ids.get(dispNum);
 
       if( race.crews.size() != 0 )
         crewId = race.crews.get(crewNum);
@@ -239,12 +267,11 @@ public class MainActivity extends Activity
 
       lastCrewId = crewId;
 
-      Toast.makeText(MainActivity.this,
-                     "Discipline selector not work now. Use discipline id 1", Toast.LENGTH_SHORT).show();
-      
-      req = new EventMessage.ProposeMsg(crewId, lapId, 1);
+      req = new EventMessage.ProposeMsg(crewId, lapId, disciplineId);
 
-      Log.d("wsa-ng-ui", "Propose new: crew=" + Integer.toString(crewId) + " lap=" + Integer.toString(lapId));
+      Log.d("wsa-ng-ui", "Propose new: crew=" + Integer.toString(crewId) +
+                         " lap=" + Integer.toString(lapId) +
+                         " discipline=" + Integer.toString(disciplineId));
       EventBus.getDefault().post(new EventMessage(req));
     }
     });
@@ -821,11 +848,11 @@ public class MainActivity extends Activity
       Log.d("wsa-ng-ui", String.format("<LAPS[%d] %s>", lap_values.size(), lap_values.toString()));
 
       if( race.crews.size() != 0 ) {
-        sled = new StartLineEditDialog(race.crews.indexOf(crew), lap_values.indexOf(lap), true);
+        sled = new StartLineEditDialog(race.crews.indexOf(crew), lap_values.indexOf(lap), -1, true);
         sled.setCrewValues(race.crews);
       }
       else {
-        sled = new StartLineEditDialog(crew, lap_values.indexOf(lap), true);
+        sled = new StartLineEditDialog(crew, lap_values.indexOf(lap), -1, true);
       }
       sled.setLapValues(lap_values);
 
@@ -838,7 +865,7 @@ public class MainActivity extends Activity
 
       sled.setStartLineEditDialogListener(new StartLineEditDialog.StartLineEditDialogListener() {
           @Override
-          public void onStartLineEditDialogResult(StartLineEditDialog sled, int crewNum, int lapNum) {
+          public void onStartLineEditDialogResult(StartLineEditDialog sled, int crewNum, int lapNum, int disciplineId) {
             EventMessage.ProposeMsg req;
             int crewId;
             int lapId = lap_values.get(lapNum);

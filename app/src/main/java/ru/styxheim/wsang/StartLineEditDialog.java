@@ -19,29 +19,33 @@ public class StartLineEditDialog extends DialogFragment
   public static int MAX = 9999;
 
   public interface StartLineEditDialogListener {
-    void onStartLineEditDialogResult(StartLineEditDialog sled, int crew, int lap);
+    void onStartLineEditDialogResult(StartLineEditDialog sled, int crew, int lap, int discipline);
   }
 
   private StartLineEditDialogListener listener;
 
   private int crew_chosen;
   private int lap_chosen;
+  private int disp_choosen;
 
   private ArrayList<Integer> crew_values = new ArrayList<Integer>();
   private ArrayList<Integer> lap_values = new ArrayList<Integer>();
+  private ArrayList<String> disps = new ArrayList<String>();
 
   boolean editMode = false;
 
-  public StartLineEditDialog(int crew_no, int lap_no)
+  public StartLineEditDialog(int crew_no, int lap_no, int disp_no)
   {
     this.crew_chosen = crew_no;
     this.lap_chosen = lap_no;
+    this.disp_choosen = disp_no;
   }
   
-  public StartLineEditDialog(int crew_no, int lap_no, boolean is_edit)
+  public StartLineEditDialog(int crew_no, int lap_no, int disp_no, boolean is_edit)
   {
     this.crew_chosen = crew_no;
     this.lap_chosen = lap_no;
+    this.disp_choosen = disp_no;
     this.editMode = is_edit;
   }
 
@@ -60,6 +64,11 @@ public class StartLineEditDialog extends DialogFragment
     this.crew_values = values;
   }
 
+  public void setDisciplines(ArrayList<String> disps)
+  {
+    this.disps = disps;
+  }
+
   @Override
   public void onClick(View v)
   {
@@ -67,7 +76,7 @@ public class StartLineEditDialog extends DialogFragment
     v.requestFocusFromTouch();
     /* remove dialog */
     this.dismiss();
-    Log.d("wsa-ng-ui", String.format("sled: crew=%d, lap=%d", crew_chosen, lap_chosen));
+    Log.d("wsa-ng-ui", String.format("sled: crew=%d, lap=%d, discipline=%d", crew_chosen, lap_chosen, disp_choosen));
 
     if( v.getId() == R.id.start_line_edit_dialog_save && listener != null) {
       if( crew_values.size() != 0 && (crew_chosen >= crew_values.size() ||
@@ -78,7 +87,8 @@ public class StartLineEditDialog extends DialogFragment
         return;
       listener.onStartLineEditDialogResult(this,
                                            this.crew_chosen,
-                                           this.lap_chosen);
+                                           this.lap_chosen,
+                                           this.disp_choosen);
     }
   }
 
@@ -95,6 +105,26 @@ public class StartLineEditDialog extends DialogFragment
     }
   }
 
+  protected void setupDisciplineButton(View v)
+  {
+    final Button b;
+
+    b = v.findViewById(R.id.discipline_button);
+    if( disp_choosen >= 0 && disp_choosen < disps.size() ) {
+      b.setVisibility(View.VISIBLE);
+      b.setText(disps.get(disp_choosen));
+    } else {
+      b.setVisibility(View.GONE);
+    }
+
+    b.setOnClickListener(new Button.OnClickListener() {
+      public void onClick(View v) {
+        disp_choosen = (disp_choosen + 1) % disps.size();
+        b.setText(disps.get(disp_choosen));
+      }
+    });
+  }
+
   public View onCreateView(LayoutInflater inflater, ViewGroup container,
                            Bundle savedInstanceState)
   {
@@ -102,7 +132,7 @@ public class StartLineEditDialog extends DialogFragment
     NumberPicker np;
     Button b;
 
-
+    setupDisciplineButton(v);
 
     b = (Button)v.findViewById(R.id.start_line_edit_dialog_save);
     b.setOnClickListener(this);
