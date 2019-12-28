@@ -745,6 +745,8 @@ public class MainService extends Service
       }
 
       /* check laps data */
+      ArrayList<StartRow> upd_rows = new ArrayList<StartRow>();
+ 
       for( int i = 0; i < status.lap.size(); i++ ) {
         StartRow.SyncData rrow = status.lap.get(i);
         StartRow lrow;
@@ -764,7 +766,8 @@ public class MainService extends Service
         if( lrow == null ) {
           lrow = starts.addRecord(rrow);
           lrow.setState(StartRow.SyncState.SYNCED);
-          EventBus.getDefault().post(lrow.clone());
+          //EventBus.getDefault().post(lrow.clone());
+          upd_rows.add(lrow.clone());
           changed = true;
         }
         else {
@@ -791,9 +794,10 @@ public class MainService extends Service
           }
 
           /* event UI */
-          EventBus.getDefault().post(lrow.clone());
+          //EventBus.getDefault().post(lrow.clone());
+          upd_rows.add(lrow.clone());
         }
-
+ 
         if( rrow.timestamp > timestamp ) {
           _updateTimeStamp(rrow.timestamp);
           Log.i("wsa-ng", _("[RECEIVE] StartRow timestamp: local = %d, remote = %d",
@@ -801,6 +805,7 @@ public class MainService extends Service
                             rrow.timestamp));
         }
       }
+      EventBus.getDefault().post(upd_rows);
 
       if( changed )
         starts.Save(getApplicationContext());

@@ -416,8 +416,12 @@ public class MainActivity extends Activity
         to_insert++;
       }
     }
+    
+    Log.d("wsa-ng-ui", String.format("Update %d rows, to insert: %d",
+                                     rows.size(), to_insert));
 
     if( to_insert > 3 ) {
+      final long bulk_load_start = System.currentTimeMillis();
       final Iterator<StartRow> iter = rows.iterator();
       final Runnable upd = new Runnable() {
         private int count = 0;
@@ -431,9 +435,13 @@ public class MainActivity extends Activity
             _update_StartRow(nrow);
             load_text.post(this);
           } else {
+            long bulk_load_time = System.currentTimeMillis() - bulk_load_start;
+            long load_ms = bulk_load_time % 1000;
+            long load_seconds = bulk_load_time / 1000;
             load.setVisibility(View.GONE);
             view.setVisibility(View.VISIBLE);
             settings_btn.setEnabled(true);
+            g("Bulk load: %d.%ds", load_seconds, load_ms);
           }
           count++;
         }
