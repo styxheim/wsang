@@ -280,16 +280,30 @@ public class MainActivity extends Activity
 
   protected TableData _getTableDataByDisciplineId(int disciplineId)
   {
-    TableData td;
+    TableData td = null;
     /* get and check last table data by disciplineId */
     if( tableList.size() > 0 ) {
       td = tableList.get(tableList.size() - 1);
-      if( td.disciplineId == disciplineId ) {
-        return td;
+      if( td.disciplineId != disciplineId ) {
+        return null;
       }
+      /*
+      if( td.tableDataList.size() != 0 ) {
+        // FIXME: this code make load slowly
+        for( TableData ctd : tableList ) {
+          if( ctd.disciplineId == disciplineId ) {
+            if( ctd.tableDataList.size() == 0 ) {
+              tableList.remove(ctd);
+              ((ViewGroup)findViewById(R.id.table_list)).removeView(ctd.layout);
+            }
+            break;
+          }
+        }
+      }
+      */
     }
 
-    return null;
+    return td;
   }
 
   protected ViewData _getViewDataById(int rowId)
@@ -328,6 +342,32 @@ public class MainActivity extends Activity
 
       _buttonsSetup();
       _tablesSetup();
+      _zeroTablesSetup();
+    }
+  }
+
+  protected void _zeroTablesSetup()
+  {
+    TableData td;
+    LinearLayout tableListLayout = findViewById(R.id.table_list);
+
+    if( race == null || term == null )
+      return;
+
+    for( int i = 0; i < race.disciplines.size(); i++ ) {
+      boolean found = false;
+      RaceStatus.Discipline rdisp = race.disciplines.get(i);
+
+      for( TableData _td : tableList ) {
+        if( rdisp.id == _td.disciplineId ) {
+          found = true;
+        }
+      }
+      if( !found ) {
+        td = new TableData(rdisp.id);
+        tableList.add(td);
+        tableListLayout.addView(td.getView());
+      }
     }
   }
 
@@ -350,6 +390,7 @@ public class MainActivity extends Activity
         race = new_race;
         _buttonsSetup();
         _tablesSetup();
+        _zeroTablesSetup();
 
         if( chrono != null )
           chrono.reload();
@@ -612,6 +653,7 @@ public class MainActivity extends Activity
       if( layout != null ) {
         ((ViewGroup)layout.findViewById(tableId)).addView(vd.getView());
       }
+      tableDataList.add(vd);
     }
   }
 
