@@ -31,7 +31,7 @@ public class PenaltyActivity extends Activity
   protected int lap;
   protected ArrayList<Integer> gates = new ArrayList<Integer>();
   protected ArrayList<Integer> penalties = new ArrayList<Integer>();
-  protected ArrayList<Integer> values = new ArrayList<Integer>();
+  protected int[] values;
 
   protected SharedPreferences settingsChrono;
 
@@ -53,7 +53,7 @@ public class PenaltyActivity extends Activity
       this.lap = extras.getInt("lap");
       this.gates = extras.getIntegerArrayList("gates");
       this.penalties = extras.getIntegerArrayList("penalties");
-      this.values = extras.getIntegerArrayList("values");
+      this.values = extras.getIntArray("values");
       this.race_timestamp = extras.getLong("race_timestamp");
       this.term_timestamp = extras.getLong("term_timestamp");
     }
@@ -95,7 +95,7 @@ public class PenaltyActivity extends Activity
 
         ((ViewGroup)rb.getParent()).removeView(rb);
         rb.setText(penalties.get(i).toString());
-        if( i == values.get(gi)) {
+        if( i == values[gi]) {
           rb.setChecked(true);
         }
         else {
@@ -140,7 +140,7 @@ public class PenaltyActivity extends Activity
       msg = new EventMessage.ProposeMsg(EventMessage.ProposeMsg.Type.PENALTY);
       msg.rowId = rowId;
       msg.gate = gates.get(i);
-      msg.penalty = values.get(i);
+      msg.penalty = values[i];
       EventBus.getDefault().post(new EventMessage(msg));
     }
     /* TODO: send new data */
@@ -152,7 +152,7 @@ public class PenaltyActivity extends Activity
     int gate = v.getTag(R.id.tag_gate_id);
     int penalty = v.getTag(R.id.tag_penalty_id);
 
-    values.set(gate, penalty);
+    values[gate] = penalty;
   }
 
   @Subscribe(threadMode = ThreadMode.MAIN)

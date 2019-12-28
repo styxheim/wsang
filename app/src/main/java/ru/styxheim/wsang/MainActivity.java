@@ -17,6 +17,7 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.Arrays;
 
 import org.greenrobot.eventbus.SubscriberExceptionEvent;
 import org.greenrobot.eventbus.EventBus;
@@ -239,7 +240,6 @@ public class MainActivity extends Activity
         }
       }
     }
-    g("id=%d num=%d", lastDisciplineId, selectedDisciplineNum);
 
     if( race.crews.size() != 0 ) {
       sled = new StartLineEditDialog(-1, lap_values.size() - 1, selectedDisciplineNum);
@@ -285,22 +285,20 @@ public class MainActivity extends Activity
     if( tableList.size() > 0 ) {
       td = tableList.get(tableList.size() - 1);
       if( td.disciplineId != disciplineId ) {
-        return null;
+        td = null;
       }
-      /*
-      if( td.tableDataList.size() != 0 ) {
-        // FIXME: this code make load slowly
-        for( TableData ctd : tableList ) {
-          if( ctd.disciplineId == disciplineId ) {
-            if( ctd.tableDataList.size() == 0 ) {
-              tableList.remove(ctd);
-              ((ViewGroup)findViewById(R.id.table_list)).removeView(ctd.layout);
-            }
-            break;
+      // FIXME: this code make load slowly
+      for( TableData ctd : tableList ) {
+        if( td == ctd )
+          break;
+        if( ctd.disciplineId == disciplineId ) {
+          if( ctd.tableDataList.size() == 0 ) {
+            tableList.remove(ctd);
+            ((ViewGroup)findViewById(R.id.table_list)).removeView(ctd.layout);
           }
+          break;
         }
       }
-      */
     }
 
     return td;
@@ -668,7 +666,7 @@ public class MainActivity extends Activity
     public long finish;
     public long start;
     public boolean strike;
-    public ArrayList<Integer> gates = new ArrayList<Integer>();
+    public int[] gates;
 
     protected Context context;
 
@@ -750,8 +748,8 @@ public class MainActivity extends Activity
       tStart.setText(Default.millisecondsToString(start));
       _strikeTextView(tStart);
 
-      for( int i = 0; i < gates.size(); i++ ) {
-        int gatePenaltyId = gates.get(i);
+      for( int i = 0; i < gates.length; i++ ) {
+        int gatePenaltyId = gates[i];
         int pvalue = 0;
         TextView tGate = tGates.get(i);
 
@@ -790,13 +788,12 @@ public class MainActivity extends Activity
       strike = row.strike;
       disciplineId = row.disciplineId;
 
-      gates.clear();
-      for( int i = 0; i < race.gates.size(); i++ ) {
+      gates = new int[race.gates.size()];
+      for( int i = 0; i < gates.length; i++ ) {
         int gateId = race.gates.get(i);
-        gates.add(0);
         for( StartRow.Gate lgate : row.gates ) {
           if( lgate.gate == gateId ) {
-            gates.set(i, lgate.penalty);
+            gates[i] = lgate.penalty;
             break;
           }
         }
@@ -1163,7 +1160,7 @@ public class MainActivity extends Activity
 
           extras.putIntegerArrayList("gates", disp.gates);
           extras.putIntegerArrayList("penalties", race.penalties);
-          extras.putIntegerArrayList("values", gates);
+          extras.putIntArray("values", gates);
 
           extras.putLong("term_timestamp", term.timestamp);
           extras.putLong("race_timestamp", race.timestamp);
