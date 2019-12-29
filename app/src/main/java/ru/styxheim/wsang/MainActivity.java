@@ -600,7 +600,7 @@ public class MainActivity extends Activity
       header = (TableRow)_newDataCol(R.layout.data_row);
       TextView anyGate;
       int index;
-      title = new TextView(MainActivity.this);
+      title = (TextView)LayoutInflater.from(MainActivity.this).inflate(R.layout.table_title, null);
 
       tableId = View.generateViewId();
       tl.setId(tableId);
@@ -749,6 +749,16 @@ public class MainActivity extends Activity
       }
     }
 
+    protected String numpad3(int n)
+    {
+      if( n < 10 ) {
+        return String.format(" %d ", n);
+      } else if( n < 100 ) {
+        return String.format(" %d", n);
+      }
+      return Integer.toString(n);
+    }
+
     protected void _update()
     {
       switch( state ) {
@@ -769,10 +779,10 @@ public class MainActivity extends Activity
         break;
       }
 
-      tLap.setText(Integer.toString(lap));
+      tLap.setText(numpad3(lap));
       _strikeTextView(tLap);
 
-      tCrew.setText(Integer.toString(crew));
+      tCrew.setText(numpad3(crew));
       _strikeTextView(tCrew);
  
       tStart.setText(Default.millisecondsToString(start));
