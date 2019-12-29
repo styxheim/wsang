@@ -805,7 +805,8 @@ public class MainService extends Service
                             rrow.timestamp));
         }
       }
-      EventBus.getDefault().post(upd_rows);
+      if( upd_rows.size() != 0 )
+        EventBus.getDefault().post(upd_rows);
 
       if( changed )
         starts.Save(getApplicationContext());

@@ -26,6 +26,7 @@ import org.greenrobot.eventbus.ThreadMode;
 import android.widget.RelativeLayout.*;
 import android.text.style.*;
 import org.apache.http.impl.client.*;
+import javax.sql.*;
 
 public class MainActivity extends Activity
 {
@@ -402,6 +403,17 @@ public class MainActivity extends Activity
     }
   }
 
+  protected void _scrollToBottom()
+  {
+    final ScrollView sv = findViewById(R.id.vscroll);
+
+    sv.post(new Runnable() {
+      public void run() {
+        sv.scrollTo(0, findViewById(R.id.bottom_spacer).getBottom());
+      }
+    });
+  }
+
   @Subscribe(threadMode = ThreadMode.MAIN)
   public void _event_StartRowList(final ArrayList<StartRow> rows)
   {
@@ -420,48 +432,70 @@ public class MainActivity extends Activity
     Log.d("wsa-ng-ui", String.format("Update %d rows, to insert: %d",
                                      rows.size(), to_insert));
 
-    if( to_insert > 3 ) {
-      final long bulk_load_start = System.currentTimeMillis();
-      final Iterator<StartRow> iter = rows.iterator();
-      final Runnable upd = new Runnable() {
-        private int count = 0;
+    final long bulk_load_start = System.currentTimeMillis();
+    final Iterator<StartRow> iter = rows.iterator();
+    final boolean scrollToBottom = (to_insert != 0);
+    final LinearLayout tableListLayout = findViewById(R.id.table_list);
+    final int to_insert_f = to_insert;
 
-        public void run() {
+    Runnable upd = new Runnable() {
+      private int count = 0;
+
+      public void run() {
+        for( int i = 0; i < 13; i++ ) {
           if( iter.hasNext() ) {
             StartRow nrow = iter.next();
-            load_text.setText(String.format("Loading %d/%d",
-                                            count,
-                                            rows.size()));
-            _update_StartRow(nrow);
-            load_text.post(this);
+
+            _update_StartRow_fast(nrow, tableListLayout);
           } else {
             long bulk_load_time = System.currentTimeMillis() - bulk_load_start;
             long load_ms = bulk_load_time % 1000;
             long load_seconds = bulk_load_time / 1000;
+
             load.setVisibility(View.GONE);
             view.setVisibility(View.VISIBLE);
             settings_btn.setEnabled(true);
-            g("Bulk load: %d.%ds", load_seconds, load_ms);
+            if( scrollToBottom ) {
+              _scrollToBottom();
+            }
+            if( rows.size() > 13 ) {
+              g("Bulk load: %d.%ds (%d all, %d new)",
+                load_seconds, load_ms, rows.size(), to_insert_f);
+            }
+            return;
           }
           count++;
         }
-      };
+        load_text.setText(String.format("Loading %d/%d",
+                                        count,
+                                        rows.size()));
+        load_text.post(this);
+      }
+    };
 
-      settings_btn.setEnabled(false);
+    settings_btn.setEnabled(false);
+
+    if( to_insert > 3 ) {
       view.setVisibility(View.GONE);
       load.setVisibility(View.VISIBLE);
       load_text.setText(String.format("Loading %d lines...", to_insert));
-
-      upd.run();
-    } else {
-      for( StartRow row : rows ) {
-        _update_StartRow(row);
-      }
     }
+
+    upd.run();
   }
 
   @Subscribe(threadMode = ThreadMode.MAIN)
-  public void _update_StartRow(StartRow row)
+  public void _update_StartRow(StartRow row) {
+    final LinearLayout tableListLayout = findViewById(R.id.table_list);
+    boolean scrollToBottom = (_getViewDataById(row.getRowId()) == null);
+
+    _update_StartRow_fast(row, tableListLayout);
+    if( scrollToBottom ) {
+      _scrollToBottom();
+    }
+  }
+
+  protected void _update_StartRow_fast(StartRow row, final LinearLayout tableListLayout)
   {
     /* Update or add new data */
     ViewData vd = _getViewDataById(row.getRowId());
@@ -474,12 +508,9 @@ public class MainActivity extends Activity
       /* try to add new row */
       vd = new ViewData(row.getRowId(), row.disciplineId);
       TableData td = _getTableDataByDisciplineId(row.disciplineId);
-      final ScrollView sv = findViewById(R.id.vscroll);
 
       if( td == null ) {
-        final LinearLayout tableListLayout = findViewById(R.id.table_list);
         /* setup new table */
-
         td = new TableData(row.disciplineId);
         tableList.add(td);
         tableListLayout.addView(td.getView());
@@ -487,12 +518,6 @@ public class MainActivity extends Activity
 
       td.addData(vd);
       dataList.add(vd);
-
-      sv.post(new Runnable() {
-        public void run() {
-          sv.scrollTo(0, findViewById(R.id.bottom_spacer).getBottom());
-        }
-      });
     }
 
     /* auto-confirm */
@@ -684,7 +709,7 @@ public class MainActivity extends Activity
     protected TextView tCrew;
     protected TextView tStart;
     protected TextView tFinish;
-    protected ArrayList<TextView> tGates = new ArrayList<TextView>();
+    protected TextView[] tGates;
 
     public ViewData(int id, int disciplineId)
     {
@@ -759,7 +784,7 @@ public class MainActivity extends Activity
       for( int i = 0; i < gates.length; i++ ) {
         int gatePenaltyId = gates[i];
         int pvalue = 0;
-        TextView tGate = tGates.get(i);
+        TextView tGate = tGates[i];
 
         _strikeTextView(tGate);
         if( gatePenaltyId >= race.penalties.size() || gatePenaltyId < 0 )
@@ -1267,32 +1292,27 @@ public class MainActivity extends Activity
       tCrew.setOnClickListener(lapcrewListener);
       tLap.setOnClickListener(lapcrewListener);
 
+      tGates = new TextView[race.gates.size()];
       for( int i = 0; i < race.gates.size(); i++ ) {
         TextView tGate = (TextView)_newDataCol(R.id.any_gate);
 
         tGate.setTag(R.id.tag_gate_id, race.gates.get(i));
         tGate.setOnClickListener(gateListener);
-        tGates.add(tGate);
+        tGates[i] = tGate;
       }
 
-      tRow.removeAllViews();
-
-      tRow.addView(tSyncer);
-      tRow.addView(tLap);
-      tRow.addView(tCrew);
-      tRow.addView(_build_spacer());
+      tRow.removeView(tRow.findViewById(R.id.any_gate));
 
       tStart.setOnClickListener(startListener);
-      tRow.addView(tStart);
-      tRow.addView(_build_spacer());
 
+      int index = tRow.indexOfChild(tFinish) - 1;
       for( TextView v : tGates ) {
-        tRow.addView(v);
-        tRow.addView(_build_spacer());
+        tRow.addView(v, index);
+        tRow.addView(_build_spacer(), index);
+        index += 2;
       }
 
       tFinish.setOnClickListener(finishListener);
-      tRow.addView(tFinish);
 
       updateVisibilityByDisp();
       return tRow;
