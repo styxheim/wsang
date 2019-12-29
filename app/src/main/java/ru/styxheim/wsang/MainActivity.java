@@ -612,16 +612,15 @@ public class MainActivity extends Activity
       /* add table header */
       header.findViewById(R.id.start_gate).setTag(R.id.tag_gate_id, RaceStatus.GATE_START);
       header.findViewById(R.id.finish_gate).setTag(R.id.tag_gate_id, RaceStatus.GATE_FINISH);
-      index = header.indexOfChild(header.findViewById(R.id.finish_gate)) - 1;
+      index = header.indexOfChild((View)header.findViewById(R.id.finish_gate)) - 1;
       anyGate = header.findViewById(R.id.any_gate);
       header.removeView(anyGate);
       for( int gateId : race.gates ) {
         anyGate = (TextView)_newDataCol(R.id.any_gate);
         anyGate.setText(Integer.toString(gateId));
         anyGate.setTag(R.id.tag_gate_id, gateId);
-        header.addView(_build_spacer(), index);
         header.addView(anyGate, index);
-        index += 2;
+        index++;
       }
       tl.addView(header);
 
@@ -658,7 +657,6 @@ public class MainActivity extends Activity
             
           if( gateId.compareTo(RaceStatus.GATE_START) == 0 ) {
             v.setVisibility(b2v(tdisp.startGate));
-            header.getChildAt(i + 1).setVisibility(b2v(tdisp.startGate));
             continue;
           }
           
@@ -674,7 +672,6 @@ public class MainActivity extends Activity
             }
           }
           v.setVisibility(b2v(found));
-          header.getChildAt(i + 1).setVisibility(b2v(found));
         }
       }
     }
@@ -777,7 +774,7 @@ public class MainActivity extends Activity
 
       tCrew.setText(Integer.toString(crew));
       _strikeTextView(tCrew);
-
+ 
       tStart.setText(Default.millisecondsToString(start));
       _strikeTextView(tStart);
 
@@ -959,47 +956,33 @@ public class MainActivity extends Activity
       sled.show(getFragmentManager(), sled.getClass().getCanonicalName());
     }
 
+    private int b2v(boolean val)
+    {
+      if( !val )
+        return View.GONE;
+      return View.VISIBLE;
+    }
+
     public void updateVisibilityByDisp()
     {
       TerminalStatus.Discipline disp = term.getDiscipline(disciplineId);
-      ViewGroup parent = (ViewGroup)tStart.getParent();
-      View startSpacer = parent.getChildAt(parent.indexOfChild(tStart) + 1);
 
-      if( disp != null && disp.startGate ) {
-        tStart.setVisibility(View.VISIBLE);
-        startSpacer.setVisibility(View.VISIBLE);
-      } else {
-        tStart.setVisibility(View.GONE);
-        startSpacer.setVisibility(View.GONE);
-      }
-
+      tStart.setVisibility(b2v(disp != null && disp.startGate));
       for( TextView gateView : tGates ) {
         boolean found = false;
         int viewGateId = gateView.getTag(R.id.tag_gate_id);
-        View gateSpacer = parent.getChildAt(parent.indexOfChild(gateView) + 1);
 
         if( disp != null ) {
-          for( Integer gateId : disp.gates ) {
+          for( int gateId : disp.gates ) {
             if( gateId == viewGateId ) {
               found = true;
               break;
             }
           }
         }
-        if( found ) {
-          gateView.setVisibility(View.VISIBLE);
-          gateSpacer.setVisibility(View.VISIBLE);
-        } else {
-          gateView.setVisibility(View.GONE);
-          gateSpacer.setVisibility(View.GONE);
-        }
+        gateView.setVisibility(b2v(found));
       }
-
-      if( disp != null && disp.finishGate ) {
-        tFinish.setVisibility(View.VISIBLE);
-      } else {
-        tFinish.setVisibility(View.GONE);
-      }
+      tFinish.setVisibility(b2v(disp != null && disp.finishGate));
     }
 
     public View getView()
@@ -1292,6 +1275,7 @@ public class MainActivity extends Activity
       tCrew.setOnClickListener(lapcrewListener);
       tLap.setOnClickListener(lapcrewListener);
 
+      int index = tRow.indexOfChild(tRow.findViewById(R.id.any_gate));
       tGates = new TextView[race.gates.size()];
       for( int i = 0; i < race.gates.size(); i++ ) {
         TextView tGate = (TextView)_newDataCol(R.id.any_gate);
@@ -1299,19 +1283,13 @@ public class MainActivity extends Activity
         tGate.setTag(R.id.tag_gate_id, race.gates.get(i));
         tGate.setOnClickListener(gateListener);
         tGates[i] = tGate;
+        tRow.addView(tGate, index);
+        index++;
       }
 
       tRow.removeView(tRow.findViewById(R.id.any_gate));
 
       tStart.setOnClickListener(startListener);
-
-      int index = tRow.indexOfChild(tFinish) - 1;
-      for( TextView v : tGates ) {
-        tRow.addView(v, index);
-        tRow.addView(_build_spacer(), index);
-        index += 2;
-      }
-
       tFinish.setOnClickListener(finishListener);
 
       updateVisibilityByDisp();
@@ -1328,11 +1306,6 @@ public class MainActivity extends Activity
     }
     v.setId(v.generateViewId());
     return v;
-  }
-
-  public View _build_spacer()
-  {
-    return _newDataCol(R.id.spacer);
   }
 
   protected void _tablesSetup()

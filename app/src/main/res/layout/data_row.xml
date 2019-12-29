@@ -13,7 +13,7 @@
 	<TextView
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
-    android:text="@string/lap_short"
+		android:text="@string/lap_short"
 		android:textAppearance="?android:attr/textAppearanceLarge"
 		android:id="@+id/lap"
 		android:padding="6dp"
@@ -22,29 +22,13 @@
 	<TextView
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
-    android:text="@string/crew_short"
+		android:text="@string/crew_short"
 		android:textAppearance="?android:attr/textAppearanceLarge"
 		android:id="@+id/crew"
 		android:padding="6dp"
 		android:gravity="center"/>
 
-		<View
-		android:id="@+id/spacer"
-		android:layout_width="1dp"
-		android:layout_height="match_parent"
-		android:padding="6dp"
-		android:background="@color/spacer"/>
-
-<TextView
-		android:layout_width="wrap_content"
-		android:layout_height="wrap_content"
-    android:text="@string/start_time"
-		android:textAppearance="?android:attr/textAppearanceLarge"
-		android:id="@+id/start_gate"
-		android:padding="6dp"
-		android:gravity="center"/>
-
-		<View
+	<View
 		android:id="@+id/spacer"
 		android:layout_width="1dp"
 		android:layout_height="match_parent"
@@ -52,6 +36,17 @@
 		android:background="@color/spacer"/>
 
 	<TextView
+		android:background="@drawable/cell"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:text="@string/start_time"
+		android:textAppearance="?android:attr/textAppearanceLarge"
+		android:id="@+id/start_gate"
+		android:padding="6dp"
+		android:gravity="center"/>
+
+	<TextView
+		android:background="@drawable/cell"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
 		android:text="Gate"
@@ -64,9 +59,10 @@
 		android:gravity="center"/>
 
 	<TextView
+		android:background="@drawable/cell"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
-    android:text="@string/finish_time"
+		android:text="@string/finish_time"
 		android:textAppearance="?android:attr/textAppearanceLarge"
 		android:id="@+id/finish_gate"
 		android:padding="6dp"
