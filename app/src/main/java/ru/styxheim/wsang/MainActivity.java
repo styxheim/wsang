@@ -512,7 +512,6 @@ public class MainActivity extends Activity
 
     if( vd == null ) {
       /* try to add new row */
-      vd = new ViewData(row.getRowId(), row.disciplineId);
       TableData td = _getTableDataByDisciplineId(row.disciplineId);
 
       if( td == null ) {
@@ -522,6 +521,7 @@ public class MainActivity extends Activity
         tableListLayout.addView(td.getView());
       }
 
+      vd = new ViewData(row.getRowId(), row.disciplineId, td);
       td.addData(vd);
       dataList.add(vd);
     }
@@ -727,10 +727,10 @@ public class MainActivity extends Activity
 
     public void addData(ViewData vd)
     {
+      tableDataList.add(vd);
       if( layout != null ) {
         ((ViewGroup)layout.findViewById(tableId)).addView(vd.getView());
       }
-      tableDataList.add(vd);
       if( hidden ) {
         toggleHide();
       }
@@ -749,6 +749,7 @@ public class MainActivity extends Activity
     public long start;
     public boolean strike;
     public int[] gates;
+    public TableData parent;
 
     protected Context context;
 
@@ -760,11 +761,12 @@ public class MainActivity extends Activity
     protected TextView tFinish;
     protected TextView[] tGates;
 
-    public ViewData(int id, int disciplineId)
+    public ViewData(int id, int disciplineId, TableData td)
     {
       this.rowId = id;
       this.disciplineId = disciplineId;
       this.context = MainActivity.this;
+      this.parent = td;
     }
 
     public void select()
@@ -1058,6 +1060,12 @@ public class MainActivity extends Activity
 
       tRow.setTag(R.id.tag_selected, false);
       tRow.setTag(R.id.tag_background, null);
+
+      if( (parent.tableDataList.indexOf(this) % 2) == 0 ) {
+        tRow.setBackgroundResource(R.color.rowEven);
+      } else {
+        //tRow.setBackgroundResource(R.color.rowOdd);
+      }
 
       TableRow.OnClickListener rowClickListener = new TableRow.OnClickListener() {
         @Override
