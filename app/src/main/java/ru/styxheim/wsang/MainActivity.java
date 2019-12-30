@@ -633,6 +633,8 @@ public class MainActivity extends Activity
       }
       table_layout.addView(header);
 
+      header.setBackgroundResource(R.color.rowHeader);
+      //title.setBackgroundResource(R.color.rowHeader);
       title.setOnClickListener(new TextView.OnClickListener() {
         @Override
         public void onClick(View v) {

@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+  <color name="black">#000000</color>
   <color name="transparent">#00ffffff</color>
 
+  <color name="rowHeader">#6A83CD</color>
   <color name="rowEven">#C8D2DD</color>
-  <color name="rowOdd">#169e1d</color>
+  <color name="rowOdd">#DCDFE2</color>
   <color name="spacer">#000000</color>
 
   <color name="notSynced">#E0C351</color>
