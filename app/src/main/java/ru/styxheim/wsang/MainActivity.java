@@ -1006,6 +1006,21 @@ public class MainActivity extends Activity
 
       tRow.setTag(R.id.tag_selected, false);
       tRow.setTag(R.id.tag_background, null);
+      
+      TableRow.OnClickListener rowClickListener = new TableRow.OnClickListener() {
+        @Override
+        public void onClick(View v)
+        {
+          for( ViewData vd : dataList ) {
+            if( vd.rowId == rowId )
+              vd.select();
+            else
+              vd.deselect();
+          }
+        }
+      };
+      
+      tRow.setOnClickListener(rowClickListener);
 
       View.OnClickListener lapcrewListener = new View.OnClickListener() {
         @Override
