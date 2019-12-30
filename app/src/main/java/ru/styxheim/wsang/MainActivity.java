@@ -423,6 +423,9 @@ public class MainActivity extends Activity
     final Button settings_btn = findViewById(R.id.settings_button);
     int to_insert = 0;
 
+    if( race == null || term == null )
+      return;
+
     for( StartRow row : rows ) {
       if( _getViewDataById(row.getRowId()) == null ) {
         to_insert++;
@@ -488,6 +491,9 @@ public class MainActivity extends Activity
   public void _update_StartRow(StartRow row) {
     final LinearLayout tableListLayout = findViewById(R.id.table_list);
     boolean scrollToBottom = (_getViewDataById(row.getRowId()) == null);
+
+    if( race == null || term == null )
+      return;
 
     _update_StartRow_fast(row, tableListLayout);
     if( scrollToBottom ) {
@@ -585,9 +591,12 @@ public class MainActivity extends Activity
     public int disciplineId;
     public ArrayList<ViewData> tableDataList = new ArrayList<ViewData>();
     LinearLayout layout;
+    TableLayout table_layout;
     TableRow header;
     public int tableId;
     public TextView title;
+    String disp_name;
+    boolean hidden = false;
 
     public TableData(int disciplineId)
     {
@@ -596,18 +605,18 @@ public class MainActivity extends Activity
 
     public View getView()
     {
-      TableLayout tl = new TableLayout(MainActivity.this);
+      table_layout = new TableLayout(MainActivity.this);
       header = (TableRow)_newDataCol(R.layout.data_row);
       TextView anyGate;
       int index;
       title = (TextView)LayoutInflater.from(MainActivity.this).inflate(R.layout.table_title, null);
 
       tableId = View.generateViewId();
-      tl.setId(tableId);
+      table_layout.setId(tableId);
       layout = new LinearLayout(MainActivity.this);
       layout.setOrientation(LinearLayout.VERTICAL);
       layout.addView(title);
-      layout.addView(tl);
+      layout.addView(table_layout);
 
       /* add table header */
       header.findViewById(R.id.start_gate).setTag(R.id.tag_gate_id, RaceStatus.GATE_START);
@@ -622,10 +631,30 @@ public class MainActivity extends Activity
         header.addView(anyGate, index);
         index++;
       }
-      tl.addView(header);
+      table_layout.addView(header);
+
+      title.setOnClickListener(new TextView.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+          int size = tableList.size();
+          if( size > 1 && tableList.get(size - 1) != TableData.this ) {
+            toggleHide();
+          }
+        }
+      });
 
       update();
       return layout;
+    }
+
+    public void toggleHide() {
+      hidden = !hidden;
+      table_layout.setVisibility(b2v(!hidden));
+      table_layout.post(new Runnable() {
+        public void run() {
+          _updateTitle();
+        }
+      });
     }
 
     private int b2v(boolean val)
@@ -635,16 +664,36 @@ public class MainActivity extends Activity
       return View.VISIBLE;
     }
  
+    protected void _updateTitle()
+    {
+      String title_text = disp_name;
+      if( hidden ) {
+        title_text += String.format(" (%d)", tableDataList.size());
+      }
+      title.setText(title_text);
+    }
+
     public void update()
     {
-      RaceStatus.Discipline rdisp = race.getDiscipline(disciplineId);
-      TerminalStatus.Discipline tdisp = term.getDiscipline(disciplineId);
+      RaceStatus.Discipline rdisp = null;
+      TerminalStatus.Discipline tdisp = null;
+
+      if( term != null )
+        tdisp = term.getDiscipline(disciplineId);
+
+      if( race != null )
+        rdisp = race.getDiscipline(disciplineId);
 
       if( rdisp == null ) {
-        title.setText("discipline id #" + Integer.toString(disciplineId));
+        disp_name = "discipline id #" + Integer.toString(disciplineId);
       } else {
-        title.setText(rdisp.name);
+        disp_name = rdisp.name;
       }
+      _updateTitle();
+
+      if( tdisp == null )
+        return;
+
       for( int i = 0; i < header.getChildCount(); i++ ) {
         View v = header.getChildAt(i);
         if( v instanceof TextView ) {
@@ -654,17 +703,17 @@ public class MainActivity extends Activity
           
           if( gateId == null )
             continue;
-            
+
           if( gateId.compareTo(RaceStatus.GATE_START) == 0 ) {
             v.setVisibility(b2v(tdisp.startGate));
             continue;
           }
-          
+
           if( gateId.compareTo(RaceStatus.GATE_FINISH) == 0 ) {
             v.setVisibility(b2v(tdisp.finishGate));
             continue;
           }
-          
+
           for( int tgateId : tdisp.gates ) {
             if( gateId.compareTo(tgateId) == 0 ) {
               found = true;
@@ -682,6 +731,9 @@ public class MainActivity extends Activity
         ((ViewGroup)layout.findViewById(tableId)).addView(vd.getView());
       }
       tableDataList.add(vd);
+      if( hidden ) {
+        toggleHide();
+      }
     }
   }
 
@@ -1006,7 +1058,7 @@ public class MainActivity extends Activity
 
       tRow.setTag(R.id.tag_selected, false);
       tRow.setTag(R.id.tag_background, null);
-      
+
       TableRow.OnClickListener rowClickListener = new TableRow.OnClickListener() {
         @Override
         public void onClick(View v)
