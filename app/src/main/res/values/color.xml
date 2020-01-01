@@ -15,6 +15,6 @@
   <color name="Syncing">#5e1556</color>
 
   <color name="selected_row">#FF0000</color>
-
+  <color name="selected_col">#FC948D</color>
   <color name="strike_text">#808080</color>
 </resources>

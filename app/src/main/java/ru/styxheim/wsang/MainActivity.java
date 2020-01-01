@@ -42,6 +42,8 @@ public class MainActivity extends Activity
 
   protected int selectedRowId = -1;
   protected int selectedLapId = -1;
+  protected View selectedGate;
+  protected View selectedGateHeader;
 
   protected ArrayList<ViewData> dataList = new ArrayList<ViewData>();
   protected ArrayList<TableData> tableList = new ArrayList<TableData>();
@@ -628,6 +630,7 @@ public class MainActivity extends Activity
         anyGate = (TextView)_newDataCol(R.id.any_gate);
         anyGate.setText(Integer.toString(gateId));
         anyGate.setTag(R.id.tag_gate_id, gateId);
+        anyGate.setTag(R.id.tag_selected, false);
         header.addView(anyGate, index);
         index++;
       }
@@ -673,6 +676,24 @@ public class MainActivity extends Activity
         title_text += String.format(" (%d)", tableDataList.size());
       }
       title.setText(title_text);
+    }
+
+    public View getGateView(int gateId)
+    {
+      for( int i = 0; i < header.getChildCount(); i++ ) {
+        View v = header.getChildAt(i);
+        if( v instanceof TextView ) {
+          Integer _gateId = (Integer)v.getTag(R.id.tag_gate_id);
+
+          if( _gateId == null )
+            continue;
+
+          if( _gateId.compareTo(gateId) == 0 ) {
+            return v;
+          }
+        }
+      }
+      return null;
     }
 
     public void update()
@@ -771,27 +792,27 @@ public class MainActivity extends Activity
       this.parent = td;
     }
 
-    public void select()
+    public void select(final View v, final int resource)
     {
-      boolean selected = tRow.getTag(R.id.tag_selected);
+      boolean selected = v.getTag(R.id.tag_selected);
 
       if( selected )
         return;
 
-      tRow.setTag(R.id.tag_selected, true);
-      tRow.setTag(R.id.tag_background, tRow.getBackground());
-      tRow.setBackgroundResource(R.color.selected_row);
+      v.setTag(R.id.tag_selected, true);
+      v.setTag(R.id.tag_background, v.getBackground());
+      v.setBackgroundResource(resource);
     }
 
-    public void deselect()
+    public void deselect(final View v)
     {
-      boolean selected = tRow.getTag(R.id.tag_selected);
+      boolean selected = v.getTag(R.id.tag_selected);
 
       if( !selected )
         return;
 
-      tRow.setTag(R.id.tag_selected, false);
-      tRow.setBackground((Drawable)tRow.getTag(R.id.tag_background));
+      v.setTag(R.id.tag_selected, false);
+      v.setBackground((Drawable)v.getTag(R.id.tag_background));
     }
 
     protected void _strikeTextView(TextView v)
@@ -855,6 +876,7 @@ public class MainActivity extends Activity
         else
           pvalue = race.penalties.get(gatePenaltyId);
 
+        tGate.setTag(R.id.tag_gate_value, gatePenaltyId);
         if( gatePenaltyId == 0 )
           tGate.setText("  ");
         else
@@ -899,16 +921,165 @@ public class MainActivity extends Activity
         tRow.post(new Runnable() {
           public void run() {
             if( selectedRowId == rowId || selectedLapId == lap ) {
-              select();
+              select(tRow, R.color.selected_row);
             }
             else {
-              deselect();
+              deselect(tRow);
             }
 
             _update();
           }
         });
       }
+    }
+
+    protected void _deselectGate()
+    {
+      if( selectedGate != null ) {
+        deselect(selectedGate);
+        selectedGate = null;
+      }
+      if( selectedGateHeader != null ) {
+        deselect(selectedGateHeader);
+        selectedGateHeader = null;
+      }
+    }
+
+    protected void _selectByLapId()
+    {
+      for( ViewData vd : dataList ) {
+        if( vd.lap == lap ) {
+          vd.select(vd.tRow, R.color.selected_row);
+        }
+        else {
+          vd.deselect(vd.tRow);
+        }
+      }
+      selectedRowId = -1;
+      selectedLapId = lap;
+
+      _deselectGate();
+    }
+
+    protected void _selectByRowId()
+    {
+      for( ViewData vd : dataList ) {
+        if( vd.rowId == rowId )
+          vd.select(vd.tRow, R.color.selected_row);
+        else
+          vd.deselect(vd.tRow);
+      }
+      selectedRowId = rowId;
+      selectedLapId = -1;
+
+      _deselectGate();
+    }
+
+    protected void _selectByGateId(final View v, final int gateId)
+    {
+      final View vh = parent.getGateView(gateId);
+
+      _selectByRowId();
+      v.post(new Runnable() {
+        public void run() {
+          selectedGate = v;
+          select(v, R.color.selected_col);
+
+          selectedGateHeader = vh;
+          select(vh, R.color.selected_col);
+        }
+      });
+    }
+
+    protected void _setupGateListener(View v)
+    {
+      /*
+      View.OnClickListener gate2activityListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v)
+        {
+          Bundle extras = new Bundle();
+          Intent intent = new Intent(MainActivity.this, PenaltyActivity.class);
+          TerminalStatus.Discipline disp = term.getDiscipline(disciplineId);
+
+          _selectByRowId();
+
+          extras.putInt("rowId", rowId);
+          extras.putInt("lap", lap);
+          extras.putInt("crew", crew);
+
+          extras.putIntegerArrayList("gates", disp.gates);
+          extras.putIntegerArrayList("penalties", race.penalties);
+          extras.putIntArray("values", gates);
+
+          extras.putLong("term_timestamp", term.timestamp);
+          extras.putLong("race_timestamp", race.timestamp);
+
+          intent.putExtras(extras);
+          startActivity(intent);
+        }
+      };
+      v.setOnClickListener(gate2activityListener);
+      */
+      View.OnClickListener gate2menuListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v)
+        {
+          final int gateId = v.getTag(R.id.tag_gate_id);
+          PopupMenu popup = new PopupMenu(MainActivity.this, v);
+
+          if( ((Integer)v.getTag(R.id.tag_gate_value)).compareTo(0) == 0 ) {
+            for( int i = 1; i < race.penalties.size(); i++ ) {
+              popup.getMenu().add(1, i, i, Integer.toString(race.penalties.get(i)));
+            }
+          } else {
+            popup.getMenu().add(1, 0, 0, "Отменить");
+          }
+          popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item)
+            {
+              final EventMessage.ProposeMsg msg;
+              int penaltyId = item.getItemId();
+
+              Log.d("wsa-ng", String.format("Emit Penalty gate %d, value %d (%d)",
+                                            gateId,
+                                            item.getItemId(),
+                                            race.penalties.get(item.getItemId())));
+              msg = new EventMessage.ProposeMsg(EventMessage.ProposeMsg.Type.PENALTY);
+              msg.rowId = rowId;
+              msg.gate = gateId;
+              msg.penalty = penaltyId;
+              if( penaltyId == 0 ) {
+                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+
+                builder.setTitle(R.string.false_start);
+                builder.setMessage("Отменить результат?");
+                builder.setPositiveButton("Да", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int id)
+                    {
+                      EventBus.getDefault().post(new EventMessage(msg));
+                    }
+                  });
+                builder.setNegativeButton("Нет", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int id)
+                    {
+                    }
+                  });
+                builder.create().show();
+              } else {
+                EventBus.getDefault().post(new EventMessage(msg));
+              }
+              return true;
+            }
+          });
+          _selectByGateId(v, gateId);
+          popup.show();
+        }
+      };
+      v.setOnClickListener(gate2menuListener);
     }
 
     protected void _show_strike_dialog()
@@ -1073,12 +1244,7 @@ public class MainActivity extends Activity
         @Override
         public void onClick(View v)
         {
-          for( ViewData vd : dataList ) {
-            if( vd.rowId == rowId )
-              vd.select();
-            else
-              vd.deselect();
-          }
+          _selectByRowId();
         }
       };
       
@@ -1091,14 +1257,7 @@ public class MainActivity extends Activity
           TerminalStatus.Discipline disp = term.getDiscipline(disciplineId);
           PopupMenu popup;
 
-          for( ViewData vd : dataList ) {
-            if( vd.rowId == rowId )
-              vd.select();
-            else
-              vd.deselect();
-          }
-          selectedRowId = rowId;
-          selectedLapId = -1;
+          _selectByRowId();
 
           if( disp.startGate && ((disp.gates.size() == 0) ||
                                  (disp.gates.size() != 0 && strike)) ) {
@@ -1150,14 +1309,7 @@ public class MainActivity extends Activity
           long offset = 0;
           PopupMenu pmenu = new PopupMenu(MainActivity.this, v);
 
-          for( ViewData vd : dataList ) {
-            if( vd.rowId == rowId )
-              vd.select();
-            else
-              vd.deselect();
-          }
-          selectedRowId = rowId;
-          selectedLapId = -1;
+          _selectByRowId();
 
           if( finish == 0 ) {
             if( size == 0 ) {
@@ -1239,56 +1391,13 @@ public class MainActivity extends Activity
         }
       };
 
-      View.OnClickListener gateListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View v)
-        {
-          Bundle extras = new Bundle();
-          Intent intent = new Intent(MainActivity.this, PenaltyActivity.class);
-          TerminalStatus.Discipline disp = term.getDiscipline(disciplineId);
-
-          for( ViewData vd : dataList ) {
-            if( vd.rowId == rowId )
-              vd.select();
-            else
-              vd.deselect();
-          }
-
-          selectedRowId = rowId;
-          selectedLapId = -1;
-
-          extras.putInt("rowId", rowId);
-          extras.putInt("lap", lap);
-          extras.putInt("crew", crew);
-
-          extras.putIntegerArrayList("gates", disp.gates);
-          extras.putIntegerArrayList("penalties", race.penalties);
-          extras.putIntArray("values", gates);
-
-          extras.putLong("term_timestamp", term.timestamp);
-          extras.putLong("race_timestamp", race.timestamp);
-
-          intent.putExtras(extras);
-          startActivity(intent);
-        }
-      };
-
       View.OnClickListener startListener = new View.OnClickListener() {
         @Override
         public void onClick(View v)
         {
           PopupMenu popup = new PopupMenu(MainActivity.this, v);
 
-          for( ViewData vd : dataList ) {
-            if( vd.lap == lap ) {
-              vd.select();
-            }
-            else {
-              vd.deselect();
-            }
-          }
-          selectedRowId = -1;
-          selectedLapId = lap;
+          _selectByLapId();
 
           if( start != 0 ) {
             /* reset start time */
@@ -1367,8 +1476,9 @@ public class MainActivity extends Activity
       for( int i = 0; i < race.gates.size(); i++ ) {
         TextView tGate = (TextView)_newDataCol(R.id.any_gate);
 
+        tGate.setTag(R.id.tag_selected, false);
         tGate.setTag(R.id.tag_gate_id, race.gates.get(i));
-        tGate.setOnClickListener(gateListener);
+        _setupGateListener(tGate);
         tGates[i] = tGate;
         tRow.addView(tGate, index);
         index++;
