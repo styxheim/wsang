@@ -185,6 +185,15 @@
 				android:gravity="right">
 
 				<ImageButton
+					android:id="@+id/new_crew_local"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					style="?android:attr/buttonBarButtonStyle"
+					android:src="@mipmap/ic_plus"
+					android:onClick="startLocalOnClick"
+					android:visibility="gone"/>
+
+				<ImageButton
 					android:id="@+id/new_crew"
 					android:layout_width="wrap_content"
 					android:layout_height="wrap_content"

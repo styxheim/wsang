@@ -37,6 +37,7 @@ public class MainActivity extends Activity
   protected RaceStatus race;
   protected TerminalStatus term;
   protected boolean finishGate;
+  protected StartList local_startList;
 
   protected Chrono chrono;
 
@@ -87,6 +88,10 @@ public class MainActivity extends Activity
     } else {
       this.getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED);
     }
+    
+    local_startList = new StartList();
+    local_startList.setOutput("localRows.json");
+    local_startList.Load(this);
   }
 
   @Override
@@ -192,6 +197,91 @@ public class MainActivity extends Activity
     EventBus.getDefault().post(new EventMessage(EventMessage.EventType.COUNTDOWN_STOP, null));
   }
 
+  protected int _fillDisciplinesArray(ArrayList<Integer> disp_ids, ArrayList<String> disp_names,
+                                      int lastDisciplineId)
+  {
+    int selectedDisciplineNum = -1;
+    for( TerminalStatus.Discipline tdisp : term.disciplines ) {
+      if( tdisp.startGate ) {
+        RaceStatus.Discipline rdisp = race.getDiscipline(tdisp.id);
+        if( lastDisciplineId == tdisp.id )
+          selectedDisciplineNum = disp_ids.size();
+        disp_ids.add(tdisp.id);
+        if( rdisp != null ) {
+          disp_names.add(rdisp.name);
+        } else {
+          disp_names.add(String.format("id %d", tdisp.id));
+        }
+      }
+    }
+
+    if( selectedDisciplineNum == -1 && race.disciplines.size() > 1 ) {
+      selectedDisciplineNum = 0;
+    }
+
+    return selectedDisciplineNum;
+  }
+
+  protected int _fillDisciplinesArrayLocal(ArrayList<Integer> disp_ids, ArrayList<String> disp_names,
+                                           int lastDisciplineId)
+  {
+    int selectedDisciplineNum = -1;
+    for( TerminalStatus.Discipline tdisp : term.disciplines ) {
+      if( !tdisp.startGate &&
+          (tdisp.gates.size() != 0 || tdisp.finishGate) ) {
+        RaceStatus.Discipline rdisp = race.getDiscipline(tdisp.id);
+        if( lastDisciplineId == tdisp.id )
+          selectedDisciplineNum = disp_ids.size();
+        disp_ids.add(tdisp.id);
+        if( rdisp != null ) {
+          disp_names.add(rdisp.name);
+        } else {
+          disp_names.add(String.format("id %d", tdisp.id));
+        }
+      }
+    }
+
+    if( selectedDisciplineNum == -1 && race.disciplines.size() > 1 ) {
+      selectedDisciplineNum = 0;
+    }
+
+    return selectedDisciplineNum;
+  }
+
+  public void startLocalOnClick(View v)
+  {
+    StartLineEditDialog sled;
+    final ArrayList<Integer> lap_values = new ArrayList<Integer>();
+    final ArrayList<String> disp_names = new ArrayList<String>();
+    final ArrayList<Integer> disp_ids = new ArrayList<Integer>();
+    int lastDisciplineId = -1;
+    int selectedDisciplineNum = 0;
+
+    if( dataList.size() > 0 ) {
+      ViewData vd = dataList.get(dataList.size() - 1);
+      lastDisciplineId = vd.disciplineId;
+    }
+
+    selectedDisciplineNum = _fillDisciplinesArrayLocal(disp_ids, disp_names, lastDisciplineId);
+
+    lap_values.add(0);
+    sled = new StartLineEditDialog(-1, -1, selectedDisciplineNum, false);
+    sled.setLapValues(lap_values);
+    sled.setDisciplines(disp_names);
+    sled.setStartLineEditDialogListener(new StartLineEditDialog.StartLineEditDialogListener() {
+      @Override
+      public void onStartLineEditDialogResult(StartLineEditDialog sled, int crewNum, int lapNum, int disciplineNum)
+      {
+        /* TODO: setup new local rows and update table
+        local_startList.addRecord(crewNum, 0, disp_ids.get(disciplineNum));
+        local_startList.Save(MainActivity.this);
+        */
+      }
+    });
+    sled.show(getFragmentManager(), sled.getClass().getCanonicalName());
+
+  }
+
   public void startOnClick(View v)
   {
     StartLineEditDialog sled;
@@ -230,19 +320,7 @@ public class MainActivity extends Activity
     lap_values.add(lastLapId + 1);
 
     /* fill disciplines */
-    for( TerminalStatus.Discipline tdisp : term.disciplines ) {
-      if( tdisp.startGate ) {
-        RaceStatus.Discipline rdisp = race.getDiscipline(tdisp.id);
-        if( lastDisciplineId == tdisp.id )
-          selectedDisciplineNum = disp_ids.size();
-        disp_ids.add(tdisp.id);
-        if( rdisp != null ) {
-          disp_names.add(rdisp.name);
-        } else {
-          disp_names.add(String.format("id %d", tdisp.id));
-        }
-      }
-    }
+    selectedDisciplineNum = _fillDisciplinesArray(disp_ids, disp_names, lastDisciplineId);
 
     if( race.crews.size() != 0 ) {
       sled = new StartLineEditDialog(-1, lap_values.size() - 1, selectedDisciplineNum);
@@ -1519,6 +1597,8 @@ public class MainActivity extends Activity
   protected void _buttonsSetup()
   {
     Button disp_btn = findViewById(R.id.discipline_title);
+    ImageButton new_crew_btn = findViewById(R.id.new_crew);
+    ImageButton new_crew_local_btn = findViewById(R.id.new_crew_local);
 
     disp_btn.setVisibility(View.GONE);
 
@@ -1538,10 +1618,16 @@ public class MainActivity extends Activity
     Log.d("wsa-ng-ui", "Table setup continue");
 
     finishGate = false;
-    findViewById(R.id.new_crew).setVisibility(View.GONE);
+    new_crew_local_btn.setVisibility(View.GONE);
+    new_crew_btn.setVisibility(View.GONE);
     for( TerminalStatus.Discipline tdisp : term.disciplines ) {
       if( tdisp.startGate ) {
-        findViewById(R.id.new_crew).setVisibility(View.VISIBLE);
+        new_crew_btn.setVisibility(View.VISIBLE);
+      }
+      if( !tdisp.startGate &&
+          (tdisp.gates.size() != 0 ||
+           tdisp.finishGate) ) {
+        new_crew_local_btn.setVisibility(View.VISIBLE);
       }
       if( tdisp.finishGate ) {
         finishGate = true;
