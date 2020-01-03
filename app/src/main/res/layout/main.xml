@@ -143,10 +143,23 @@
 
 						</LinearLayout>
 
+            <View
+              android:layout_width="match_parent"
+              android:layout_height="150dp"
+							android:id="@+id/bottom_spacer"/>
+ 
+            <LinearLayout
+              android:id="@+id/table_list_local"
+              android:orientation="vertical"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:fillViewport="true">
+						</LinearLayout>
+
 						<View
 							android:layout_width="match_parent"
 							android:layout_height="150dp"
-							android:id="@+id/bottom_spacer"/>
+							android:id="@+id/bottom_spacer_local"/>
 
 					</LinearLayout>
 

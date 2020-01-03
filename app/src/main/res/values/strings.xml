@@ -35,6 +35,7 @@
 
   <string name="edit_lapcrew">Редактировать заезд</string>
   <string name="set_strike">Экипаж сошёл с трассы</string>
+  <string name="remove_row">Удалить запись</string>
 
   <string name="yes">Да</string>
   <string name="no">Нет</string>

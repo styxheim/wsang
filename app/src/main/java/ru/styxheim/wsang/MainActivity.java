@@ -46,8 +46,11 @@ public class MainActivity extends Activity
   protected View selectedGate;
   protected View selectedGateHeader;
 
-  protected ArrayList<ViewData> dataList = new ArrayList<ViewData>();
-  protected ArrayList<TableData> tableList = new ArrayList<TableData>();
+  protected ArrayList<ViewData> dataList_remote = new ArrayList<ViewData>();
+  protected ArrayList<TableData> tableList_remote = new ArrayList<TableData>();
+  protected ArrayList<ViewData> dataList_local = new ArrayList<ViewData>();
+  protected ArrayList<TableData> tableList_local = new ArrayList<TableData>();
+
 
   protected boolean countDownMode = false;
   protected long countDownLap;
@@ -257,8 +260,11 @@ public class MainActivity extends Activity
     int lastDisciplineId = -1;
     int selectedDisciplineNum = 0;
 
-    if( dataList.size() > 0 ) {
-      ViewData vd = dataList.get(dataList.size() - 1);
+    if( dataList_local.size() > 0 ) {
+      ViewData vd = dataList_local.get(dataList_local.size() - 1);
+      lastDisciplineId = vd.disciplineId;
+    } else if( dataList_remote.size() > 0 ) {
+      ViewData vd = dataList_remote.get(dataList_remote.size() - 1);
       lastDisciplineId = vd.disciplineId;
     }
 
@@ -272,14 +278,14 @@ public class MainActivity extends Activity
       @Override
       public void onStartLineEditDialogResult(StartLineEditDialog sled, int crewNum, int lapNum, int disciplineNum)
       {
-        /* TODO: setup new local rows and update table
-        local_startList.addRecord(crewNum, 0, disp_ids.get(disciplineNum));
+        StartRow row = local_startList.addRecord(crewNum, 0, disp_ids.get(disciplineNum));
+        row.setState(StartRow.SyncState.ERROR);
         local_startList.Save(MainActivity.this);
-        */
+        _localTableLoad();
+        findViewById(R.id.vscroll).scrollTo(0, findViewById(R.id.bottom_spacer_local).getBottom());
       }
     });
     sled.show(getFragmentManager(), sled.getClass().getCanonicalName());
-
   }
 
   public void startOnClick(View v)
@@ -305,8 +311,8 @@ public class MainActivity extends Activity
       return;
     }
 
-    if( dataList.size() > 0 ) {
-      vd = dataList.get(dataList.size() - 1);
+    if( dataList_remote.size() > 0 ) {
+      vd = dataList_remote.get(dataList_remote.size() - 1);
       lastLapId = vd.lap;
       lastDisciplineId = vd.disciplineId;
       // allow attach to last lap in 2 cases:
@@ -359,7 +365,9 @@ public class MainActivity extends Activity
     sled.show(getFragmentManager(), sled.getClass().getCanonicalName());
   }
 
-  protected TableData _getTableDataByDisciplineId(int disciplineId)
+  protected TableData _getTableDataByDisciplineId(ArrayList<TableData> tableList,
+                                                  LinearLayout tableListLayout,
+                                                  int disciplineId)
   {
     TableData td = null;
     /* get and check last table data by disciplineId */
@@ -375,7 +383,7 @@ public class MainActivity extends Activity
         if( ctd.disciplineId == disciplineId ) {
           if( ctd.tableDataList.size() == 0 ) {
             tableList.remove(ctd);
-            ((ViewGroup)findViewById(R.id.table_list)).removeView(ctd.layout);
+            tableListLayout.removeView(ctd.layout);
           }
           break;
         }
@@ -385,7 +393,7 @@ public class MainActivity extends Activity
     return td;
   }
 
-  protected ViewData _getViewDataById(int rowId)
+  protected ViewData _getViewDataById(ArrayList<ViewData> dataList, int rowId)
   {
     for( ViewData vd : dataList ) {
       if( vd.rowId == rowId )
@@ -422,6 +430,7 @@ public class MainActivity extends Activity
       _buttonsSetup();
       _tablesSetup();
       _zeroTablesSetup();
+      _localTableLoad();
     }
   }
 
@@ -437,16 +446,28 @@ public class MainActivity extends Activity
       boolean found = false;
       RaceStatus.Discipline rdisp = race.disciplines.get(i);
 
-      for( TableData _td : tableList ) {
+      for( TableData _td : tableList_remote ) {
         if( rdisp.id == _td.disciplineId ) {
           found = true;
         }
       }
       if( !found ) {
-        td = new TableData(rdisp.id);
-        tableList.add(td);
+        td = new TableData(rdisp.id, tableList_remote);
+        tableList_remote.add(td);
         tableListLayout.addView(td.getView());
       }
+    }
+  }
+
+  protected void _localTableLoad()
+  {
+    LinearLayout tableListLayout = findViewById(R.id.table_list_local);
+
+    if( race == null || term == null )
+      return;
+
+    for( StartRow row : local_startList ) {
+      _update_StartRow_fast(row, tableListLayout, dataList_local, tableList_local, true);
     }
   }
 
@@ -470,14 +491,18 @@ public class MainActivity extends Activity
         _buttonsSetup();
         _tablesSetup();
         _zeroTablesSetup();
+        _localTableLoad();
 
         if( chrono != null )
           chrono.reload();
       } else {
         race = null;
         ((ViewGroup)findViewById(R.id.table_list)).removeAllViews();
-        dataList.clear();
-        tableList.clear();
+        ((ViewGroup)findViewById(R.id.table_list_local)).removeAllViews();
+        dataList_remote.clear();
+        tableList_remote.clear();
+        dataList_local.clear();
+        tableList_local.clear();
         boot();
       }
     }
@@ -485,11 +510,11 @@ public class MainActivity extends Activity
 
   protected void _scrollToBottom()
   {
-    final ScrollView sv = findViewById(R.id.vscroll);
+    final View sv = findViewById(R.id.vscroll);
 
     sv.post(new Runnable() {
       public void run() {
-        sv.scrollTo(0, findViewById(R.id.bottom_spacer).getBottom());
+        sv.scrollTo(0, findViewById(R.id.table_list_local).getTop());
       }
     });
   }
@@ -507,7 +532,7 @@ public class MainActivity extends Activity
       return;
 
     for( StartRow row : rows ) {
-      if( _getViewDataById(row.getRowId()) == null ) {
+      if( _getViewDataById(dataList_remote, row.getRowId()) == null ) {
         to_insert++;
       }
     }
@@ -529,7 +554,7 @@ public class MainActivity extends Activity
           if( iter.hasNext() ) {
             StartRow nrow = iter.next();
 
-            _update_StartRow_fast(nrow, tableListLayout);
+            _update_StartRow_fast(nrow, tableListLayout, dataList_remote, tableList_remote, false);
           } else {
             long bulk_load_time = System.currentTimeMillis() - bulk_load_start;
             long load_ms = bulk_load_time % 1000;
@@ -570,21 +595,25 @@ public class MainActivity extends Activity
   @Subscribe(threadMode = ThreadMode.MAIN)
   public void _update_StartRow(StartRow row) {
     final LinearLayout tableListLayout = findViewById(R.id.table_list);
-    boolean scrollToBottom = (_getViewDataById(row.getRowId()) == null);
+    boolean scrollToBottom = (_getViewDataById(dataList_remote, row.getRowId()) == null);
 
     if( race == null || term == null )
       return;
 
-    _update_StartRow_fast(row, tableListLayout);
+    _update_StartRow_fast(row, tableListLayout, dataList_remote, tableList_remote, false);
     if( scrollToBottom ) {
       _scrollToBottom();
     }
   }
 
-  protected void _update_StartRow_fast(StartRow row, final LinearLayout tableListLayout)
+  protected void _update_StartRow_fast(StartRow row,
+                                       final LinearLayout tableListLayout,
+                                       ArrayList<ViewData> dataList,
+                                       ArrayList<TableData> tableList,
+                                       boolean is_local)
   {
     /* Update or add new data */
-    ViewData vd = _getViewDataById(row.getRowId());
+    ViewData vd = _getViewDataById(dataList, row.getRowId());
 
     Log.d("wsa-ng-ui",
           "got " + row.toString() +
@@ -592,16 +621,18 @@ public class MainActivity extends Activity
 
     if( vd == null ) {
       /* try to add new row */
-      TableData td = _getTableDataByDisciplineId(row.disciplineId);
+      TableData td = _getTableDataByDisciplineId(tableList,
+                                                 tableListLayout,
+                                                 row.disciplineId);
 
       if( td == null ) {
         /* setup new table */
-        td = new TableData(row.disciplineId);
+        td = new TableData(row.disciplineId, tableList);
         tableList.add(td);
         tableListLayout.addView(td.getView());
       }
 
-      vd = new ViewData(row.getRowId(), row.disciplineId, td);
+      vd = new ViewData(row.getRowId(), row.disciplineId, td, dataList, is_local);
       td.addData(vd);
       dataList.add(vd);
     }
@@ -677,10 +708,12 @@ public class MainActivity extends Activity
     public TextView title;
     String disp_name;
     boolean hidden = false;
+    ArrayList<TableData> tableList;
 
-    public TableData(int disciplineId)
+    public TableData(int disciplineId, ArrayList<TableData> tableList)
     {
       this.disciplineId = disciplineId;
+      this.tableList = tableList;
     }
 
     public View getView()
@@ -851,8 +884,10 @@ public class MainActivity extends Activity
     public boolean strike;
     public int[] gates;
     public TableData parent;
+    public ArrayList<ViewData> dataList;
 
     protected Context context;
+    public boolean is_local = false;
 
     protected View tSyncer;
     protected TableRow tRow;
@@ -862,12 +897,17 @@ public class MainActivity extends Activity
     protected TextView tFinish;
     protected TextView[] tGates;
 
-    public ViewData(int id, int disciplineId, TableData td)
+    public ViewData(int id, int disciplineId,
+                    TableData td,
+                    ArrayList<ViewData> dataList,
+                    boolean is_local)
     {
       this.rowId = id;
       this.disciplineId = disciplineId;
       this.context = MainActivity.this;
       this.parent = td;
+      this.dataList = dataList;
+      this.is_local = true;
     }
 
     public void select(final View v, final int resource)
@@ -1069,6 +1109,246 @@ public class MainActivity extends Activity
       });
     }
 
+    protected void _onLapCrewClick(View v)
+    {
+      TerminalStatus.Discipline disp = term.getDiscipline(disciplineId);
+      PopupMenu popup;
+
+      _selectByRowId();
+
+      if( !is_local && disp.startGate && ((disp.gates.size() == 0) ||
+                                         (disp.gates.size() != 0 && strike)) ) {
+        // instand dialog: when only start gate
+        // or not striked on linear judge
+        _show_edit_dialog();
+        return;
+      }
+
+      popup = new PopupMenu(MainActivity.this, v);
+
+      if( disp.gates.size() == 0 || strike )
+        return;
+
+      // show menu only for linear judge (and not striked)
+
+      if( disp.startGate || is_local ) {
+        popup.getMenu().add(1, 3, 3, R.string.edit_lapcrew);
+      }
+      popup.getMenu().add(1, 4, 4, R.string.set_strike);
+
+      if( is_local ) {
+        popup.getMenu().add(1, 5, 5, R.string.remove_row);
+      }
+
+      popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+        @Override
+        public boolean onMenuItemClick(MenuItem item)
+        {
+          switch( item.getItemId() ) {
+          case 3:
+            _show_edit_dialog();
+            break;
+          case 4:
+            _show_strike_dialog();
+            break;
+          case 5:
+            g("Not implemented");
+          default:
+            return false;
+          }
+          return true;
+        }
+      });
+
+      popup.show();
+    }
+
+    protected void _onFinishClick(View v)
+    {
+      int i = 0;
+      int size = chrono.getSize();
+      long offset = 0;
+      PopupMenu pmenu = new PopupMenu(MainActivity.this, v);
+
+      _selectByRowId();
+
+      if( finish == 0 ) {
+        if( size == 0 ) {
+          Toast.makeText(MainActivity.this,
+                         "Используйте кнопку секундомера для отсечки времени",
+                         Toast.LENGTH_SHORT).show();
+          return;
+        }
+
+        for( Chrono.Record r : chrono ) {
+          String title;
+
+          if( i == 0 ) {
+            offset = r.getValue();
+          }
+          title = String.format("%2d. %s %s%s",
+                                size - i,
+                                Default.millisecondsToString(r.getValue()),
+                                ((offset >= r.getValue()) ? ("+") : ("-")),
+                                Default.millisecondsToString(offset - r.getValue()));
+
+          pmenu.getMenu().add(1, i, i, title);
+          if( r.isSelected() ) {
+            pmenu.getMenu().getItem(i).setEnabled(false);
+          }
+
+          i++;
+        }
+      }
+      else {
+        pmenu.getMenu().add(1, 1, 1, "Отменить финиш");
+      }
+
+      pmenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+        @Override
+        public boolean onMenuItemClick(MenuItem item)
+        {
+          if( finish == 0 ) {
+            Chrono.Record r = chrono.getRecord(item.getItemId());
+            EventMessage.ProposeMsg req;
+
+            if( r == null )
+              return false;
+
+            if( !is_local ) {
+              req = new EventMessage.ProposeMsg(r.getValue(), EventMessage.ProposeMsg.Type.FINISH);
+              req.setRowId(rowId);
+              EventBus.getDefault().post(new EventMessage(EventMessage.EventType.PROPOSE, req));
+            } else {
+              StartRow row = local_startList.getRecord(rowId);
+              row.setFinishData(r.getValue());
+              row.setState(StartRow.SyncState.ERROR);
+              local_startList.Save(getApplicationContext());
+              _localTableLoad();
+            }
+          } else {
+            switch( item.getItemId() ) {
+            case 1:
+              AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+              builder.setMessage("Обнулить финишное время?");
+              builder.setPositiveButton("Да", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int id)
+                {
+                  if( !is_local ) {
+                    EventMessage.ProposeMsg req;
+
+                    req = new EventMessage.ProposeMsg(0, EventMessage.ProposeMsg.Type.FINISH);
+                    req.setRowId(rowId);
+                    EventBus.getDefault().post(new EventMessage(EventMessage.EventType.PROPOSE, req));
+                  } else {
+                    StartRow row = local_startList.getRecord(rowId);
+                    row.setFinishData(0);
+                    row.setState(StartRow.SyncState.ERROR);
+                    local_startList.Save(getApplicationContext());
+                    _localTableLoad();
+                  }
+                 }
+               });
+               builder.setNegativeButton("Нет", new DialogInterface.OnClickListener() {
+                 @Override
+                 public void onClick(DialogInterface dialog, int id)
+                 {
+                 }
+               });
+               builder.create().show();
+               break;
+            }
+          }
+
+          return true;
+        }
+      });
+      pmenu.show();
+    }
+
+    protected void _onStartClick(View v)
+    {
+      PopupMenu popup = new PopupMenu(MainActivity.this, v);
+
+      _selectByLapId();
+
+      if( is_local ) {
+        /* local data has no `Start Time` field because this terminal
+         * can create new rows at network layer
+         */
+        return;
+      }
+
+      if( start != 0 ) {
+        /* reset start time */
+        popup.getMenu().add(1, 3, 3, R.string.false_start);
+      }
+      else if( !countDownMode ) {
+        popup.getMenu().add(1, 10, 10, R.string.ten_seconds_button);
+        popup.getMenu().add(1, 30, 30, R.string.thirty_seconds_button);
+        popup.getMenu().add(1, 60, 60, R.string.sixty_seconds_button);
+      }
+
+      if( (countDownMode && (countDownLap == lap || start == 0)) ) {
+        popup.getMenu().add(1, 1, 1, R.string.start_cancel_stop);
+      }
+
+      popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+        @Override
+        public boolean onMenuItemClick(MenuItem item)
+        {
+          AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+
+          switch( item.getItemId() ) {
+          case 1:
+            /* stop countdown */
+            EventBus.getDefault().post(new EventMessage(EventMessage.EventType.COUNTDOWN_STOP, null));
+            return true;
+          case 3:
+            builder.setTitle(R.string.false_start);
+            builder.setMessage("Отменить результаты заезда " + Integer.toString(lap) + "?");
+            builder.setPositiveButton("Да", new DialogInterface.OnClickListener() {
+              @Override
+              public void onClick(DialogInterface dialog, int id)
+              {
+                EventMessage.ProposeMsg req;
+
+                req = new EventMessage.ProposeMsg(EventMessage.ProposeMsg.Type.START);
+                for( ViewData vd : dataList ) {
+                  if( vd.lap == lap ) {
+                    req.setRowId(vd.rowId);
+                    EventBus.getDefault().post(new EventMessage(EventMessage.EventType.PROPOSE, req));
+                  }
+                }
+              }
+            });
+            builder.setNegativeButton("Нет", new DialogInterface.OnClickListener() {
+              @Override
+              public void onClick(DialogInterface dialog, int id)
+              {
+              }
+            });
+            builder.create().show();
+            break;
+          case 10:
+          case 30:
+          case 60:
+            long seconds = item.getItemId();
+            EventMessage.CountDownMsg msg;
+
+            msg = new EventMessage.CountDownMsg(lap, disciplineId, seconds * 1000);
+            EventBus.getDefault().post(new EventMessage(EventMessage.EventType.COUNTDOWN_START, msg));
+            break;
+          default:
+            return false;
+          }
+          return true;
+        }
+      });
+      popup.show();
+    }
+
     protected void _setupGateListener(View v)
     {
       /*
@@ -1137,7 +1417,15 @@ public class MainActivity extends Activity
                     @Override
                     public void onClick(DialogInterface dialog, int id)
                     {
-                      EventBus.getDefault().post(new EventMessage(msg));
+                      if( !is_local ) {
+                        EventBus.getDefault().post(new EventMessage(msg));
+                      } else {
+                        StartRow row = local_startList.getRecord(rowId);
+                        row.setGateData(msg.gate, msg.penalty);
+                        row.setState(StartRow.SyncState.ERROR);
+                        local_startList.Save(getApplicationContext());
+                        _localTableLoad();
+                      }
                     }
                   });
                 builder.setNegativeButton("Нет", new DialogInterface.OnClickListener() {
@@ -1148,7 +1436,15 @@ public class MainActivity extends Activity
                   });
                 builder.create().show();
               } else {
-                EventBus.getDefault().post(new EventMessage(msg));
+                if( !is_local ) {
+                  EventBus.getDefault().post(new EventMessage(msg));
+                } else {
+                  StartRow row = local_startList.getRecord(rowId);
+                  row.setGateData(msg.gate, msg.penalty);
+                  row.setState(StartRow.SyncState.ERROR);
+                  local_startList.Save(getApplicationContext());
+                  _localTableLoad();
+                }
               }
               return true;
             }
@@ -1167,10 +1463,18 @@ public class MainActivity extends Activity
       builder.setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
         @Override
         public void onClick(DialogInterface dialog, int id) {
-          EventMessage.ProposeMsg req;
+          if( !is_local ) {
+            EventMessage.ProposeMsg req;
 
-          req = new EventMessage.ProposeMsg().setRowId(rowId).setStrike(true);
-          EventBus.getDefault().post(new EventMessage(req));
+            req = new EventMessage.ProposeMsg().setRowId(rowId).setStrike(true);
+            EventBus.getDefault().post(new EventMessage(req));
+          } else {
+            StartRow row = local_startList.getRecord(rowId);
+            row.setStrike(true);
+            row.setState(StartRow.SyncState.ERROR);
+            local_startList.Save(getApplicationContext());
+            _localTableLoad();
+          }
         }
       });
       builder.setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
@@ -1187,46 +1491,50 @@ public class MainActivity extends Activity
       final ArrayList<Integer> lap_values = new ArrayList<Integer>();
       RaceStatus.Discipline rdisp = race.getDiscipline(disciplineId);
 
-      /* pass previous and next lap data */
-      int cpos = dataList.indexOf(ViewData.this);
-      int pos = cpos;
+      if( !is_local ) {
+        /* pass previous and next lap data */
+        int cpos = dataList.indexOf(ViewData.this);
+        int pos = cpos;
 
-      if( start == 0 ) {
-        /* previous lap */
-        while ( --cpos >= 0 ) {
-          ViewData prev = dataList.get(cpos);
+        if( start == 0 ) {
+          /* previous lap */
+          while ( --cpos >= 0 ) {
+            ViewData prev = dataList.get(cpos);
 
-          if( prev.lap != lap && lap_values.indexOf(prev.lap) == -1 ) {
-            if( prev.start == 0 && (rdisp == null || rdisp.parallel) ) {
-              /* not add when prev started */
-              lap_values.add(prev.lap);
-            }
-            break;
-          }
-        }
-      }
-
-      lap_values.add(lap);
-      cpos = pos;
-
-      if( start == 0 ) {
-        int lastLapId = lap;
-        boolean found = false;
-        /* next lap */
-        while( ++cpos < dataList.size() ) {
-          ViewData next = dataList.get(cpos);
-
-          if( !found ) {
-            if( lap_values.indexOf(next.lap) == -1 ) {
-              if( next.start == 0 && (rdisp == null || rdisp.parallel) ) {
-                lap_values.add(next.lap);
+            if( prev.lap != lap && lap_values.indexOf(prev.lap) == -1 ) {
+              if( prev.start == 0 && (rdisp == null || rdisp.parallel) ) {
+                /* not add when prev started */
+                lap_values.add(prev.lap);
               }
-              found = true;;
+              break;
             }
           }
-          lastLapId = next.lap;
         }
-        lap_values.add(lastLapId + 1);
+
+        lap_values.add(lap);
+        cpos = pos;
+
+        if( start == 0 ) {
+          int lastLapId = lap;
+          boolean found = false;
+          /* next lap */
+          while( ++cpos < dataList.size() ) {
+            ViewData next = dataList.get(cpos);
+
+            if( !found ) {
+              if( lap_values.indexOf(next.lap) == -1 ) {
+                if( next.start == 0 && (rdisp == null || rdisp.parallel) ) {
+                  lap_values.add(next.lap);
+                }
+                found = true;;
+              }
+            }
+            lastLapId = next.lap;
+          }
+          lap_values.add(lastLapId + 1);
+        }
+      } else {
+        lap_values.add(0);
       }
 
       Log.d("wsa-ng-ui", String.format("<LAPS[%d] %s>", lap_values.size(), lap_values.toString()));
@@ -1240,7 +1548,7 @@ public class MainActivity extends Activity
       }
       sled.setLapValues(lap_values);
 
-      if( countDownMode && countDownLap == lap ) {
+      if( !is_local && countDownMode && countDownLap == lap ) {
         Toast.makeText(MainActivity.this,
                        "Идёт отсчёт",
                        Toast.LENGTH_SHORT).show();
@@ -1250,7 +1558,6 @@ public class MainActivity extends Activity
       sled.setStartLineEditDialogListener(new StartLineEditDialog.StartLineEditDialogListener() {
           @Override
           public void onStartLineEditDialogResult(StartLineEditDialog sled, int crewNum, int lapNum, int disciplineId) {
-            EventMessage.ProposeMsg req;
             int crewId;
             int lapId = lap_values.get(lapNum);
 
@@ -1261,11 +1568,19 @@ public class MainActivity extends Activity
 
             Log.i("wsa-ng-ui", "Set new lap/crew for row #" + Integer.toString(rowId) +
                             " crew=" + Integer.toString(crewId) + " lap=" + Integer.toString(lapId) );
-            req = new EventMessage.ProposeMsg(crewId, lapId, ViewData.this.disciplineId);
+            if( !is_local ) {
+              EventMessage.ProposeMsg req;
 
-            req.setRowId(rowId);
-
-            EventBus.getDefault().post(new EventMessage(EventMessage.EventType.PROPOSE, req));
+              req = new EventMessage.ProposeMsg(crewId, lapId, ViewData.this.disciplineId);
+              req.setRowId(rowId);
+              EventBus.getDefault().post(new EventMessage(EventMessage.EventType.PROPOSE, req));
+            } else {
+              StartRow row = local_startList.getRecord(rowId);
+              row.setIdentify(crewId, lapId, row.disciplineId);
+              row.setState(StartRow.SyncState.ERROR);
+              local_startList.Save(getApplicationContext());
+              _localTableLoad();
+            }
           }
         });
       sled.show(getFragmentManager(), sled.getClass().getCanonicalName());
@@ -1332,217 +1647,7 @@ public class MainActivity extends Activity
         @Override
         public void onClick(View v)
         {
-          TerminalStatus.Discipline disp = term.getDiscipline(disciplineId);
-          PopupMenu popup;
-
-          _selectByRowId();
-
-          if( disp.startGate && ((disp.gates.size() == 0) ||
-                                 (disp.gates.size() != 0 && strike)) ) {
-            // instand dialog: when only start gate
-            // or not striked on linear judge
-            _show_edit_dialog();
-            return;
-          }
-
-          popup = new PopupMenu(MainActivity.this, v);
-
-          if( disp.gates.size() == 0 || strike )
-            return;
-
-          // show menu only for linear judge (and not striked)
-
-          if( disp.startGate )
-            popup.getMenu().add(1, 3, 3, R.string.edit_lapcrew);
-          popup.getMenu().add(1, 4, 4, R.string.set_strike);
-
-          popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item)
-            {
-              switch( item.getItemId() ) {
-              case 3:
-                _show_edit_dialog();
-                break;
-              case 4:
-                _show_strike_dialog();
-                break;
-              default:
-                return false;
-              }
-              return true;
-            }
-          });
-
-          popup.show();
-        }
-      };
-
-      View.OnClickListener finishListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View v)
-        {
-          int i = 0;
-          int size = chrono.getSize();
-          long offset = 0;
-          PopupMenu pmenu = new PopupMenu(MainActivity.this, v);
-
-          _selectByRowId();
-
-          if( finish == 0 ) {
-            if( size == 0 ) {
-              Toast.makeText(MainActivity.this,
-                             "Используйте кнопку секундомера для отсечки времени",
-                             Toast.LENGTH_SHORT).show();
-              return;
-            }
-            
-            for( Chrono.Record r : chrono ) {
-              String title;
-
-              if( i == 0 ) {
-                offset = r.getValue();
-              }
-              title = String.format("%2d. %s %s%s",
-                                    size - i,
-                                    Default.millisecondsToString(r.getValue()),
-                                    ((offset >= r.getValue()) ? ("+") : ("-")),
-                                    Default.millisecondsToString(offset - r.getValue()));
-
-              pmenu.getMenu().add(1, i, i, title);
-              if( r.isSelected() ) {
-                pmenu.getMenu().getItem(i).setEnabled(false);
-              }
-
-              i++;
-            }
-          }
-          else {
-            pmenu.getMenu().add(1, 1, 1, "Отменить финиш");
-          }
-
-          pmenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item)
-            {
-              if( finish == 0 ) {
-                Chrono.Record r = chrono.getRecord(item.getItemId());
-                EventMessage.ProposeMsg req;
-
-                if( r == null )
-                  return false;
-
-                req = new EventMessage.ProposeMsg(r.getValue(), EventMessage.ProposeMsg.Type.FINISH);
-                req.setRowId(rowId);
-                EventBus.getDefault().post(new EventMessage(EventMessage.EventType.PROPOSE, req));
-              }
-              else {
-                switch( item.getItemId() ) {
-                case 1:
-                  AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-                  builder.setMessage("Обнулить финишное время?");
-                  builder.setPositiveButton("Да", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int id) {
-                      EventMessage.ProposeMsg req;
-
-                      req = new EventMessage.ProposeMsg(0, EventMessage.ProposeMsg.Type.FINISH);
-                      req.setRowId(rowId);
-                      EventBus.getDefault().post(new EventMessage(EventMessage.EventType.PROPOSE, req));
-                    }
-                  });
-                  builder.setNegativeButton("Нет", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int id) {
-                    }
-                  });
-                  builder.create().show();
-                  break;
-                }
-              }
-
-              return true;
-            }
-          });
-
-          pmenu.show();
-        }
-      };
-
-      View.OnClickListener startListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View v)
-        {
-          PopupMenu popup = new PopupMenu(MainActivity.this, v);
-
-          _selectByLapId();
-
-          if( start != 0 ) {
-            /* reset start time */
-            popup.getMenu().add(1, 3, 3, R.string.false_start);
-          }
-          else if( !countDownMode ) {
-            popup.getMenu().add(1, 10, 10, R.string.ten_seconds_button);
-            popup.getMenu().add(1, 30, 30, R.string.thirty_seconds_button);
-            popup.getMenu().add(1, 60, 60, R.string.sixty_seconds_button);
-          }
-
-          if( (countDownMode && (countDownLap == lap || start == 0)) ) {
-            popup.getMenu().add(1, 1, 1, R.string.start_cancel_stop);
-          }
-
-          popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item)
-            {
-              AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-
-              switch( item.getItemId() ) {
-              case 1:
-                /* stop countdown */
-                EventBus.getDefault().post(new EventMessage(EventMessage.EventType.COUNTDOWN_STOP, null));
-                return true;
-              case 3:
-                builder.setTitle(R.string.false_start);
-                builder.setMessage("Отменить результаты заезда " + Integer.toString(lap) + "?");
-                builder.setPositiveButton("Да", new DialogInterface.OnClickListener() {
-                  @Override
-                  public void onClick(DialogInterface dialog, int id) {
-                    EventMessage.ProposeMsg req;
-
-                    req = new EventMessage.ProposeMsg(EventMessage.ProposeMsg.Type.START);
-                    for( ViewData vd : dataList ) {
-                      if( vd.lap == lap ) {
-                        req.setRowId(vd.rowId);
-                        EventBus.getDefault().post(new EventMessage(EventMessage.EventType.PROPOSE, req));
-                      }
-                    }
-                  }
-                });
-                builder.setNegativeButton("Нет", new DialogInterface.OnClickListener() {
-                  @Override
-                  public void onClick(DialogInterface dialog, int id) {
-                  }
-                });
-                builder.create().show();
-                break;
-              case 10:
-              case 30:
-              case 60:
-                long seconds = item.getItemId();
-                EventMessage.CountDownMsg msg;
-
-                msg = new EventMessage.CountDownMsg(lap, disciplineId, seconds * 1000);
-                EventBus.getDefault().post(new EventMessage(EventMessage.EventType.COUNTDOWN_START, msg));
-                break;
-              default:
-                return false;
-              }
-              return true;
-            }
-          });
-
-          popup.show();
+          _onLapCrewClick(v);
         }
       };
 
@@ -1563,9 +1668,20 @@ public class MainActivity extends Activity
       }
 
       tRow.removeView(tRow.findViewById(R.id.any_gate));
-
-      tStart.setOnClickListener(startListener);
-      tFinish.setOnClickListener(finishListener);
+      tStart.setOnClickListener(new View.OnClickListener() {
+        @Override
+        public void onClick(View v)
+        {
+          _onStartClick(v);
+        }
+      });
+      tFinish.setOnClickListener(new View.OnClickListener() {
+        @Override
+        public void onClick(View v)
+        {
+          _onFinishClick(v);
+        }
+      });
 
       updateVisibilityByDisp();
       return tRow;
@@ -1585,11 +1701,19 @@ public class MainActivity extends Activity
 
   protected void _tablesSetup()
   {
-    for( TableData td : tableList ) {
+    for( TableData td : tableList_remote ) {
       td.update();
     }
 
-    for( ViewData vd : dataList ) {
+    for( ViewData vd : dataList_remote ) {
+      vd.updateVisibilityByDisp();
+    }
+
+    for( TableData td : tableList_local ) {
+      td.update();
+    }
+
+    for( ViewData vd : dataList_local ) {
       vd.updateVisibilityByDisp();
     }
   }

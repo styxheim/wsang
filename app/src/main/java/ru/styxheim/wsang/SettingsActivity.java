@@ -238,6 +238,10 @@ public class SettingsActivity extends Activity
         StartList starts = new StartList();
         starts.Save(getApplicationContext());
 
+        StartList starts_local = new StartList();
+        starts_local.setOutput("localRows.json");
+        starts_local.Save(getApplicationContext());
+
         SharedPreferences.Editor ed;
         ed = getSharedPreferences("chrono_data", Context.MODE_PRIVATE).edit();
         ed.clear();
@@ -306,6 +310,7 @@ public class SettingsActivity extends Activity
   public void exportOnClick(View v)
   {
     StartList starts = new StartList();
+    StartList starts_local = new StartList();
     ServerStatus ss = new ServerStatus();
     File raceFile;
     SharedPreferences race_settings = getSharedPreferences("race", Context.MODE_PRIVATE);
@@ -313,6 +318,8 @@ public class SettingsActivity extends Activity
     ss.raceStatus = new RaceStatus(race_settings);
     raceFile = new File(Environment.getExternalStorageDirectory(), "tid_" + ss.terminalStatus.get(0).terminalId + ".json");
     starts.Load(getApplicationContext());
+    starts_local.setOutput("localRows.json");
+    starts_local.Load(this);
 
     try {
       try( StringWriter sw = new StringWriter();
@@ -324,6 +331,8 @@ public class SettingsActivity extends Activity
         ss.saveJSON(jw);
         jw.name("Lap");
         starts.saveJSON(jw);
+        jw.name("LapLocal");
+        starts_local.saveJSON(jw);
         jw.endObject();
 
         try( FileOutputStream fos = new FileOutputStream(raceFile) ) {
