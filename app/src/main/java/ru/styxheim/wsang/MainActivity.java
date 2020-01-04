@@ -868,11 +868,31 @@ public class MainActivity extends Activity
       }
     }
 
+    public void _remove()
+    {
+      for( ViewData vd : tableDataList ) {
+        vd._remove();
+      }
+      tableList.remove(this);
+      ((ViewGroup)layout.getParent()).removeView(layout);
+    }
+
+    public void removeData(ViewData vd)
+    {
+      tableDataList.remove(vd);
+      if( table_layout != null ) {
+        table_layout.removeView(vd.getView());
+      }
+      if( tableDataList.size() == 0 ) {
+        _remove();
+      }
+    }
+
     public void addData(ViewData vd)
     {
       tableDataList.add(vd);
-      if( layout != null ) {
-        ((ViewGroup)layout.findViewById(tableId)).addView(vd.getView());
+      if( table_layout != null ) {
+        table_layout.addView(vd.getView());
       }
       if( hidden ) {
         toggleHide();
@@ -1118,6 +1138,25 @@ public class MainActivity extends Activity
       });
     }
 
+    public void _remove()
+    {
+      Chrono.Record r;
+
+      if( !is_local )
+        return;
+
+      parent.removeData(this);
+      dataList.remove(this);
+
+      local_startList.removeRecord(rowId);
+      local_startList.Save(getApplicationContext());
+
+      if( chrono != null && finish != 0 ) {
+        if( (r = chrono.getRecord(finish)) != null )
+          r.deselect();
+      }
+    }
+
     protected void _onLapCrewClick(View v)
     {
       TerminalStatus.Discipline disp = term.getDiscipline(disciplineId);
@@ -1135,7 +1174,7 @@ public class MainActivity extends Activity
 
       popup = new PopupMenu(MainActivity.this, v);
 
-      if( disp.gates.size() == 0 || strike )
+      if( !is_local && (disp.gates.size() == 0 || strike) )
         return;
 
       // show menu only for linear judge (and not striked)
@@ -1143,10 +1182,14 @@ public class MainActivity extends Activity
       if( disp.startGate || is_local ) {
         popup.getMenu().add(1, 3, 3, R.string.edit_lapcrew);
       }
-      popup.getMenu().add(1, 4, 4, R.string.set_strike);
+      if( !strike ) {
+        popup.getMenu().add(1, 4, 4, R.string.set_strike);
+      } else {
+        popup.getMenu().add(1, 5, 5, R.string.set_unstrike);
+      }
 
       if( is_local ) {
-        popup.getMenu().add(1, 5, 5, R.string.remove_row);
+        popup.getMenu().add(1, 6, 6, R.string.remove_row);
       }
 
       popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
@@ -1158,10 +1201,14 @@ public class MainActivity extends Activity
             _show_edit_dialog();
             break;
           case 4:
-            _show_strike_dialog();
+            _show_strike_dialog(true);
+            break;
+          case 6:
+            _remove();
             break;
           case 5:
-            g("Not implemented");
+            _show_strike_dialog(false);
+            break;
           default:
             return false;
           }
@@ -1465,10 +1512,14 @@ public class MainActivity extends Activity
       v.setOnClickListener(gate2menuListener);
     }
 
-    protected void _show_strike_dialog()
+    protected void _show_strike_dialog(final boolean striked)
     {
       AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-      builder.setMessage(String.format("Закрыть заезд %d экипажа %d?", lap, crew));
+      if( striked ) {
+        builder.setMessage(String.format("Закрыть заезд %d экипажа %d?", lap, crew));
+      } else {
+        builder.setMessage(String.format("Открыть заезд %d экипажа %d?", lap, crew));
+      }
       builder.setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
         @Override
         public void onClick(DialogInterface dialog, int id) {
@@ -1479,7 +1530,7 @@ public class MainActivity extends Activity
             EventBus.getDefault().post(new EventMessage(req));
           } else {
             StartRow row = local_startList.getRecord(rowId);
-            row.setStrike(true);
+            row.setStrike(striked);
             row.setState(StartRow.SyncState.ERROR);
             local_startList.Save(getApplicationContext());
             _localTableLoad();
@@ -1626,6 +1677,10 @@ public class MainActivity extends Activity
 
     public View getView()
     {
+      if( tRow != null ) {
+        return tRow;
+      }
+
       tRow = (TableRow)LayoutInflater.from(this.context).inflate(R.layout.data_row, null);
       tSyncer = tRow.findViewById(R.id.syncer);
       tCrew = tRow.findViewById(R.id.crew);

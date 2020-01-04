@@ -44,6 +44,16 @@ public class StartList implements Iterable<StartRow>
     return Rows.iterator();
   }
 
+  public void removeRecord(int rowId)
+  {
+    for( StartRow row : Rows ) {
+      if( row.getRowId() == rowId ) {
+        Rows.remove(row);
+        break;
+      }
+    }
+  }
+
   /* Add new record to list
    */
   public StartRow addRecord(int crewId, int lapId, int disciplineId)
