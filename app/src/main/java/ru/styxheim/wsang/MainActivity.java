@@ -282,7 +282,7 @@ public class MainActivity extends Activity
         row.setState(StartRow.SyncState.ERROR);
         local_startList.Save(MainActivity.this);
         _localTableLoad();
-        findViewById(R.id.vscroll).scrollTo(0, findViewById(R.id.bottom_spacer_local).getBottom());
+        _scrollToBottom(dataList_local);
       }
     });
     sled.show(getFragmentManager(), sled.getClass().getCanonicalName());
@@ -508,15 +508,24 @@ public class MainActivity extends Activity
     }
   }
 
-  protected void _scrollToBottom()
+  protected void _scrollToBottom(final ArrayList<ViewData> vdl)
   {
     final View sv = findViewById(R.id.vscroll);
 
-    sv.post(new Runnable() {
-      public void run() {
-        sv.scrollTo(0, findViewById(R.id.table_list_local).getTop());
-      }
-    });
+    if( vdl.size() != 0 ) {
+      sv.post(new Runnable() {
+        public void run() {
+          View v = vdl.get(vdl.size() - 1).tRow;
+          int toTop = 0;
+
+          do {
+            toTop += v.getTop();
+          } while( (v = (View)v.getParent()) != sv );
+
+          sv.scrollTo(0, toTop);
+        }
+      });
+    }
   }
 
   @Subscribe(threadMode = ThreadMode.MAIN)
@@ -564,7 +573,7 @@ public class MainActivity extends Activity
             view.setVisibility(View.VISIBLE);
             settings_btn.setEnabled(true);
             if( scrollToBottom ) {
-              _scrollToBottom();
+              _scrollToBottom(dataList_remote);
             }
             if( rows.size() > 13 ) {
               g("Bulk load: %d.%ds (%d all, %d new)",
@@ -602,7 +611,7 @@ public class MainActivity extends Activity
 
     _update_StartRow_fast(row, tableListLayout, dataList_remote, tableList_remote, false);
     if( scrollToBottom ) {
-      _scrollToBottom();
+      _scrollToBottom(dataList_remote);
     }
   }
 
