@@ -916,7 +916,7 @@ public class MainActivity extends Activity
       this.context = MainActivity.this;
       this.parent = td;
       this.dataList = dataList;
-      this.is_local = true;
+      this.is_local = is_local;
     }
 
     public void select(final View v, final int resource)
