@@ -1685,17 +1685,38 @@ public class MainActivity extends Activity
 
     public View getView()
     {
+      TextView anyGate = null;
+      int anyGateIndex = 0;
+
       if( tRow != null ) {
         return tRow;
       }
 
       tRow = (TableRow)LayoutInflater.from(this.context).inflate(R.layout.data_row, null);
-      tSyncer = tRow.findViewById(R.id.syncer);
-      tCrew = tRow.findViewById(R.id.crew);
-      tLap = tRow.findViewById(R.id.lap);
-      tStart = tRow.findViewById(R.id.start_gate);
-      tFinish = tRow.findViewById(R.id.finish_gate);
-
+      for( int i = 0; i < tRow.getChildCount(); i++ ) {
+        View v = tRow.getChildAt(i);
+        switch( v.getId() ) {
+        case R.id.syncer:
+          tSyncer = v;
+          break;
+        case R.id.crew:
+          tCrew = (TextView)v;
+          break;
+        case R.id.lap:
+          tLap = (TextView)v;
+          break;
+        case R.id.start_gate:
+          tStart = (TextView)v;
+          break;
+        case R.id.finish_gate:
+          tFinish = (TextView)v;
+          break;
+        case R.id.any_gate:
+          anyGate = (TextView)v;
+          anyGateIndex = i;
+          break;
+        }
+      }
       tRow.setTag(R.id.tag_selected, false);
       tRow.setTag(R.id.tag_background, null);
 
@@ -1726,20 +1747,26 @@ public class MainActivity extends Activity
       tCrew.setOnClickListener(lapcrewListener);
       tLap.setOnClickListener(lapcrewListener);
 
-      int index = tRow.indexOfChild(tRow.findViewById(R.id.any_gate));
       tGates = new TextView[race.gates.size()];
       for( int i = 0; i < race.gates.size(); i++ ) {
-        TextView tGate = (TextView)_newDataCol(R.id.any_gate);
+        if( i > 0 ) {
+          anyGate = (TextView)_newDataCol(R.id.any_gate);
+        }
 
-        tGate.setTag(R.id.tag_selected, false);
-        tGate.setTag(R.id.tag_gate_id, race.gates.get(i));
-        _setupGateListener(tGate);
-        tGates[i] = tGate;
-        tRow.addView(tGate, index);
-        index++;
+        anyGate.setTag(R.id.tag_selected, false);
+        anyGate.setTag(R.id.tag_gate_id, race.gates.get(i));
+        _setupGateListener(anyGate);
+        tGates[i] = anyGate;
+        if( i > 0 ) {
+          tRow.addView(anyGate, anyGateIndex);
+        }
+        anyGateIndex++;
       }
 
-      tRow.removeView(tRow.findViewById(R.id.any_gate));
+      if( race.gates.size() == 0 ) {
+        tRow.removeView(anyGate);
+      }
+
       tStart.setOnClickListener(new View.OnClickListener() {
         @Override
         public void onClick(View v)
