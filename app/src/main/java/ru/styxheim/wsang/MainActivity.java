@@ -469,6 +469,12 @@ public class MainActivity extends Activity
     for( StartRow row : local_startList ) {
       _update_StartRow_fast(row, tableListLayout, dataList_local, tableList_local, true);
     }
+
+    if( tableList_local.size() == 0 ) {
+      findViewById(R.id.notebook_title).setVisibility(View.GONE);
+    } else {
+      findViewById(R.id.notebook_title).setVisibility(View.VISIBLE);
+    }
   }
 
   @Subscribe(threadMode = ThreadMode.MAIN)
@@ -1155,6 +1161,8 @@ public class MainActivity extends Activity
         if( (r = chrono.getRecord(finish)) != null )
           r.deselect();
       }
+      
+      _localTableLoad();
     }
 
     protected void _onLapCrewClick(View v)

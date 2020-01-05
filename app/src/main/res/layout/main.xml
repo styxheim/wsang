@@ -143,17 +143,27 @@
 
 						</LinearLayout>
 
-            <View
-              android:layout_width="match_parent"
-              android:layout_height="150dp"
+						<View
+							android:layout_width="match_parent"
+							android:layout_height="150dp"
 							android:id="@+id/bottom_spacer"/>
- 
-            <LinearLayout
-              android:id="@+id/table_list_local"
-              android:orientation="vertical"
-              android:layout_width="wrap_content"
-              android:layout_height="wrap_content"
-              android:fillViewport="true">
+
+						<TextView
+							android:layout_width="match_parent"
+							android:layout_height="wrap_content"
+							android:textAppearance="?android:attr/textAppearanceLarge"
+							android:gravity="center"
+							android:text="@string/notebook_title"
+							android:padding="6dp"
+							android:id="@+id/notebook_title"/>
+
+						<LinearLayout
+							android:id="@+id/table_list_local"
+							android:orientation="vertical"
+							android:layout_width="wrap_content"
+							android:layout_height="wrap_content"
+							android:fillViewport="true">
+
 						</LinearLayout>
 
 						<View

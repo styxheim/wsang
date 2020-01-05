@@ -40,4 +40,6 @@
 
   <string name="yes">Да</string>
   <string name="no">Нет</string>
+
+  <string name="notebook_title">Лист для заметок</string>
 </resources>
