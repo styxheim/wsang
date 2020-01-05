@@ -1198,6 +1198,7 @@ public class MainActivity extends Activity
 
       if( is_local ) {
         popup.getMenu().add(1, 6, 6, R.string.remove_row);
+        popup.getMenu().add(1, 7, 7, R.string.merge_row);
       }
 
       popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
@@ -1216,6 +1217,9 @@ public class MainActivity extends Activity
             break;
           case 5:
             _show_strike_dialog(false);
+            break;
+          case 7:
+            _show_merge_dialog();
             break;
           default:
             return false;
@@ -1548,6 +1552,57 @@ public class MainActivity extends Activity
       builder.setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
         @Override
         public void onClick(DialogInterface dialog, int id) {
+        }
+      });
+      builder.create().show();
+    }
+
+    protected void _show_merge_dialog()
+    {
+      ArrayList<Integer> rowIds = new ArrayList<Integer>();
+      ArrayList<String> rowTitles = new ArrayList<String>();
+      StartRow row = local_startList.getRecord(rowId);
+      StartRow.SyncData to_merge = row.getSyncData();
+
+      for( ViewData vd : dataList_remote ) {
+        // match by discipline id and crew id
+        // local data has no lapId info
+        if( vd.disciplineId == disciplineId &&
+            vd.crew == crew ) {
+          boolean merge_possible = true;
+          // check for empty
+          // compares only: finish time, start time and gates penalty
+          if( to_merge.finishTime != null &&
+              (vd.finish != 0 && vd.finish != to_merge.finishTime) ) {
+            continue;
+          }
+          if( to_merge.startTime != null &&
+              (vd.start != 0 && vd.start != to_merge.startTime) ) {
+            continue;
+          }
+          for( StartRow.Gate g : to_merge.gates ) {
+            int gateIndex = race.gates.indexOf(g.gate);
+            if( vd.gates[gateIndex] != 0 && g.penalty != vd.gates[gateIndex] ) {
+              merge_possible = false;
+              break;
+            }
+          }
+          if( !merge_possible ) {
+            continue;
+          }
+          // fill arrays
+          rowIds.add(vd.rowId);
+          rowTitles.add(String.format("Заезд %d", vd.lap));
+        }
+      }
+
+      AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+      builder.setItems(rowTitles.toArray(new String[0]),
+                       new DialogInterface.OnClickListener() {
+        @Override
+        public void onClick(DialogInterface dialog, int item)
+        {
+          g("Not Implement");
         }
       });
       builder.create().show();

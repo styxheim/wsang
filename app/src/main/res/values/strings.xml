@@ -37,6 +37,7 @@
   <string name="set_strike">Экипаж сошёл с трассы</string>
   <string name="set_unstrike">Экипаж вернулся на трассу</string>
   <string name="remove_row">Удалить запись</string>
+  <string name="merge_row">Применить на...</string>
 
   <string name="yes">Да</string>
   <string name="no">Нет</string>

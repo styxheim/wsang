@@ -400,6 +400,15 @@ public class StartRow
     this.syncList.add(new SyncData(rgate));
   }
 
+  public SyncData getSyncData()
+  {
+    SyncData r = new SyncData();
+    for( SyncData ndata : syncList ) {
+      r.inprint(ndata);
+    }
+    return r;
+  }
+
   public void updateNotPendingFields(SyncData received,
                                      SyncData previous,
                                      SyncData diff)
@@ -408,11 +417,7 @@ public class StartRow
     // by data present in syncList
     // return syncData with fields whant not updated
     // when `previous` is null, no changes in `this`
-    SyncData pending = new SyncData();
-
-    for( SyncData ndata : syncList ) {
-      pending.inprint(ndata);
-    }
+    SyncData pending = getSyncData();
 
     // timestamp not used in this case
     // rowId not used in this case
