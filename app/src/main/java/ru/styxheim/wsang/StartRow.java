@@ -136,6 +136,36 @@ public class StartRow
       }
     }
 
+    public String toString()
+    {
+      String s = new String();
+
+      s += "<SyncData";
+      if( rowId != null )
+        s += " id=" + rowId.toString();
+      if( disciplineId != null )
+        s += " discipline=" + disciplineId.toString();
+      if( crewId != null )
+        s += " crew=" + crewId.toString();
+      if( lapId != null )
+        s += " lap=" + lapId.toString();
+      if( strike != null )
+        s += " strike=" + ( strike == true ? "true" : "false" );
+      if( startTime != null )
+        s += " start=" + startTime.toString();
+      if( gates.size() > 0 ) {
+        s += " gates={";
+        for( Gate g : gates ) {
+          s += String.format(" <id=%d penalty=%d>", g.gate, g.penalty);
+        }
+        s += " }";
+      }
+      if( finishTime != null )
+        s += " finish=" + finishTime.toString();
+      s += ">";
+      return s;
+    }
+
     public SyncData(JsonReader jr) throws IOException
     {
       this.gates.clear();
@@ -280,6 +310,17 @@ public class StartRow
         if( !found )
           this.gates.add(ogate.clone());
       }
+    }
+
+    protected Gate _getGate(int gateId)
+    {
+      for( Gate g : gates ) {
+        if( g.gate == gateId ) {
+          return g;
+        }
+      }
+
+      return null;
     }
 
     public SyncData clone()
@@ -463,39 +504,30 @@ public class StartRow
 
     if( received.gates.size() != 0 ) {
       for( Gate rgate : received.gates ) {
-        boolean found_in_pending = false;
-        for( Gate ogate : pending.gates ) {
-          if( ogate.gate == rgate.gate ) {
-            // gate found in pending
-            found_in_pending = true;
-            if( ogate.penalty != rgate.penalty ) {
-              // value is differ
-              if( diff != null )
-                diff.gates.add(rgate);
-            }
-            break;
-            // value is equal to pending: nothing
+        Gate pgate = pending._getGate(rgate.gate);
+        if( pgate == null ) {
+          /* not found: simple set gate data */
+          Gate g = _getGate(rgate.gate);
+          if( g == null ) {
+            gates.add(rgate.clone());
+          } else {
+            g.penalty = rgate.penalty;
+            if( previous != null )
+              previous.gates.add(rgate.clone());
           }
+        } else if( pgate.penalty == rgate.penalty ) {
+          /* gate found in pending queue: value is equal */
+          pending.gates.remove(pgate);
         }
-        if( !found_in_pending && previous != null ) {
-          for( Gate lgate : gates ) {
-            if( lgate.gate == rgate.gate ) {
-              if( lgate.penalty != rgate.penalty ) {
-                // value not equal
-                previous.gates.add(lgate.clone());
-                lgate.penalty = rgate.penalty;
-                break;
-              }
-            }
-          }
-        }
+      }
+      if( diff != null ) {
+        /* set list of reaming gates from pending to diff */
+        diff.gates = pending.gates;
       }
     }
     else if( diff != null ) {
       // received not have pending values
-      for( Gate ogate : pending.gates ) {
-        diff.gates.add(ogate.clone());
-      }
+      diff.gates = pending.gates;
     }
   }
 
@@ -644,6 +676,16 @@ public class StartRow
       w.endArray();
     }
     w.endObject();
+  }
+
+  protected Gate _getGate(int gateId)
+  {
+    for( Gate g : gates ) {
+      if( g.gate == gateId ) {
+        return g;
+      }
+    }
+    return null;
   }
 
   boolean updateGate(Gate rgate) {

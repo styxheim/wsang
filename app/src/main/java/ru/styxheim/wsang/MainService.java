@@ -776,6 +776,9 @@ public class MainService extends Service
 
           lrow.updateNotPendingFields(rrow, previous, diff);
 
+          Log.d("wsa-ng", _("[RECEIVE] received=%s, previous=%s, diff=%s",
+                            rrow.toString(), previous.toString(), diff.toString()));
+
           if( lrow.state == StartRow.SyncState.SYNCED ) {
             if( !previous.isEmpty() )
               changed = true;
