@@ -1559,42 +1559,42 @@ public class MainActivity extends Activity
 
     protected void _start_row_to_event(StartRow row, int target_rowId)
     {
-      for( StartRow.SyncData data : row.syncList ) {
-        for( StartRow.Gate g : data.gates ) {
-          EventMessage.ProposeMsg msg;
+      StartRow.SyncData to_event = row.getSyncData();
 
-          if( g.penalty == 0 )
-            continue;
+      for( StartRow.Gate g : to_event.gates ) {
+        EventMessage.ProposeMsg msg;
 
-          msg = new EventMessage.ProposeMsg(EventMessage.ProposeMsg.Type.PENALTY);
-          msg.rowId = target_rowId;
-          msg.gate = g.gate;
-          msg.penalty = g.penalty;
-          EventBus.getDefault().post(new EventMessage(msg));
-        }
+        if( g.penalty == 0 )
+          continue;
 
-        if( data.strike != null && data.strike != false ) {
-          EventMessage.ProposeMsg msg;
+        msg = new EventMessage.ProposeMsg(EventMessage.ProposeMsg.Type.PENALTY);
+        msg.rowId = target_rowId;
+        msg.gate = g.gate;
+        msg.penalty = g.penalty;
+        EventBus.getDefault().post(new EventMessage(msg));
+      }
 
-          msg = new EventMessage.ProposeMsg().setRowId(target_rowId).setStrike(data.strike);
-          EventBus.getDefault().post(new EventMessage(msg));
-        }
+      if( to_event.strike != null && to_event.strike != false ) {
+        EventMessage.ProposeMsg msg;
 
-        if( data.startTime != null && data.startTime != 0 ) {
-          EventMessage.ProposeMsg msg;
+        msg = new EventMessage.ProposeMsg().setRowId(target_rowId).setStrike(to_event.strike);
+        EventBus.getDefault().post(new EventMessage(msg));
+      }
 
-          msg = new EventMessage.ProposeMsg(data.startTime, EventMessage.ProposeMsg.Type.START);
-          msg.setRowId(target_rowId);
-          EventBus.getDefault().post(new EventMessage(msg));
-        }
+      if( to_event.startTime != null && to_event.startTime != 0 ) {
+        EventMessage.ProposeMsg msg;
 
-        if( data.finishTime != null && data.finishTime != 0 ) {
-          EventMessage.ProposeMsg msg;
+        msg = new EventMessage.ProposeMsg(to_event.startTime, EventMessage.ProposeMsg.Type.START);
+        msg.setRowId(target_rowId);
+        EventBus.getDefault().post(new EventMessage(msg));
+      }
 
-          msg = new EventMessage.ProposeMsg(data.finishTime, EventMessage.ProposeMsg.Type.FINISH);
-          msg.setRowId(target_rowId);
-          EventBus.getDefault().post(new EventMessage(msg));
-        }
+      if( to_event.finishTime != null && to_event.finishTime != 0 ) {
+        EventMessage.ProposeMsg msg;
+
+        msg = new EventMessage.ProposeMsg(to_event.finishTime, EventMessage.ProposeMsg.Type.FINISH);
+        msg.setRowId(target_rowId);
+        EventBus.getDefault().post(new EventMessage(msg));
       }
     }
 
