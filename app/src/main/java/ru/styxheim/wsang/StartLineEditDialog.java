@@ -109,6 +109,15 @@ public class StartLineEditDialog extends DialogFragment
   {
     final Button b;
 
+    if( disp_choosen == -1 ) {
+      if( disps.size() == 1 ) {
+        disp_choosen = 0;
+      }
+      else {
+        disp_choosen = ThreadLocalRandom.current().nextInt(0, disps.size() - 1);
+      }
+    }
+
     b = v.findViewById(R.id.discipline_button);
     if( disp_choosen >= 0 && disp_choosen < disps.size() ) {
       b.setVisibility(View.VISIBLE);
