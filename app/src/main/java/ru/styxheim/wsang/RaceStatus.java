@@ -187,7 +187,12 @@ public class RaceStatus
         this.competitionId = jr.nextLong();
         break;
       case COMPETITION_NAME:
-        this.competitionName = jr.nextString();
+        try {
+          this.competitionName = jr.nextString();
+        } catch( IllegalStateException e ) {
+          this.competitionName = null;
+          jr.nextNull();
+        }
         break;
       case SYNCPOINT:
         this.syncPoint = jr.nextLong();
