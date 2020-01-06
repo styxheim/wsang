@@ -1563,6 +1563,9 @@ public class MainActivity extends Activity
         for( StartRow.Gate g : data.gates ) {
           EventMessage.ProposeMsg msg;
 
+          if( g.penalty == 0 )
+            continue;
+
           msg = new EventMessage.ProposeMsg(EventMessage.ProposeMsg.Type.PENALTY);
           msg.rowId = target_rowId;
           msg.gate = g.gate;
@@ -1570,14 +1573,14 @@ public class MainActivity extends Activity
           EventBus.getDefault().post(new EventMessage(msg));
         }
 
-        if( data.strike != null ) {
+        if( data.strike != null && data.strike != false ) {
           EventMessage.ProposeMsg msg;
 
           msg = new EventMessage.ProposeMsg().setRowId(target_rowId).setStrike(data.strike);
           EventBus.getDefault().post(new EventMessage(msg));
         }
 
-        if( data.startTime != null ) {
+        if( data.startTime != null && data.startTime != 0 ) {
           EventMessage.ProposeMsg msg;
 
           msg = new EventMessage.ProposeMsg(data.startTime, EventMessage.ProposeMsg.Type.START);
@@ -1585,7 +1588,7 @@ public class MainActivity extends Activity
           EventBus.getDefault().post(new EventMessage(msg));
         }
 
-        if( data.finishTime != null ) {
+        if( data.finishTime != null && data.finishTime != 0 ) {
           EventMessage.ProposeMsg msg;
 
           msg = new EventMessage.ProposeMsg(data.finishTime, EventMessage.ProposeMsg.Type.FINISH);
@@ -1610,17 +1613,25 @@ public class MainActivity extends Activity
           boolean merge_possible = true;
           // check for empty
           // compares only: finish time, start time and gates penalty
-          if( vd.finish != 0 ||
-              (vd.finish != 0 && to_merge.finishTime != null && vd.finish != to_merge.finishTime) ) {
+          if( vd.finish != 0 && to_merge.finishTime != null &&
+              to_merge.finishTime != 0 && vd.finish != to_merge.finishTime ) {
+            /* disallow merging */
             continue;
           }
-          if( vd.start != 0 ||
-              (vd.start != 0 && to_merge.startTime != null && vd.start != to_merge.startTime) ) {
+          if( vd.start != 0 && to_merge.startTime != null &&
+              to_merge.startTime != 0 && vd.start != to_merge.startTime ) {
+            /* disallow merging */
             continue;
           }
           for( StartRow.Gate g : to_merge.gates ) {
             int gateIndex = race.gates.indexOf(g.gate);
-            if( vd.gates[gateIndex] != 0 && g.penalty != vd.gates[gateIndex] ) {
+
+            if( gateIndex == -1 ) {
+              continue;
+            }
+
+            if( vd.gates[gateIndex] != 0 && g.penalty != 0 &&
+                g.penalty != vd.gates[gateIndex] ) {
               merge_possible = false;
               break;
             }
