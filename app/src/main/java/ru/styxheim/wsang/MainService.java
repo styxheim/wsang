@@ -605,6 +605,7 @@ public class MainService extends Service
   private void _event_propose(EventMessage.ProposeMsg msg)
   {
     StartRow row;
+    StartRow.SyncState ostate = StartRow.SyncState.ERROR;
 
     if( msg.rowId == -1 ) {
       /* new record */
@@ -619,6 +620,7 @@ public class MainService extends Service
                           Integer.toString(msg.rowId)));
         return;
       }
+      ostate = row.state;
 
       Log.d("wsa-ng", _("Got message " + msg.type.name() + " for rowId #" +
                         Integer.toString(msg.rowId)));
@@ -631,19 +633,27 @@ public class MainService extends Service
         row.setState(StartRow.SyncState.PENDING);
         break;
       case STRIKE:
-        row.setStrike(msg.strike);
+        if( row.strike != msg.strike )
+          row.setStrike(msg.strike);
         break;
       case FINISH:
-        row.setFinishData(msg.time);
+        if( row.finishAt != msg.time )
+          row.setFinishData(msg.time);
         break;
       case IDENTIFY:
-        row.setIdentify(msg.crewId, msg.lapId, msg.disciplineId);
+        if( row.crewId != msg.crewId ||
+            row.lapId != msg.lapId ||
+            row.disciplineId != msg.disciplineId )
+          row.setIdentify(msg.crewId, msg.lapId, msg.disciplineId);
         break;
       case START:
-        row.setStartData(msg.time);
+        if( row.startAt != msg.time )
+          row.setStartData(msg.time);
         break;
       case PENALTY:
-        row.setGateData(msg.gate, msg.penalty);
+        StartRow.Gate g = row.getGate(msg.gate);
+        if( g == null || g.penalty != msg.penalty )
+          row.setGateData(msg.gate, msg.penalty);
         break;
       default:
         Log.e("wsa-ng", _("Unknown msg type for rowId #" +
@@ -652,8 +662,10 @@ public class MainService extends Service
       }
     }
 
-    EventBus.getDefault().post(row);
-    starts.Save(getApplicationContext());
+    if( row.state != ostate ) {
+      EventBus.getDefault().post(row);
+      starts.Save(getApplicationContext());
+    }
   }
 
   @Subscribe(threadMode = ThreadMode.MAIN)

@@ -512,7 +512,7 @@ public class StartRow
         Gate pgate = pending._getGate(rgate.gate);
         if( pgate == null ) {
           /* not found: simple set gate data */
-          Gate g = _getGate(rgate.gate);
+          Gate g = getGate(rgate.gate);
           if( g == null ) {
             gates.add(rgate.clone());
           } else {
@@ -683,7 +683,7 @@ public class StartRow
     w.endObject();
   }
 
-  protected Gate _getGate(int gateId)
+  public Gate getGate(int gateId)
   {
     for( Gate g : gates ) {
       if( g.gate == gateId ) {
