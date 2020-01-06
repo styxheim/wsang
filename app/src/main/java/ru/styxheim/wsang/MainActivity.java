@@ -1557,11 +1557,49 @@ public class MainActivity extends Activity
       builder.create().show();
     }
 
+    protected void _start_row_to_event(StartRow row, int target_rowId)
+    {
+      for( StartRow.SyncData data : row.syncList ) {
+        for( StartRow.Gate g : data.gates ) {
+          EventMessage.ProposeMsg msg;
+
+          msg = new EventMessage.ProposeMsg(EventMessage.ProposeMsg.Type.PENALTY);
+          msg.rowId = target_rowId;
+          msg.gate = g.gate;
+          msg.penalty = g.penalty;
+          EventBus.getDefault().post(new EventMessage(msg));
+        }
+
+        if( data.strike != null ) {
+          EventMessage.ProposeMsg msg;
+
+          msg = new EventMessage.ProposeMsg().setRowId(target_rowId).setStrike(data.strike);
+          EventBus.getDefault().post(new EventMessage(msg));
+        }
+
+        if( data.startTime != null ) {
+          EventMessage.ProposeMsg msg;
+
+          msg = new EventMessage.ProposeMsg(data.startTime, EventMessage.ProposeMsg.Type.START);
+          msg.setRowId(target_rowId);
+          EventBus.getDefault().post(new EventMessage(msg));
+        }
+
+        if( data.finishTime != null ) {
+          EventMessage.ProposeMsg msg;
+
+          msg = new EventMessage.ProposeMsg(data.finishTime, EventMessage.ProposeMsg.Type.FINISH);
+          msg.setRowId(target_rowId);
+          EventBus.getDefault().post(new EventMessage(msg));
+        }
+      }
+    }
+
     protected void _show_merge_dialog()
     {
-      ArrayList<Integer> rowIds = new ArrayList<Integer>();
-      ArrayList<String> rowTitles = new ArrayList<String>();
-      StartRow row = local_startList.getRecord(rowId);
+      final ArrayList<Integer> rowIds = new ArrayList<Integer>();
+      final ArrayList<String> rowTitles = new ArrayList<String>();
+      final StartRow row = local_startList.getRecord(rowId);
       StartRow.SyncData to_merge = row.getSyncData();
 
       for( ViewData vd : dataList_remote ) {
@@ -1572,12 +1610,12 @@ public class MainActivity extends Activity
           boolean merge_possible = true;
           // check for empty
           // compares only: finish time, start time and gates penalty
-          if( to_merge.finishTime != null &&
-              (vd.finish != 0 && vd.finish != to_merge.finishTime) ) {
+          if( vd.finish != 0 ||
+              (vd.finish != 0 && to_merge.finishTime != null && vd.finish != to_merge.finishTime) ) {
             continue;
           }
-          if( to_merge.startTime != null &&
-              (vd.start != 0 && vd.start != to_merge.startTime) ) {
+          if( vd.start != 0 ||
+              (vd.start != 0 && to_merge.startTime != null && vd.start != to_merge.startTime) ) {
             continue;
           }
           for( StartRow.Gate g : to_merge.gates ) {
@@ -1595,14 +1633,24 @@ public class MainActivity extends Activity
           rowTitles.add(String.format("Заезд %d", vd.lap));
         }
       }
+      
+      if( rowIds.size() == 0 ) {
+        g("Совпадений не найдено");
+        return;
+      }
 
       AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
       builder.setItems(rowTitles.toArray(new String[0]),
                        new DialogInterface.OnClickListener() {
         @Override
-        public void onClick(DialogInterface dialog, int item)
+        public void onClick(DialogInterface dialog, final int item)
         {
-          g("Not Implement");
+          tRow.post(new Runnable() {
+            public void run() {
+              _start_row_to_event(row, rowIds.get(item));
+              _remove();
+            }
+          });
         }
       });
       builder.create().show();

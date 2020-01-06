@@ -331,7 +331,7 @@ public class StartRow
     }
   };
 
-  protected ArrayList<SyncData> syncList = new ArrayList<SyncData>();
+  public ArrayList<SyncData> syncList = new ArrayList<SyncData>();
   protected ArrayList<SyncData> syncedList = new ArrayList<SyncData>();
 
   public SyncState state = SyncState.NONE;
