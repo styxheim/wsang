@@ -1672,6 +1672,12 @@ public class MainActivity extends Activity
       StartLineEditDialog sled;
       final ArrayList<Integer> lap_values = new ArrayList<Integer>();
       RaceStatus.Discipline rdisp = race.getDiscipline(disciplineId);
+      ArrayList<String> disps = new ArrayList<String>();
+
+      if( rdisp == null )
+        disps.add(String.format("id #%d", disciplineId));
+      else
+        disps.add(rdisp.name);
 
       if( !is_local ) {
         /* pass previous and next lap data */
@@ -1729,6 +1735,7 @@ public class MainActivity extends Activity
         sled = new StartLineEditDialog(crew, lap_values.indexOf(lap), -1, true);
       }
       sled.setLapValues(lap_values);
+      sled.setDisciplines(disps);
 
       if( !is_local && countDownMode && countDownLap == lap ) {
         Toast.makeText(MainActivity.this,
