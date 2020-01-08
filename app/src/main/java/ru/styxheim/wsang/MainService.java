@@ -395,10 +395,9 @@ public class MainService extends Service
               Log.e("wsa-ng", _("[RECEIVE] Got error: %s ->\n%s",
                                 e.getMessage(), e2trace(e)));
 
-              Toast.makeText(MainService.this,
-                             "Sync error: Look to logcat 'wsa-ng'",
-                             Toast.LENGTH_SHORT).show();
-
+              serverStatus = new ServerStatus();
+              serverStatus.error = new ServerStatus.Error();
+              serverStatus.error.text = "Server response malformed. Look to logcat for details.";
             }
           }
         }

@@ -16,7 +16,7 @@ public class ServerStatus
   ArrayList<TerminalStatus> terminalStatus = new ArrayList<TerminalStatus>();
   final static String ERROR = "Error";
 
-  public class Error
+  public static class Error
   {
     public String text;
 
