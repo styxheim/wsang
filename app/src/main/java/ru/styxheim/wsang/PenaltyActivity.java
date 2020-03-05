@@ -149,8 +149,8 @@ public class PenaltyActivity extends Activity
 
   public void onClickPenaltyRadioButton(View v)
   {
-    int gate = v.getTag(R.id.tag_gate_id);
-    int penalty = v.getTag(R.id.tag_penalty_id);
+    int gate = (int)v.getTag(R.id.tag_gate_id);
+    int penalty = (int)v.getTag(R.id.tag_penalty_id);
 
     values[gate] = penalty;
   }

@@ -13,7 +13,8 @@
         android:label="@string/app_name"
         android:resizeableActivity = "true"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme">
+        android:theme="@style/AppTheme"
+        android:networkSecurityConfig="@xml/network_security">
 
         <service
             android:name=".MainService" />

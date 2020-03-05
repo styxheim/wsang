@@ -25,7 +25,6 @@ import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 import android.widget.RelativeLayout.*;
 import android.text.style.*;
-import org.apache.http.impl.client.*;
 import javax.sql.*;
 
 public class MainActivity extends Activity
@@ -947,7 +946,7 @@ public class MainActivity extends Activity
 
     public void select(final View v, final int resource)
     {
-      boolean selected = v.getTag(R.id.tag_selected);
+      boolean selected = (boolean)v.getTag(R.id.tag_selected);
 
       if( selected )
         return;
@@ -959,7 +958,7 @@ public class MainActivity extends Activity
 
     public void deselect(final View v)
     {
-      boolean selected = v.getTag(R.id.tag_selected);
+      boolean selected = (boolean)v.getTag(R.id.tag_selected);
 
       if( !selected )
         return;
@@ -1451,7 +1450,7 @@ public class MainActivity extends Activity
         @Override
         public void onClick(View v)
         {
-          final int gateId = v.getTag(R.id.tag_gate_id);
+          final int gateId = (int)v.getTag(R.id.tag_gate_id);
           PopupMenu popup = new PopupMenu(MainActivity.this, v);
 
           if( ((Integer)v.getTag(R.id.tag_gate_value)).compareTo(0) == 0 ) {
@@ -1789,7 +1788,7 @@ public class MainActivity extends Activity
       tStart.setVisibility(b2v(disp != null && disp.startGate));
       for( TextView gateView : tGates ) {
         boolean found = false;
-        int viewGateId = gateView.getTag(R.id.tag_gate_id);
+        int viewGateId = (int)gateView.getTag(R.id.tag_gate_id);
 
         if( disp != null ) {
           for( int gateId : disp.gates ) {
