@@ -1181,11 +1181,6 @@ public class MainActivity extends Activity
 
       popup = new PopupMenu(MainActivity.this, v);
 
-      if( !is_local && (disp.gates.size() == 0 || strike) )
-        return;
-
-      // show menu only for linear judge (and not striked)
-
       if( disp.startGate || is_local ) {
         popup.getMenu().add(1, 3, 3, R.string.edit_lapcrew);
       }
@@ -1537,7 +1532,7 @@ public class MainActivity extends Activity
           if( !is_local ) {
             EventMessage.ProposeMsg req;
 
-            req = new EventMessage.ProposeMsg().setRowId(rowId).setStrike(true);
+            req = new EventMessage.ProposeMsg().setRowId(rowId).setStrike(striked);
             EventBus.getDefault().post(new EventMessage(req));
           } else {
             StartRow row = local_startList.getRecord(rowId);
