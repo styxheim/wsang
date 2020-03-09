@@ -1143,6 +1143,29 @@ public class MainActivity extends Activity
       });
     }
 
+    public void _show_row_remove_dialog()
+    {
+      if( !is_local )
+        return;
+
+      AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+      builder.setMessage("Удалить запись?");
+      builder.setPositiveButton("Да", new DialogInterface.OnClickListener() {
+        @Override
+        public void onClick(DialogInterface dialog, int id)
+        {
+          _remove();
+        }
+      });
+      builder.setNegativeButton("Нет", new DialogInterface.OnClickListener() {
+        @Override
+        public void onClick(DialogInterface dialog, int id)
+        {
+        }
+      });
+      builder.create().show();
+    }
+
     public void _remove()
     {
       Chrono.Record r;
@@ -1207,7 +1230,7 @@ public class MainActivity extends Activity
             _show_strike_dialog(true);
             break;
           case 6:
-            _remove();
+            _show_row_remove_dialog();
             break;
           case 5:
             _show_strike_dialog(false);
