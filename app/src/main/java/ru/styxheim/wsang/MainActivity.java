@@ -38,6 +38,7 @@ public class MainActivity extends Activity
   protected boolean finishGate;
   protected StartList local_startList;
 
+  protected boolean strict_crewslist = false;
   protected Chrono chrono;
 
   protected int selectedRowId = -1;
@@ -1744,7 +1745,7 @@ public class MainActivity extends Activity
 
       Log.d("wsa-ng-ui", String.format("<LAPS[%d] %s>", lap_values.size(), lap_values.toString()));
 
-      if( race.crews.size() != 0 ) {
+      if( strict_crewslist && race.crews.size() != 0 ) {
         sled = new StartLineEditDialog(race.crews.indexOf(crew), lap_values.indexOf(lap), -1, true);
         sled.setCrewValues(race.crews);
       }
