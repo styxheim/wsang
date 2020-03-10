@@ -16,7 +16,7 @@ public class StartLineEditDialog extends DialogFragment
 {
 
   public static int MIN = 0;
-  public static int MAX = 9999;
+  public static int MAX = 200;
 
   public interface StartLineEditDialogListener {
     void onStartLineEditDialogResult(StartLineEditDialog sled, int crew, int lap, int discipline);
