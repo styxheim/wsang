@@ -1,5 +1,8 @@
 package ru.styxheim.wsang;
 
+import android.os.Build.VERSION;
+import android.os.Build.VERSION_CODES;
+
 import android.app.*;
 import android.os.*;
 import android.widget.*;
@@ -677,8 +680,9 @@ public class MainActivity extends Activity
     countDownLap = lapId;
     countDownEndAt = endAt;
     countDownStartAt = startAt;
-    
-    pb.setMin(0);
+    if( VERSION.SDK_INT >= VERSION_CODES.O ) {
+      pb.setMin(0);
+    }
     pb.setMax((int)(endAt - startAt));
     pb.setProgress(0);
     
