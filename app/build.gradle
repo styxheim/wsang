@@ -7,7 +7,7 @@ android {
     defaultConfig {
         applicationId "ru.styxheim.wsang"
         minSdkVersion 22
-        targetSdkVersion 22
+        targetSdkVersion 29
         versionCode 203010
         versionName "2.3.1"
     }
