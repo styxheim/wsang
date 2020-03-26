@@ -1040,7 +1040,11 @@ public class MainActivity extends Activity
           tGate.setText(Integer.toString(pvalue));
       }
 
-      tFinish.setText(Default.millisecondsToString(finish));
+      String finishText = Default.millisecondsToString(finish);
+      if( finish > start || finish == 0 ) {
+        finishText = "⚠ " + finishText;
+      }
+      tFinish.setText(finishText);
       _strikeTextView(tFinish);
     }
 
