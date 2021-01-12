@@ -716,6 +716,24 @@ public class MainActivity extends Activity
     _disableCountDownMode();
   }
 
+  private Boolean isGateIdPermittedForTerminal(Integer gateId,
+                                               RaceStatus.Discipline rdisp,
+                                               TerminalStatus.Discipline tdisp)
+  {
+    for( int rgateId : rdisp.gates ) {
+      if( gateId.compareTo(rgateId) == 0 ) {
+        for( int tgateId : tdisp.gates ) {
+          if( gateId.compareTo(tgateId) == 0 ) {
+            return true;
+          }
+        }
+        break;
+      }
+    }
+
+    return false;
+  }
+
   private class TableData
   {
     public int disciplineId;
@@ -867,13 +885,7 @@ public class MainActivity extends Activity
             continue;
           }
 
-          for( int tgateId : tdisp.gates ) {
-            if( gateId.compareTo(tgateId) == 0 ) {
-              found = true;
-              break;
-            }
-          }
-          v.setVisibility(b2v(found));
+          v.setVisibility(b2v(isGateIdPermittedForTerminal(gateId, rdisp, tdisp)));
         }
       }
     }
@@ -1811,21 +1823,22 @@ public class MainActivity extends Activity
     public void updateVisibilityByDisp()
     {
       TerminalStatus.Discipline disp = term.getDiscipline(disciplineId);
+      RaceStatus.Discipline raceDisp = race.getDiscipline(disciplineId);
+
+      if( raceDisp == null || disp == null ) {
+        tStart.setVisibility(b2v(false));
+        for( TextView gateView : tGates ) {
+          gateView.setVisibility(b2v(false));
+        }
+        tFinish.setVisibility(b2v(false));
+        return;
+      }
 
       tStart.setVisibility(b2v(disp != null && disp.startGate));
       for( TextView gateView : tGates ) {
-        boolean found = false;
         int viewGateId = (int)gateView.getTag(R.id.tag_gate_id);
 
-        if( disp != null ) {
-          for( int gateId : disp.gates ) {
-            if( gateId == viewGateId ) {
-              found = true;
-              break;
-            }
-          }
-        }
-        gateView.setVisibility(b2v(found));
+        gateView.setVisibility(b2v(isGateIdPermittedForTerminal((Integer)viewGateId, raceDisp, disp)));
       }
       tFinish.setVisibility(b2v(disp != null && disp.finishGate));
     }
