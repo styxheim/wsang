@@ -86,7 +86,6 @@ public class SettingsActivity extends Activity
 
     tv.post(cron);
 
-    _setup_mode();
     _setup_server_addr();
     _update_race_info();
     _update_terminal_id();
@@ -106,29 +105,6 @@ public class SettingsActivity extends Activity
   {
     v.setEnabled(false);
     finish();
-  }
-
-  public void _setup_mode()
-  {
-    final TextView v = (TextView)findViewById(R.id.settings_mode);
-    final Launcher.Mode mode;
-
-    mode = Launcher.Mode.valueOf(settings.getString("mode", Default.mode));
-    v.post(new Runnable() {
-      public void run() {
-        switch( mode ) {
-        case START:
-          v.setText("Судья на старте");
-          break;
-        case FINISH:
-          v.setText("Судья на финише");
-          break;
-        default:
-          v.setText("Неизвестный");
-          break;
-        }
-      }
-    });
   }
 
   public void _setup_server_addr()
@@ -237,35 +213,6 @@ public class SettingsActivity extends Activity
       @Override
       public void onClick(DialogInterface dialog, int id) {
         dialog.dismiss();
-      }
-    });
-    builder.create().show();
-  }
-
-  public void modeOnClick(View v)
-  {
-    AlertDialog.Builder builder = new AlertDialog.Builder(this);
-    final String[] keys = { "Судья на старте", "Судья на финише" };
-    final Launcher.Mode[] vals = { Launcher.Mode.START, Launcher.Mode.FINISH };
-    final Launcher.Mode mode;
-
-    mode = Launcher.Mode.valueOf(settings.getString("mode", Default.mode));
-
-    builder.setTitle("Выберите режим работы");
-    builder.setItems(keys, new DialogInterface.OnClickListener() {
-      @Override
-      public void onClick(DialogInterface dialog, final int item) {
-        if( vals[item] != mode ) {
-          SharedPreferences.Editor ed;
-
-          ed = settings.edit();
-          ed.putString("mode", vals[item].name());
-          ed.commit();
-
-          /* switch to new mode throug Launcher */
-          Intent intent = new Intent(SettingsActivity.this, Launcher.class);
-          startActivity(intent);
-        }
       }
     });
     builder.create().show();

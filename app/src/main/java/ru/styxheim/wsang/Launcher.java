@@ -7,15 +7,6 @@ import android.util.Log;
 
 public class Launcher extends Activity {
 
-  enum Mode {
-    UNKNOWN,
-    START,
-    DISTANCE,
-    FINISH,
-  }
-
-  ;
-
   protected SharedPreferences settings;
 
   @Override
