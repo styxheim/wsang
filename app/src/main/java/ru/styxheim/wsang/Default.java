@@ -16,28 +16,26 @@ public class Default {
 
   final static Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
 
-  public static String millisecondsToString(long ms)
-  {
+  public static String millisecondsToString(long ms) {
     long millis = Math.abs(ms);
 
     cal.setTimeInMillis(millis);
     String time = String.format("%02d:%02d:%02d.%02d",
-                                millis / (60 * 60 * 1000),
-                                cal.get(Calendar.MINUTE),
-                                cal.get(Calendar.SECOND),
-                                (cal.get(Calendar.MILLISECOND) / 10));
+        millis / (60 * 60 * 1000),
+        cal.get(Calendar.MINUTE),
+        cal.get(Calendar.SECOND),
+        (cal.get(Calendar.MILLISECOND) / 10));
     return time;
   }
 
-  public static String millisecondsToStringShort(long ms)
-  {
+  public static String millisecondsToStringShort(long ms) {
     long millis = Math.abs(ms);
 
     cal.setTimeInMillis(millis);
     String time = String.format("%02d:%02d:%02d",
-                                millis / (60 * 60 * 1000),
-                                cal.get(Calendar.MINUTE),
-                                cal.get(Calendar.SECOND));
+        millis / (60 * 60 * 1000),
+        cal.get(Calendar.MINUTE),
+        cal.get(Calendar.SECOND));
     return time;
   }
 };

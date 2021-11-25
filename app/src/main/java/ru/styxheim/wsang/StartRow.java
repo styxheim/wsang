@@ -1,11 +1,12 @@
 package ru.styxheim.wsang;
 
 import java.io.IOException;
+
 import android.util.*;
+
 import java.util.*;
 
-public class StartRow
-{
+public class StartRow {
   final static String CLASS_NAME = "Lap";
 
   private int rowId = -1;
@@ -17,7 +18,7 @@ public class StartRow
   public int lapId = -1;
   public long startAt = 0;
   public long finishAt = 0;
-  public ArrayList<Gate>gates = new ArrayList<Gate>();
+  public ArrayList<Gate> gates = new ArrayList<Gate>();
 
   public boolean strike = false;
 
@@ -25,69 +26,64 @@ public class StartRow
     public int gate;
     public int penalty;
 
-    public Gate()
-    {
+    public Gate() {
     }
 
-    public Gate clone()
-    {
+    public Gate clone() {
       Gate n = new Gate();
       n.gate = this.gate;
       n.penalty = this.penalty;
       return n;
     }
 
-    public Gate(int gate, int penalty)
-    {
+    public Gate(int gate, int penalty) {
       this.gate = gate;
       this.penalty = penalty;
     }
 
-    public Gate(JsonReader jr) throws IOException, IllegalStateException
-    {
+    public Gate(JsonReader jr) throws IOException, IllegalStateException {
       fromJSON(jr);
     }
 
-    public void toJSON(JsonWriter jw) throws IOException, IllegalStateException
-    {
+    public void toJSON(JsonWriter jw) throws IOException, IllegalStateException {
       jw.beginObject();
       jw.name("Gate").value(this.gate);
       jw.name("Penalty").value(this.penalty);
       jw.endObject();
     }
 
-    public void fromJSON(JsonReader jr) throws IOException, IllegalStateException
-    {
-      if( !jr.hasNext() )
+    public void fromJSON(JsonReader jr) throws IOException, IllegalStateException {
+      if (!jr.hasNext())
         return;
 
       this.gate = 0;
       this.penalty = 0;
 
       jr.beginObject();
-      while( jr.hasNext() ) {
-        switch( jr.nextName() ) {
-        case "Gate":
-          this.gate = jr.nextInt();
-          break;
-        case "Penalty":
-          this.penalty = jr.nextInt();
-          break;
-        default:
-          jr.skipValue();
-          break;
+      while (jr.hasNext()) {
+        switch (jr.nextName()) {
+          case "Gate":
+            this.gate = jr.nextInt();
+            break;
+          case "Penalty":
+            this.penalty = jr.nextInt();
+            break;
+          default:
+            jr.skipValue();
+            break;
         }
       }
       jr.endObject();
     }
 
-    public String toString()
-    {
+    public String toString() {
       String r;
       r = String.format("<Gate #%d penalty=%d>", gate, penalty);
       return r;
     }
-  };
+  }
+
+  ;
 
   public static enum SyncState {
     NONE,
@@ -95,7 +91,9 @@ public class StartRow
     SYNCING,
     ERROR,
     SYNCED,
-  };
+  }
+
+  ;
 
   protected static class SyncData {
     public Long timestamp;
@@ -109,71 +107,65 @@ public class StartRow
     public Long startTime;
     public ArrayList<Gate> gates = new ArrayList<Gate>();
 
-    public SyncData()
-    {
+    public SyncData() {
     }
 
-    public SyncData(Gate gate)
-    {
+    public SyncData(Gate gate) {
       this.gates.add(gate.clone());
     }
 
-    public SyncData(int crewId, int lapId, int disciplineId)
-    {
+    public SyncData(int crewId, int lapId, int disciplineId) {
       this.crewId = new Integer(crewId);
       this.lapId = new Integer(lapId);
       this.disciplineId = new Integer(disciplineId);
     }
 
-    public SyncData(long startTime, long finishTime)
-    {
-      if( startTime != -1 ) {
+    public SyncData(long startTime, long finishTime) {
+      if (startTime != -1) {
         this.startTime = new Long(startTime);
       }
 
-      if( finishTime != -1 ) {
+      if (finishTime != -1) {
         this.finishTime = new Long(finishTime);
       }
     }
 
-    public String toString()
-    {
+    public String toString() {
       String s = new String();
 
       s += "<SyncData";
-      if( rowId != null )
+      if (rowId != null)
         s += " id=" + rowId.toString();
-      if( disciplineId != null )
+      if (disciplineId != null)
         s += " discipline=" + disciplineId.toString();
-      if( crewId != null )
+      if (crewId != null)
         s += " crew=" + crewId.toString();
-      if( lapId != null )
+      if (lapId != null)
         s += " lap=" + lapId.toString();
-      if( strike != null )
-        s += " strike=" + ( strike == true ? "true" : "false" );
-      if( startTime != null )
+      if (strike != null)
+        s += " strike=" + (strike == true ? "true" : "false");
+      if (startTime != null)
         s += " start=" + startTime.toString();
-      if( gates.size() > 0 ) {
+      if (gates.size() > 0) {
         s += " gates={";
-        for( Gate g : gates ) {
+        for (Gate g : gates) {
           s += String.format(" <id=%d penalty=%d>", g.gate, g.penalty);
         }
         s += " }";
       }
-      if( finishTime != null )
+      if (finishTime != null)
         s += " finish=" + finishTime.toString();
       s += ">";
       return s;
     }
 
-    public SyncData(JsonReader jr) throws IOException
-    {
+    public SyncData(JsonReader jr) throws IOException {
       this.gates.clear();
 
       jr.beginObject();
-      while( jr.hasNext() ) {
+      while (jr.hasNext()) {
         String name = jr.nextName();
-        switch( name ) {
+        switch (name) {
           case "LapId":
             this.rowId = new Integer(jr.nextInt());
             break;
@@ -194,7 +186,7 @@ public class StartRow
             break;
           case "Gates":
             jr.beginArray();
-            while( jr.hasNext() ) {
+            while (jr.hasNext()) {
               this.gates.add(new Gate(jr));
             }
             jr.endArray();
@@ -213,56 +205,54 @@ public class StartRow
       jr.endObject();
     }
 
-    public boolean isEmpty()
-    {
-      return ( timestamp == null &&
-               disciplineId == null && rowId == null &&
-               crewId == null && lapId == null &&
-               finishTime == null && startTime == null &&
-               strike == null &&
-               gates.size() == 0 );
+    public boolean isEmpty() {
+      return (timestamp == null &&
+          disciplineId == null && rowId == null &&
+          crewId == null && lapId == null &&
+          finishTime == null && startTime == null &&
+          strike == null &&
+          gates.size() == 0);
     }
 
-    public void toJSON(JsonWriter jw) throws IOException
-    {
+    public void toJSON(JsonWriter jw) throws IOException {
       jw.beginObject();
 
-      if( this.timestamp != null ) {
+      if (this.timestamp != null) {
         jw.name(RaceStatus.TIMESTAMP).value(this.timestamp);
       }
 
-      if( this.disciplineId != null ) {
+      if (this.disciplineId != null) {
         jw.name("DisciplineId").value(this.disciplineId);
       }
 
-      if( this.rowId != null ) {
+      if (this.rowId != null) {
         jw.name("LapId").value(this.rowId);
       }
 
-      if( this.crewId != null ) {
+      if (this.crewId != null) {
         jw.name("CrewId").value(this.crewId);
       }
 
-      if( this.lapId != null ) {
+      if (this.lapId != null) {
         jw.name("LapNumber").value(this.lapId);
       }
 
-      if( this.finishTime != null ) {
+      if (this.finishTime != null) {
         jw.name("FinishTime").value(this.finishTime);
       }
 
-      if( this.startTime != null ) {
+      if (this.startTime != null) {
         jw.name("StartTime").value(this.startTime);
       }
 
-      if( this.strike != null ) {
+      if (this.strike != null) {
         jw.name("Strike").value(this.strike);
       }
 
-      if( this.gates.size() != 0 ) {
+      if (this.gates.size() != 0) {
         jw.name("Gates");
         jw.beginArray();
-        for( Gate gate : this.gates ) {
+        for (Gate gate : this.gates) {
           gate.toJSON(jw);
         }
         jw.endArray();
@@ -271,51 +261,49 @@ public class StartRow
       jw.endObject();
     }
 
-    public void inprint(SyncData other)
-    {
-      if( other.timestamp != null )
+    public void inprint(SyncData other) {
+      if (other.timestamp != null)
         this.timestamp = other.timestamp;
 
-      if( other.disciplineId != null )
+      if (other.disciplineId != null)
         this.disciplineId = other.disciplineId;
 
-      if( other.rowId != null )
+      if (other.rowId != null)
         this.rowId = other.rowId;
 
-      if( other.crewId != null )
+      if (other.crewId != null)
         this.crewId = other.crewId;
 
-      if( other.lapId != null )
+      if (other.lapId != null)
         this.lapId = other.lapId;
 
-      if( other.finishTime != null )
+      if (other.finishTime != null)
         this.finishTime = other.finishTime;
 
-      if( other.startTime != null )
+      if (other.startTime != null)
         this.startTime = other.startTime;
 
-      if( other.strike != null )
+      if (other.strike != null)
         this.strike = other.strike;
 
-      for( Gate ogate : other.gates ) {
+      for (Gate ogate : other.gates) {
         boolean found = false;
 
-        for( Gate lgate : this.gates ) {
-          if( lgate.gate == ogate.gate ) {
+        for (Gate lgate : this.gates) {
+          if (lgate.gate == ogate.gate) {
             lgate.penalty = ogate.penalty;
             found = true;
             break;
           }
         }
-        if( !found )
+        if (!found)
           this.gates.add(ogate.clone());
       }
     }
 
-    protected Gate _getGate(int gateId)
-    {
-      for( Gate g : gates ) {
-        if( g.gate == gateId ) {
+    protected Gate _getGate(int gateId) {
+      for (Gate g : gates) {
+        if (g.gate == gateId) {
           return g;
         }
       }
@@ -323,41 +311,37 @@ public class StartRow
       return null;
     }
 
-    public SyncData clone()
-    {
+    public SyncData clone() {
       SyncData r = new SyncData();
       r.inprint(this);
       return r;
     }
-  };
+  }
+
+  ;
 
   public ArrayList<SyncData> syncList = new ArrayList<SyncData>();
   protected ArrayList<SyncData> syncedList = new ArrayList<SyncData>();
 
   public SyncState state = SyncState.NONE;
 
-  public StartRow(int rowId)
-  {
+  public StartRow(int rowId) {
     this.rowId = rowId;
   }
 
-  public int getRowId()
-  {
+  public int getRowId() {
     return rowId;
   }
 
-  public boolean isQueueEmpty()
-  {
+  public boolean isQueueEmpty() {
     return this.syncList.size() == 0;
   }
 
-  public boolean changePossible()
-  {
+  public boolean changePossible() {
     return this.state != StartRow.SyncState.SYNCING;
   }
 
-  public void setStrike(boolean strike)
-  {
+  public void setStrike(boolean strike) {
     SyncData sd = new SyncData();
 
     this.strike = strike;
@@ -366,22 +350,19 @@ public class StartRow
     this.syncList.add(sd);
   }
 
-  public void setStartData(long startAt)
-  {
+  public void setStartData(long startAt) {
     this.startAt = startAt;
     this.state = SyncState.NONE;
     this.syncList.add(new SyncData(startAt, -1));
   }
 
-  public void setFinishData(long finishAt)
-  {
+  public void setFinishData(long finishAt) {
     this.finishAt = finishAt;
     this.state = SyncState.NONE;
     this.syncList.add(new SyncData(-1, finishAt));
   }
 
-  public void setIdentify(int crewId, int lapId, int disciplineId)
-  {
+  public void setIdentify(int crewId, int lapId, int disciplineId) {
     this.crewId = crewId;
     this.lapId = lapId;
     this.disciplineId = disciplineId;
@@ -389,21 +370,19 @@ public class StartRow
     this.syncList.add(new SyncData(crewId, lapId, disciplineId));
   }
 
-  public void setGateData(int gate, int penalty)
-  {
+  public void setGateData(int gate, int penalty) {
     Gate rgate = new Gate(gate, penalty);
 
-    if( !updateGate(rgate) )
+    if (!updateGate(rgate))
       this.gates.add(rgate);
 
     this.state = SyncState.NONE;
     this.syncList.add(new SyncData(rgate));
   }
 
-  public SyncData getSyncData()
-  {
+  public SyncData getSyncData() {
     SyncData r = new SyncData();
-    for( SyncData ndata : syncList ) {
+    for (SyncData ndata : syncList) {
       r.inprint(ndata);
     }
     return r;
@@ -411,8 +390,7 @@ public class StartRow
 
   public void updateNotPendingFields(SyncData received,
                                      SyncData previous,
-                                     SyncData diff)
-  {
+                                     SyncData diff) {
     // update StartRow for fields what not pending send
     // by data present in syncList
     // return syncData with fields whant not updated
@@ -423,123 +401,111 @@ public class StartRow
     // rowId not used in this case
     // disciplineId not used in this case
 
-    if( received.strike != null ) {
-      if( pending.strike != null ) {
-        if( received.strike.compareTo(pending.strike) != 0 ) {
-          if( diff != null )
+    if (received.strike != null) {
+      if (pending.strike != null) {
+        if (received.strike.compareTo(pending.strike) != 0) {
+          if (diff != null)
             diff.strike = pending.strike;
         }
-      }
-      else if( previous != null && received.strike.compareTo(this.strike) != 0 ) {
+      } else if (previous != null && received.strike.compareTo(this.strike) != 0) {
         previous.strike = this.strike;
         this.strike = received.strike;
       }
-    }
-    else if( diff != null ) {
+    } else if (diff != null) {
       diff.strike = pending.strike;
     }
 
-    if( received.crewId != null ) {
-      if( pending.crewId != null ) {
-        if( received.crewId.compareTo(pending.crewId) != 0 ) {
-          if( diff != null )
+    if (received.crewId != null) {
+      if (pending.crewId != null) {
+        if (received.crewId.compareTo(pending.crewId) != 0) {
+          if (diff != null)
             diff.crewId = pending.crewId;
         }
-      }
-      else if( previous != null && received.crewId.compareTo(this.crewId) != 0 ) {
+      } else if (previous != null && received.crewId.compareTo(this.crewId) != 0) {
         previous.crewId = this.crewId;
         this.crewId = received.crewId;
       }
-    }
-    else if( diff != null ) {
+    } else if (diff != null) {
       diff.crewId = pending.crewId;
     }
 
-    if( received.lapId != null ) {
-      if( pending.lapId != null ) {
-        if( received.lapId.compareTo(pending.lapId) != 0 ) {
-          if( diff != null )
+    if (received.lapId != null) {
+      if (pending.lapId != null) {
+        if (received.lapId.compareTo(pending.lapId) != 0) {
+          if (diff != null)
             diff.lapId = pending.lapId;
         }
-      }
-      else if( previous != null && received.lapId.compareTo(this.lapId) != 0 ) {
+      } else if (previous != null && received.lapId.compareTo(this.lapId) != 0) {
         previous.lapId = this.lapId;
         this.lapId = pending.lapId;
       }
-    }
-    else if( diff != null ) {
+    } else if (diff != null) {
       diff.lapId = pending.lapId;
     }
 
-    if( received.finishTime != null ) {
-      if( pending.finishTime != null ) {
-        if( received.finishTime.compareTo(pending.finishTime) != 0 ) {
-          if( diff != null )
+    if (received.finishTime != null) {
+      if (pending.finishTime != null) {
+        if (received.finishTime.compareTo(pending.finishTime) != 0) {
+          if (diff != null)
             diff.finishTime = pending.finishTime;
         }
-      }
-      else if( previous != null && received.finishTime.compareTo(this.finishAt) != 0 ) {
+      } else if (previous != null && received.finishTime.compareTo(this.finishAt) != 0) {
         previous.finishTime = this.finishAt;
         this.finishAt = received.finishTime;
       }
-    }
-    else if( diff != null ) {
+    } else if (diff != null) {
       diff.finishTime = pending.finishTime;
     }
 
-    if( received.startTime != null ) {
-      if( pending.startTime != null ) {
+    if (received.startTime != null) {
+      if (pending.startTime != null) {
         // found in pending
-        if( received.startTime.compareTo(pending.startTime) != 0 ) {
+        if (received.startTime.compareTo(pending.startTime) != 0) {
           // store differ value
-          if( diff != null )
+          if (diff != null)
             diff.startTime = pending.startTime;
         }
         // value is equal to pending: nothing
-      }
-      else if( previous != null ) {
+      } else if (previous != null) {
         previous.startTime = this.startAt;
         this.startAt = received.startTime;
       }
-    }
-    else if( diff != null ) {
+    } else if (diff != null) {
       // value is pending but received not contain this field
       diff.startTime = pending.startTime;
     }
 
-    if( received.gates.size() != 0 ) {
-      for( Gate rgate : received.gates ) {
+    if (received.gates.size() != 0) {
+      for (Gate rgate : received.gates) {
         Gate pgate = pending._getGate(rgate.gate);
-        if( pgate == null ) {
+        if (pgate == null) {
           /* not found: simple set gate data */
           Gate g = getGate(rgate.gate);
-          if( g == null ) {
+          if (g == null) {
             gates.add(rgate.clone());
           } else {
             g.penalty = rgate.penalty;
-            if( previous != null )
+            if (previous != null)
               previous.gates.add(rgate.clone());
           }
-        } else if( pgate.penalty == rgate.penalty ) {
+        } else if (pgate.penalty == rgate.penalty) {
           /* gate found in pending queue: value is equal */
           pending.gates.remove(pgate);
         }
       }
-      if( diff != null ) {
+      if (diff != null) {
         /* set list of reaming gates from pending to diff */
         diff.gates = pending.gates;
       }
-    }
-    else if( diff != null ) {
+    } else if (diff != null) {
       // received not have pending values
       diff.gates = pending.gates;
     }
   }
 
-  public void setState(SyncState state)
-  {
-    if( state == SyncState.SYNCED ) {
-      for( SyncData sd : syncList ) {
+  public void setState(SyncState state) {
+    if (state == SyncState.SYNCED) {
+      for (SyncData sd : syncList) {
         syncedList.add(sd);
       }
       syncList.clear();
@@ -547,26 +513,24 @@ public class StartRow
     this.state = state;
   }
 
-  public String toString()
-  {
-    return "<Start " + 
-           " disciplineId='" + Integer.toString(this.disciplineId) + "'" +
-           " id='" + Integer.toString(this.rowId) + "'" +
-           " ts='" + Long.toString(this.timestamp) + "'" +
-           " lapId='" + Integer.toString(this.lapId) + "'" +
-           " crewId='" + Integer.toString(this.crewId) + "'" +
-           " startTime='" + Default.millisecondsToString(this.startAt) + "'" +
-           " finishTime='" + Default.millisecondsToString(this.finishAt) + "'" +
-           " gates=" + Integer.toString(this.gates.size()) +
-           "[ " + (this.strike ? " strike" : "") + " ]" +
-           " syncPending=" + Integer.toString(this.syncList.size()) +
-           " synced=" + Integer.toString(this.syncedList.size()) +
-           " " + state.name() +
-           ">";
+  public String toString() {
+    return "<Start " +
+        " disciplineId='" + Integer.toString(this.disciplineId) + "'" +
+        " id='" + Integer.toString(this.rowId) + "'" +
+        " ts='" + Long.toString(this.timestamp) + "'" +
+        " lapId='" + Integer.toString(this.lapId) + "'" +
+        " crewId='" + Integer.toString(this.crewId) + "'" +
+        " startTime='" + Default.millisecondsToString(this.startAt) + "'" +
+        " finishTime='" + Default.millisecondsToString(this.finishAt) + "'" +
+        " gates=" + Integer.toString(this.gates.size()) +
+        "[ " + (this.strike ? " strike" : "") + " ]" +
+        " syncPending=" + Integer.toString(this.syncList.size()) +
+        " synced=" + Integer.toString(this.syncedList.size()) +
+        " " + state.name() +
+        ">";
   }
 
-  public StartRow clone()
-  {
+  public StartRow clone() {
     StartRow r = new StartRow(this.getRowId());
     r.crewId = crewId;
     r.lapId = lapId;
@@ -575,42 +539,40 @@ public class StartRow
     r.timestamp = timestamp;
     r.disciplineId = disciplineId;
     r.strike = strike;
-    for( Gate gate : gates ) {
+    for (Gate gate : gates) {
       r.gates.add(gate.clone());
     }
-    for( SyncData sdata : syncList ) {
+    for (SyncData sdata : syncList) {
       r.syncList.add(sdata.clone());
     }
-    for( SyncData sdata : syncedList ) {
+    for (SyncData sdata : syncedList) {
       r.syncedList.add(sdata.clone());
     }
     r.state = state;
     return r;
   }
 
-  public void update(SyncData newData)
-  {
-    if( newData.timestamp != null )
+  public void update(SyncData newData) {
+    if (newData.timestamp != null)
       this.timestamp = newData.timestamp;
-    if( newData.strike != null )
+    if (newData.strike != null)
       this.strike = newData.strike;
-    if( newData.lapId != null )
+    if (newData.lapId != null)
       this.lapId = newData.lapId;
-    if( newData.crewId != null ) {
+    if (newData.crewId != null) {
       this.crewId = newData.crewId;
     }
-    if( newData.disciplineId != null ) {
+    if (newData.disciplineId != null) {
       this.disciplineId = newData.disciplineId;
     }
-    if( newData.startTime != null ) {
+    if (newData.startTime != null) {
       this.startAt = newData.startTime;
     }
-    if( newData.finishTime != null ) {
+    if (newData.finishTime != null) {
       this.finishAt = newData.finishTime;
     }
-    for( Gate rgate : newData.gates )
-    {
-      if( !updateGate(rgate) )
+    for (Gate rgate : newData.gates) {
+      if (!updateGate(rgate))
         this.gates.add(rgate.clone());
     }
   }
@@ -618,14 +580,13 @@ public class StartRow
   /* get JSON for server
      return: inprintCount value for setState()
      */
-  public int prepareJSON(JsonWriter w) throws IOException
-  {
+  public int prepareJSON(JsonWriter w) throws IOException {
     int i;
     SyncData data = new SyncData();
 
     data.rowId = new Integer(rowId);
 
-    for( i = 0; i < syncList.size(); i++ ) {
+    for (i = 0; i < syncList.size(); i++) {
       data.inprint(syncList.get(i));
     }
 
@@ -633,15 +594,14 @@ public class StartRow
     return i;
   }
 
-  public void saveJSON(JsonWriter w) throws IOException
-  {
+  public void saveJSON(JsonWriter w) throws IOException {
     SyncState _state = this.state;
 
     /* SYNCING and PENDING state is equal:
      *  SYNCING for UI
      *  PENDING for configs
      */
-    if( _state == SyncState.SYNCING )
+    if (_state == SyncState.SYNCING)
       _state = SyncState.PENDING;
 
     w.beginObject();
@@ -655,27 +615,27 @@ public class StartRow
     w.name("strike").value(this.strike);
     w.name("_state_name").value(_state.name());
 
-    if( this.gates.size() != 0 ) {
+    if (this.gates.size() != 0) {
       w.name("Gates");
       w.beginArray();
-      for( Gate gate : this.gates ) {
+      for (Gate gate : this.gates) {
         gate.toJSON(w);
       }
       w.endArray();
     }
 
-    if( this.syncList.size() != 0 ) {
+    if (this.syncList.size() != 0) {
       w.name("syncList");
       w.beginArray();
-      for( SyncData sd : this.syncList ) {
+      for (SyncData sd : this.syncList) {
         sd.toJSON(w);
       }
       w.endArray();
     }
-    if( this.syncedList.size() != 0 ) {
+    if (this.syncedList.size() != 0) {
       w.name("syncedList");
       w.beginArray();
-      for( SyncData sd : this.syncedList ) {
+      for (SyncData sd : this.syncedList) {
         sd.toJSON(w);
       }
       w.endArray();
@@ -683,10 +643,9 @@ public class StartRow
     w.endObject();
   }
 
-  public Gate getGate(int gateId)
-  {
-    for( Gate g : gates ) {
-      if( g.gate == gateId ) {
+  public Gate getGate(int gateId) {
+    for (Gate g : gates) {
+      if (g.gate == gateId) {
         return g;
       }
     }
@@ -694,8 +653,8 @@ public class StartRow
   }
 
   boolean updateGate(Gate rgate) {
-    for( Gate lgate : gates ) {
-      if( lgate.gate == rgate.gate ) {
+    for (Gate lgate : gates) {
+      if (lgate.gate == rgate.gate) {
         lgate.penalty = rgate.penalty;
         return true;
       }
@@ -703,8 +662,7 @@ public class StartRow
     return false;
   }
 
-  public void loadJSON(JsonReader r) throws IllegalStateException, IOException
-  {
+  public void loadJSON(JsonReader r) throws IllegalStateException, IOException {
     this.rowId = -1;
 
     this.strike = false;
@@ -719,67 +677,67 @@ public class StartRow
     this.syncList.clear();
     this.syncedList.clear();
 
-    if( !r.hasNext() )
+    if (!r.hasNext())
       return;
 
     r.beginObject();
-    while( r.hasNext() ) {
+    while (r.hasNext()) {
       String name = r.nextName();
-      switch( name ) {
-      case "strike":
-        this.strike = r.nextBoolean();
-        break;
-      case "disciplineId":
-        this.disciplineId = r.nextInt();
-        break;
-      case "lapId":
-        this.rowId = r.nextInt();
-        break;
-      case "lapNumber":
-        this.lapId = r.nextInt();
-        break;
-      case "crewId":
-        this.crewId = r.nextInt();
-        break;
-      case "startTime":
-        /* TODO: convert from String to ms */
-        break;
-      case "finishTime":
-        /* TODO: convert from String to ms */
-        break;
-      case "startTimeMs":
-        this.startAt = r.nextLong();
-        break;
-      case "finishTimeMs":
-        this.finishAt = r.nextLong();
-        break;
-      case "_state_name":
-        this.state = SyncState.valueOf(r.nextString());
-        break;
-      case "syncList":
-        r.beginArray();
-        while( r.hasNext() ) {
-          syncList.add(new SyncData(r));
-        }
-        r.endArray();
-        break;
-      case "syncedList":
-        r.beginArray();
-        while( r.hasNext() ) {
-          syncedList.add(new SyncData(r));
-        }
-        r.endArray();
-        break;
-      case "Gates":
-        r.beginArray();
-        while( r.hasNext() ) {
-          this.gates.add(new Gate(r));
-        }
-        r.endArray();
-        break;
-      default:
-        Log.d("wsa-ng", "StartRow: Unknown field '" + name + "'");
-        r.skipValue();
+      switch (name) {
+        case "strike":
+          this.strike = r.nextBoolean();
+          break;
+        case "disciplineId":
+          this.disciplineId = r.nextInt();
+          break;
+        case "lapId":
+          this.rowId = r.nextInt();
+          break;
+        case "lapNumber":
+          this.lapId = r.nextInt();
+          break;
+        case "crewId":
+          this.crewId = r.nextInt();
+          break;
+        case "startTime":
+          /* TODO: convert from String to ms */
+          break;
+        case "finishTime":
+          /* TODO: convert from String to ms */
+          break;
+        case "startTimeMs":
+          this.startAt = r.nextLong();
+          break;
+        case "finishTimeMs":
+          this.finishAt = r.nextLong();
+          break;
+        case "_state_name":
+          this.state = SyncState.valueOf(r.nextString());
+          break;
+        case "syncList":
+          r.beginArray();
+          while (r.hasNext()) {
+            syncList.add(new SyncData(r));
+          }
+          r.endArray();
+          break;
+        case "syncedList":
+          r.beginArray();
+          while (r.hasNext()) {
+            syncedList.add(new SyncData(r));
+          }
+          r.endArray();
+          break;
+        case "Gates":
+          r.beginArray();
+          while (r.hasNext()) {
+            this.gates.add(new Gate(r));
+          }
+          r.endArray();
+          break;
+        default:
+          Log.d("wsa-ng", "StartRow: Unknown field '" + name + "'");
+          r.skipValue();
       }
     }
     r.endObject();

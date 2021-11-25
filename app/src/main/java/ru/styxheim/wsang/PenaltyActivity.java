@@ -24,8 +24,7 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
-public class PenaltyActivity extends Activity
-{
+public class PenaltyActivity extends Activity {
   protected int rowId;
   protected int crew;
   protected int lap;
@@ -39,15 +38,14 @@ public class PenaltyActivity extends Activity
   protected long term_timestamp;
 
   @Override
-  protected void onCreate(Bundle savedInstanceState)
-  {
+  protected void onCreate(Bundle savedInstanceState) {
     Bundle extras;
     super.onCreate(savedInstanceState);
 
     settingsChrono = getSharedPreferences("chrono", Context.MODE_PRIVATE);
     setContentView(R.layout.gate_penalties);
 
-    if( (extras = getIntent().getExtras()) != null ) {
+    if ((extras = getIntent().getExtras()) != null) {
       this.rowId = extras.getInt("rowId");
       this.crew = extras.getInt("crew");
       this.lap = extras.getInt("lap");
@@ -66,8 +64,7 @@ public class PenaltyActivity extends Activity
     }
   }
 
-  protected void _setupPenalties()
-  {
+  protected void _setupPenalties() {
     int rb_id = 1;
     LayoutInflater inflater = LayoutInflater.from(this);
     TextView title = findViewById(R.id.title);
@@ -75,7 +72,7 @@ public class PenaltyActivity extends Activity
 
     gate_container.removeAllViews();
 
-    for( int gi = 0; gi < gates.size(); gi++ ) {
+    for (int gi = 0; gi < gates.size(); gi++) {
       Integer gateId = gates.get(gi);
       View tGate = inflater.inflate(R.layout.gate_penalties_elem, null, false);
       TextView gate_title = tGate.findViewById(R.id.gate_title);
@@ -84,7 +81,7 @@ public class PenaltyActivity extends Activity
       gate_title.setText(gateId.toString());
       penalty_container.removeAllViews();
 
-      for( int i = 1; i < penalties.size(); i++ ) {
+      for (int i = 1; i < penalties.size(); i++) {
         /* i == 0 for `not setted` */
         View _v = inflater.inflate(R.layout.gate_penalties_elem, null, false);
         RadioButton rb = _v.findViewById(R.id.penalty);
@@ -93,12 +90,11 @@ public class PenaltyActivity extends Activity
         rb.setTag(R.id.tag_gate_id, gi);
         rb.setTag(R.id.tag_penalty_id, i);
 
-        ((ViewGroup)rb.getParent()).removeView(rb);
+        ((ViewGroup) rb.getParent()).removeView(rb);
         rb.setText(penalties.get(i).toString());
-        if( i == values[gi]) {
+        if (i == values[gi]) {
           rb.setChecked(true);
-        }
-        else {
+        } else {
           rb.setChecked(false);
         }
         penalty_container.addView(rb);
@@ -111,31 +107,27 @@ public class PenaltyActivity extends Activity
   }
 
   @Override
-  public void onStart()
-  {
+  public void onStart() {
     super.onStart();
     EventBus.getDefault().register(this);
   }
 
   @Override
-  public void onStop()
-  {
+  public void onStop() {
     EventBus.getDefault().unregister(this);
     super.onStop();
   }
 
-  public void onClickCancel(View v)
-  {
+  public void onClickCancel(View v) {
     v.setEnabled(false);
     finish();
   }
 
-  public void onClickSave(View v)
-  {
+  public void onClickSave(View v) {
     EventMessage.ProposeMsg msg;
     v.setEnabled(false);
 
-    for( int i = 0; i < gates.size(); i++ ) {
+    for (int i = 0; i < gates.size(); i++) {
       Log.d("wsa-ng", "Emit Penalty");
       msg = new EventMessage.ProposeMsg(EventMessage.ProposeMsg.Type.PENALTY);
       msg.rowId = rowId;
@@ -147,18 +139,16 @@ public class PenaltyActivity extends Activity
     finish();
   }
 
-  public void onClickPenaltyRadioButton(View v)
-  {
-    int gate = (int)v.getTag(R.id.tag_gate_id);
-    int penalty = (int)v.getTag(R.id.tag_penalty_id);
+  public void onClickPenaltyRadioButton(View v) {
+    int gate = (int) v.getTag(R.id.tag_gate_id);
+    int penalty = (int) v.getTag(R.id.tag_penalty_id);
 
     values[gate] = penalty;
   }
 
   @Subscribe(threadMode = ThreadMode.MAIN)
-  public void _event_reloadSettings(TerminalStatus term)
-  {
-    if( term.timestamp != term_timestamp ) {
+  public void _event_reloadSettings(TerminalStatus term) {
+    if (term.timestamp != term_timestamp) {
       /* move to launcher for apply new settings */
       Intent intent = new Intent(PenaltyActivity.this, Launcher.class);
       startActivity(intent);
@@ -166,9 +156,8 @@ public class PenaltyActivity extends Activity
   }
 
   @Subscribe(threadMode = ThreadMode.MAIN)
-  public void _event_reloadSettings(RaceStatus race)
-  {
-    if( race.timestamp != race_timestamp ) {
+  public void _event_reloadSettings(RaceStatus race) {
+    if (race.timestamp != race_timestamp) {
       /* move to launcher for apply new settings */
       Intent intent = new Intent(PenaltyActivity.this, Launcher.class);
       startActivity(intent);

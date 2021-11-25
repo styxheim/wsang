@@ -17,8 +17,7 @@ import java.io.*;
 
 import java.util.ArrayList;
 
-public class SettingsActivity extends Activity
-{
+public class SettingsActivity extends Activity {
   private SharedPreferences settings;
   private SharedPreferences settings_chrono;
   private MediaPlayer mPlayer;
@@ -30,16 +29,15 @@ public class SettingsActivity extends Activity
     timeInMillis = event.getEventTime() + off;
 
     if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN ||
-        keyCode == KeyEvent.KEYCODE_VOLUME_UP )
-    {
+        keyCode == KeyEvent.KEYCODE_VOLUME_UP) {
       SharedPreferences.Editor ed = settings_chrono.edit();
       ed.putLong("offset", timeInMillis);
       ed.apply();
 
       mPlayer.start();
       int vtime = settings_chrono.getInt("vibro", Default.chrono_vibro);
-      if( vtime > 0 ) {
-        Vibrator v = (Vibrator)getSystemService(Context.VIBRATOR_SERVICE);
+      if (vtime > 0) {
+        Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
         v.vibrate(VibrationEffect.createOneShot(vtime, VibrationEffect.DEFAULT_AMPLITUDE));
       }
       _update_chrono_offset_title();
@@ -50,8 +48,7 @@ public class SettingsActivity extends Activity
   }
 
   @Override
-  protected void onCreate(Bundle savedInstanceState)
-  {
+  protected void onCreate(Bundle savedInstanceState) {
     Log.d("wsa-ng", "SettingsActivity:onCreate()");
 
     super.onCreate(savedInstanceState);
@@ -62,8 +59,7 @@ public class SettingsActivity extends Activity
   }
 
   @Override
-  public void onStart()
-  {
+  public void onStart() {
     final Runnable cron;
 
     Log.d("wsa-ng", "SettingsActivity:onStart()");
@@ -71,7 +67,7 @@ public class SettingsActivity extends Activity
     super.onStart();
 
     /* chronometer */
-    final TextView tv = (TextView)findViewById(R.id.settings_chronometer);
+    final TextView tv = (TextView) findViewById(R.id.settings_chronometer);
     this.mPlayer = MediaPlayer.create(SettingsActivity.this, R.raw.lap);
     mPlayer.seekTo(0);
 
@@ -94,41 +90,36 @@ public class SettingsActivity extends Activity
   }
 
   @Override
-  public void onStop()
-  {
+  public void onStop() {
     Log.d("wsa-ng", "SettingsActivity:onStop()");
 
     super.onStop();
   }
 
-  public void doneOnClick(View v)
-  {
+  public void doneOnClick(View v) {
     v.setEnabled(false);
     finish();
   }
 
-  public void _setup_server_addr()
-  {
-    final TextView server_ed = (TextView)findViewById(R.id.settings_server_title);
+  public void _setup_server_addr() {
+    final TextView server_ed = (TextView) findViewById(R.id.settings_server_title);
     server_ed.setText(settings.getString("server_addr", Default.server_addr));
   }
 
-  public void _update_race_info()
-  {
+  public void _update_race_info() {
     final TextView tv = findViewById(R.id.settings_race_id);
     final TextView tv_t = findViewById(R.id.settings_race_title);
     SharedPreferences race_settings = getSharedPreferences("race", Context.MODE_PRIVATE);
     RaceStatus raceStatus = new RaceStatus(race_settings);
 
     tv.setText(Long.toString(raceStatus.competitionId));
-    if( raceStatus.competitionName != null )
+    if (raceStatus.competitionName != null)
       tv_t.setText(raceStatus.competitionName);
     else
       tv_t.setText("");
   }
 
-  public void _update_terminal_id()
-  {
+  public void _update_terminal_id() {
     final TextView tv = findViewById(R.id.settings_terminal_id);
     SharedPreferences race_settings = getSharedPreferences("race", Context.MODE_PRIVATE);
     TerminalStatus terminalStatus = new TerminalStatus(race_settings);
@@ -136,16 +127,14 @@ public class SettingsActivity extends Activity
     tv.setText(terminalStatus.terminalId);
   }
 
-  public void _update_chrono_offset_title()
-  {
-    final TextView tv = (TextView)findViewById(R.id.settings_chrono_offset);
+  public void _update_chrono_offset_title() {
+    final TextView tv = (TextView) findViewById(R.id.settings_chrono_offset);
 
     tv.setText(Long.toString(settings_chrono.getLong("offset", Default.chrono_offset)));
   }
 
-  public void _update_chrono_key_title()
-  {
-    final TextView tv = (TextView)findViewById(R.id.settings_chrono_key);
+  public void _update_chrono_key_title() {
+    final TextView tv = (TextView) findViewById(R.id.settings_chrono_key);
     final String key = "VOLUME UP/DOWN";
 
     tv.post(new Runnable() {
@@ -156,16 +145,14 @@ public class SettingsActivity extends Activity
     });
   }
 
-  public void importOnClick(View v)
-  {
-   Toast.makeText(SettingsActivity.this,
-                 "Unimplemented",
-                 Toast.LENGTH_SHORT).show();
+  public void importOnClick(View v) {
+    Toast.makeText(SettingsActivity.this,
+        "Unimplemented",
+        Toast.LENGTH_SHORT).show();
 
   }
 
-  public void resetOnClick(View v)
-  {
+  public void resetOnClick(View v) {
     AlertDialog.Builder builder = new AlertDialog.Builder(this);
     builder.setTitle("Выход");
     builder.setMessage("Удалить все данные и остановить приложение?");
@@ -218,8 +205,7 @@ public class SettingsActivity extends Activity
     builder.create().show();
   }
 
-  public void setNewServerAddress(View v)
-  {
+  public void setNewServerAddress(View v) {
     SharedPreferences.Editor ed;
 
     ed = settings.edit();
@@ -233,8 +219,7 @@ public class SettingsActivity extends Activity
     startActivity(intent);
   }
 
-  public void exportOnClick(View v)
-  {
+  public void exportOnClick(View v) {
     StartList starts = new StartList();
     StartList starts_local = new StartList();
     ServerStatus ss = new ServerStatus();
@@ -248,8 +233,8 @@ public class SettingsActivity extends Activity
     starts_local.Load(this);
 
     try {
-      try( StringWriter sw = new StringWriter();
-           JsonWriter jw = new JsonWriter(sw) ) {
+      try (StringWriter sw = new StringWriter();
+           JsonWriter jw = new JsonWriter(sw)) {
 
         jw.setIndent("  ");
         jw.beginObject();
@@ -261,19 +246,19 @@ public class SettingsActivity extends Activity
         starts_local.saveJSON(jw);
         jw.endObject();
 
-        try( FileOutputStream fos = new FileOutputStream(raceFile) ) {
+        try (FileOutputStream fos = new FileOutputStream(raceFile)) {
           fos.write(sw.toString().getBytes());
         }
       }
-    } catch( Exception e ) {
+    } catch (Exception e) {
       StringWriter psw = new StringWriter();
       PrintWriter pw = new PrintWriter(psw);
 
       e.printStackTrace(pw);
 
       Toast.makeText(SettingsActivity.this,
-                     "Dump error: " + e.getMessage(),
-                     Toast.LENGTH_SHORT).show();
+          "Dump error: " + e.getMessage(),
+          Toast.LENGTH_SHORT).show();
       Log.e("wsa-ng", "Dump error: " + psw.toString());
       return;
     }
@@ -284,7 +269,7 @@ public class SettingsActivity extends Activity
     this.startActivity(Intent.createChooser(intent, "Send to"));
 
     Toast.makeText(SettingsActivity.this,
-                   "See result in: " + raceFile.getPath().toString(),
-                   Toast.LENGTH_SHORT).show();
+        "See result in: " + raceFile.getPath().toString(),
+        Toast.LENGTH_SHORT).show();
   }
 }

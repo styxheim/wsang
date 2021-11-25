@@ -48,7 +48,7 @@ public class Launcher extends Activity {
         Intent.FLAG_ACTIVITY_CLEAR_TASK);
     startActivity(intent);
     return true;
-}
+  }
 
   @Override
   protected void onResume() {
