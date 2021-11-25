@@ -133,44 +133,8 @@ public class SettingsActivity extends Activity
 
   public void _setup_server_addr()
   {
-    final Button server_bt = (Button)findViewById(R.id.settings_server_addr_apply);
-    final EditText server_ed = (EditText)findViewById(R.id.settings_server_edit);
-    server_bt.setVisibility(server_bt.INVISIBLE);
+    final TextView server_ed = (TextView)findViewById(R.id.settings_server_title);
     server_ed.setText(settings.getString("server_addr", Default.server_addr));
-
-    server_ed.addTextChangedListener(new TextWatcher() {
-      @Override
-      public void onTextChanged(CharSequence s, int st, int b, int c)
-      {
-      }
-
-      @Override
-      public void afterTextChanged(Editable s)
-      {
-        if( s.toString() != settings.getString("server_addr", Default.server_addr) )
-          server_bt.setVisibility(server_bt.VISIBLE);
-        else
-          server_bt.setVisibility(server_bt.INVISIBLE);
-      }
-
-      @Override
-      public void beforeTextChanged(CharSequence s, int st, int b, int c)
-      {
-      }
-    });
-
-    server_bt.setOnClickListener(new View.OnClickListener() {
-      @Override
-      public void onClick(View v) {
-        SharedPreferences.Editor edit = settings.edit();
-        edit.putString("server_addr", server_ed.getText().toString());
-        edit.apply();
-        Toast.makeText(SettingsActivity.this,
-                       "NEW ADDR: " + server_ed.getText().toString(),
-                       Toast.LENGTH_SHORT).show();
-        v.setVisibility(v.INVISIBLE);
-      }
-    });
   }
 
   public void _update_race_info()
@@ -305,6 +269,21 @@ public class SettingsActivity extends Activity
       }
     });
     builder.create().show();
+  }
+
+  public void setNewServerAddress(View v)
+  {
+    SharedPreferences.Editor ed;
+
+    ed = settings.edit();
+    ed.putBoolean("newServerAddressRequired", true);
+    ed.commit();
+
+    /* switch to new server through Launcher */
+    Intent intent = new Intent(SettingsActivity.this, Launcher.class);
+    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK |
+        Intent.FLAG_ACTIVITY_CLEAR_TASK);
+    startActivity(intent);
   }
 
   public void exportOnClick(View v)

@@ -211,20 +211,20 @@
 					android:text="Адрес сервера"
 					android:textStyle="bold"/>
 
-				<EditText
-					android:id="@+id/settings_server_edit"
+				<TextView
+					android:id="@+id/settings_server_title"
 					android:layout_width="match_parent"
 					android:layout_height="wrap_content"
 					android:descendantFocusability="beforeDescendants"
 					android:ems="10"/>
 
 				<Button
-					android:id="@+id/settings_server_addr_apply"
-					android:visibility="invisible"
+					android:id="@+id/settings_set_new_server_address"
 					android:layout_width="match_parent"
 					style="?android:attr/buttonBarButtonStyle"
 					android:layout_height="wrap_content"
-					android:text="@string/apply_title"/>
+					android:onClick="setNewServerAddress"
+					android:text="@string/change_server_address"/>
 
 			</LinearLayout>
 

@@ -5,22 +5,21 @@ import android.os.*;
 import android.content.*;
 import android.util.Log;
 
-public class Launcher extends Activity
-{
+public class Launcher extends Activity {
 
   enum Mode {
     UNKNOWN,
     START,
     DISTANCE,
     FINISH,
-  };
+  }
+
+  ;
 
   protected SharedPreferences settings;
-  protected Mode launch_mode = Mode.UNKNOWN;
 
   @Override
-  protected void onCreate(Bundle savedInstanceState)
-  {
+  protected void onCreate(Bundle savedInstanceState) {
     Log.d("wsa-ng", "Launcher:onCreate()");
 
     super.onCreate(savedInstanceState);
@@ -32,61 +31,40 @@ public class Launcher extends Activity
   }
 
   @Override
-  public void onStart()
-  {
+  public void onStart() {
     Log.d("wsa-ng", "Launcher:onStart()");
 
     super.onStart();
   }
 
   @Override
-  public void onStop()
-  {
+  public void onStop() {
     Log.d("wsa-ng", "Launcher:onStop()");
 
     super.onStop();
   }
 
-  protected boolean switch_activity()
-  {
+  protected boolean switch_activity() {
     final Intent intent;
-    final Mode new_launch_mode;
 
-    new_launch_mode = Mode.valueOf(settings.getString("mode", Default.mode));
-
-    if( launch_mode != new_launch_mode ) {
-      Log.i("wsa-ng", "Launcher: Switch from " + launch_mode.name() +
-            " to " + new_launch_mode.name());
-      launch_mode = new_launch_mode;
-      switch( new_launch_mode ) {
-        /*
-      case START:
-        intent = new Intent(this, StartActivity.class);
-        break;
-        */
-      default:
-        intent = new Intent(this, MainActivity.class);
-        break;
-      }
-      launch_mode = new_launch_mode;
-      intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK |
-                      Intent.FLAG_ACTIVITY_CLEAR_TASK);
-      startActivity(intent);
-      return true;
+    if (settings.getBoolean("newServerAddressRequired", true)) {
+      intent = new Intent(this, ServerSetupActivity.class);
+    } else {
+      intent = new Intent(this, MainActivity.class);
     }
-    return false;
-  }
+
+    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK |
+        Intent.FLAG_ACTIVITY_CLEAR_TASK);
+    startActivity(intent);
+    return true;
+}
 
   @Override
-  protected void onResume()
-  {
+  protected void onResume() {
     Log.d("wsa-ng", "Launcher:onResume()");
     super.onResume();
 
-    if( !switch_activity() ) {
-      Log.i("wsa-ng", "Launcher: Exit");
-      finish();
-    }
+    switch_activity();
   }
 }
 

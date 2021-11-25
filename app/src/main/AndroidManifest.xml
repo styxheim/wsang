@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="ru.styxheim.wsang" >
+    package="ru.styxheim.wsang">
 
-    <uses-permission android:name="android.permission.VIBRATE"/>
+    <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
@@ -11,40 +11,41 @@
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher_round"
         android:label="@string/app_name"
-        android:resizeableActivity = "true"
+        android:networkSecurityConfig="@xml/network_security"
+        android:resizeableActivity="true"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme"
-        android:networkSecurityConfig="@xml/network_security">
+        android:theme="@style/AppTheme">
+        <activity
+            android:name=".ServerSetupActivity"
+            android:exported="false"
+            android:theme="@style/Theme.AppCompat.NoActionBar"/>
 
-        <service
-            android:name=".MainService" />
+        <service android:name=".MainService" />
 
         <activity
+            android:exported="true"
             android:name=".Launcher"
             android:label="@string/app_name"
-            android:theme="@style/AppTheme.NoActionBar"
-            android:screenOrientation="unspecified">
+            android:screenOrientation="unspecified"
+            android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-          </activity>
-
-      <activity
-        android:name=".MainActivity"
-        android:theme="@style/AppTheme.NoActionBar"
-        android:screenOrientation="unspecified" />
-
-      <activity
-          android:name=".PenaltyActivity"
-          android:theme="@style/AppTheme.NoActionBar"
-          android:screenOrientation="unspecified" />
-
-      <activity
-          android:name=".SettingsActivity"
-          android:theme="@style/AppTheme.NoActionBar"
-          android:screenOrientation="unspecified" />
-
+        </activity>
+        <activity
+            android:name=".MainActivity"
+            android:screenOrientation="unspecified"
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity
+            android:name=".PenaltyActivity"
+            android:screenOrientation="unspecified"
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity
+            android:name=".SettingsActivity"
+            android:screenOrientation="unspecified"
+            android:theme="@style/AppTheme.NoActionBar" />
     </application>
 
 </manifest>

@@ -1,13 +1,14 @@
 apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
 
 android {
-    compileSdkVersion 29
+    compileSdkVersion 31
     buildToolsVersion "29.0.3"
 
     defaultConfig {
         applicationId "ru.styxheim.wsang"
         minSdkVersion 22
-        targetSdkVersion 29
+        targetSdkVersion 31
         versionCode 203010
         versionName "2.3.1"
     }
@@ -25,4 +26,7 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation 'org.greenrobot:eventbus:3.0.0'
     implementation 'com.squareup.okhttp3:okhttp:+'
+    implementation 'androidx.appcompat:appcompat:1.4.0'
+    implementation 'com.google.android.material:material:1.4.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.2'
 }
