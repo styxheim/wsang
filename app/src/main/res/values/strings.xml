@@ -1,50 +1,50 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">Я Судья</string>
+    <string name="app_name">I\'m a Judge</string>
 
-    <string name="ten_seconds_button">10 секунд</string>
-    <string name="thirty_seconds_button">30 секунд</string>
-    <string name="sixty_seconds_button">60 секунд</string>
-    <string name="cancel_button">Отмена</string>
+    <string name="ten_seconds_button">10 seconds</string>
+    <string name="thirty_seconds_button">30 seconds</string>
+    <string name="sixty_seconds_button">60 seconds</string>
+    <string name="cancel_button">Dismiss</string>
 
-    <string name="timer_started">Обратный отсчёт уже запущен</string>
+    <string name="timer_started">Countdown already started</string>
 
-    <string name="new_crew_cancel_title">Отменить</string>
-    <string name="new_crew_save_title">Добавить</string>
-    <string name="edit_crew_save_title">Сохранить</string>
-    <string name="new_crew_dialog_title">Редактирование заезда</string>
+    <string name="new_crew_cancel_title">Cancel</string>
+    <string name="new_crew_save_title">Add</string>
+    <string name="edit_crew_save_title">Save</string>
+    <string name="new_crew_dialog_title">Lap edit</string>
 
-    <string name="crew_short"> Э </string>
-    <string name="lap_short"> З </string>
+    <string name="crew_short"> C </string>
+    <string name="lap_short"> L </string>
 
-    <string name="crew">Экипаж</string>
-    <string name="lap">Заезд</string>
+    <string name="crew">Crew</string>
+    <string name="lap">Lap</string>
 
-    <string name="start_time">Время старта</string>
-    <string name="finish_time">Время финиша</string>
+    <string name="start_time">Start time</string>
+    <string name="finish_time">Finish time</string>
 
-    <string name="false_start">Фальстарт</string>
-    <string name="true_start">Подтвердить старт</string>
+    <string name="false_start">False start</string>
+    <string name="true_start">Start is OK</string>
 
-    <string name="start_cancel_stop">Отменить отсчёт</string>
+    <string name="start_cancel_stop">Cancel countdown</string>
 
-    <string name="change_server_address">Изменить</string>
+    <string name="change_server_address">Edit</string>
 
-    <string name="disciplines">Дисциплины</string>
+    <string name="disciplines">Disciplines</string>
 
-    <string name="edit_lapcrew">Редактировать заезд</string>
-    <string name="set_strike">Экипаж сошёл с трассы</string>
-    <string name="set_unstrike">Экипаж вернулся на трассу</string>
-    <string name="remove_row">Удалить запись</string>
-    <string name="merge_row">Применить на...</string>
+    <string name="edit_lapcrew">Edit lap</string>
+    <string name="set_strike">Retired</string>
+    <string name="set_unstrike">unRetired</string>
+    <string name="remove_row">Delete</string>
+    <string name="merge_row">Apply to…</string>
 
-    <string name="yes">Да</string>
-    <string name="no">Нет</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
 
-    <string name="notebook_title">Лист для заметок</string>
+    <string name="notebook_title">Notes</string>
     
-    <string name="server_apply">Использовать</string>
+    <string name="server_apply">Connect</string>
     <string name="server_addr_hint">127.0.0.1:9001</string>
-    <string name="server_addr_label">Адрес сервера</string>
+    <string name="server_addr_label">Server address</string>
 </resources>
