@@ -43,9 +43,14 @@
     <string name="no">Нет</string>
 
     <string name="notebook_title">Лист для заметок</string>
-    
+
     <string name="server_apply">Использовать</string>
     <string name="server_addr_description">Введите IP адрес сервера и порт</string>
     <string name="server_addr_hint">127.0.0.1:9001</string>
     <string name="server_addr_label">Адрес сервера</string>
+    <string name="server_error_message">Нет проблем</string>
+
+    <string name="server_choose_competition">Выберите соревнование</string>
+
+    <string name="server_no_active_competitions">Нет активных соревнований. Свяжитесь с администратором.</string>
 </resources>

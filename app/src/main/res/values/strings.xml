@@ -48,4 +48,9 @@
     <string name="server_addr_description">Type the server IP and port</string>
     <string name="server_addr_hint">127.0.0.1:9001</string>
     <string name="server_addr_label">Server address</string>
+    <string name="server_error_message">No problems</string>
+
+    <string name="server_choose_competition">Choose a competition</string>
+
+    <string name="server_no_active_competitions">No active competitions. Contact with administrator.</string>
 </resources>
