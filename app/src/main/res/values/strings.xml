@@ -45,6 +45,7 @@
     <string name="notebook_title">Notes</string>
     
     <string name="server_apply">Connect</string>
+    <string name="server_addr_description">Type the server IP and port</string>
     <string name="server_addr_hint">127.0.0.1:9001</string>
     <string name="server_addr_label">Server address</string>
 </resources>

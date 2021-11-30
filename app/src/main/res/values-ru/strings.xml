@@ -45,6 +45,7 @@
     <string name="notebook_title">Лист для заметок</string>
     
     <string name="server_apply">Использовать</string>
+    <string name="server_addr_description">Введите IP адрес сервера и порт</string>
     <string name="server_addr_hint">127.0.0.1:9001</string>
     <string name="server_addr_label">Адрес сервера</string>
 </resources>

@@ -6,31 +6,40 @@
     android:layout_height="match_parent"
     tools:context=".ServerSetupActivity">
 
-    <TextView
+    <LinearLayout
+        android:id="@+id/linearLayout"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/server_addr_label"
-        android:labelFor="@id/server_address" />
-
-    <EditText
-        android:id="@+id/server_address"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:autofillHints=""
-        android:ems="10"
-        android:inputType="textPersonName"
-        android:text="@string/server_addr_hint"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent">
 
-    <Button
-        android:id="@+id/server_apply"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/server_apply"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/server_address" />
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:labelFor="@id/server_address"
+            android:text="@string/server_addr_label" />
+
+        <EditText
+            android:id="@+id/server_address"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:autofillHints="@string/server_addr_hint"
+            android:ems="10"
+            android:inputType="textUri"
+            android:minHeight="48dp"
+            tools:ignore="DuplicateSpeakableTextCheck" />
+
+        <Button
+            android:id="@+id/server_apply"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/server_apply"
+            app:layout_constraintEnd_toStartOf="@+id/linearLayout"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+    </LinearLayout>
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>
