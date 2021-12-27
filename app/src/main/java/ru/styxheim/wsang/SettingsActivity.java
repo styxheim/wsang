@@ -159,7 +159,7 @@ public class SettingsActivity extends Activity {
   public void resetOnClick(View v) {
     AlertDialog.Builder builder = new AlertDialog.Builder(this);
     builder.setTitle("Выход");
-    builder.setMessage("Удалить все данные и остановить приложение?");
+    builder.setMessage("Вы хотите удалить все данные текущих соревнований и остановить приложение?");
     builder.setPositiveButton("Выполнить", new DialogInterface.OnClickListener() {
       @Override
       public void onClick(DialogInterface dialog, int id) {
