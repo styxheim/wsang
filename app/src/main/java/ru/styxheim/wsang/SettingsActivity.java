@@ -38,7 +38,11 @@ public class SettingsActivity extends Activity {
       int vtime = settings_chrono.getInt("vibro", Default.chrono_vibro);
       if (vtime > 0) {
         Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
-        v.vibrate(VibrationEffect.createOneShot(vtime, VibrationEffect.DEFAULT_AMPLITUDE));
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+          v.vibrate(VibrationEffect.createOneShot(vtime, VibrationEffect.DEFAULT_AMPLITUDE));
+        } else {
+          v.vibrate(vtime);
+        }
       }
       _update_chrono_offset_title();
       mPlayer.seekTo(0);
