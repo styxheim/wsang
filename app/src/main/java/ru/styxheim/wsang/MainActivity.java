@@ -940,7 +940,7 @@ public class MainActivity extends Activity {
     protected void _strikeTextView(TextView v) {
       if (strike) {
         v.setPaintFlags(v.getPaintFlags() | Paint.STRIKE_THRU_TEXT_FLAG);
-        v.setTextColor(R.color.strike_text);
+        v.setTextColor(getResources().getColor(R.color.strike_text));
       } else {
         v.setPaintFlags(v.getPaintFlags() & (~Paint.STRIKE_THRU_TEXT_FLAG));
       }
