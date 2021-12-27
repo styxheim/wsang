@@ -38,7 +38,7 @@ public class Launcher extends Activity {
   protected boolean switch_activity() {
     final Intent intent;
 
-    if (settings.getBoolean("newServerAddressRequired", true)) {
+    if (settings.getString("server_addr", Default.server_addr).compareTo(Default.server_addr) == 0) {
       intent = new Intent(this, ServerSetupActivity.class);
     } else {
       intent = new Intent(this, MainActivity.class);

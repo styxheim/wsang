@@ -210,16 +210,8 @@ public class SettingsActivity extends Activity {
   }
 
   public void setNewServerAddress() {
-    SharedPreferences.Editor ed;
-
-    ed = settings.edit();
-    ed.putBoolean("newServerAddressRequired", true);
-    ed.commit();
-
     /* switch to new server through Launcher */
-    Intent intent = new Intent(SettingsActivity.this, Launcher.class);
-    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK |
-        Intent.FLAG_ACTIVITY_CLEAR_TASK);
+    Intent intent = new Intent(SettingsActivity.this, ServerSetupActivity.class);
     startActivity(intent);
   }
 

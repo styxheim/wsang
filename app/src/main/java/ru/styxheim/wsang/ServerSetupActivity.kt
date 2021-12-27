@@ -27,7 +27,6 @@ class ServerSetupActivity : AppCompatActivity() {
     binding = ActivityServerSetupBinding.inflate(layoutInflater)
     setContentView(binding!!.root)
 
-    stopService()
     initVars()
     setupView()
   }
@@ -65,6 +64,8 @@ class ServerSetupActivity : AppCompatActivity() {
       Default.competitionConfig("race", competition.CompetitionId),
       MODE_PRIVATE
     )
+
+    stopService()
 
     with(mainSettings.edit()) {
       putString("server_addr", serverAddress)
