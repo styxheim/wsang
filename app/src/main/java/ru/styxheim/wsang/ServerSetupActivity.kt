@@ -27,8 +27,15 @@ class ServerSetupActivity : AppCompatActivity() {
     binding = ActivityServerSetupBinding.inflate(layoutInflater)
     setContentView(binding!!.root)
 
+    stopService()
     initVars()
     setupView()
+  }
+
+  private fun stopService() {
+    val intent = Intent(this, MainService::class.java)
+
+    stopService(intent)
   }
 
   private fun initVars() {
