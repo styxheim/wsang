@@ -32,6 +32,7 @@ public class PenaltyActivity extends Activity {
   protected ArrayList<Integer> penalties = new ArrayList<Integer>();
   protected int[] values;
 
+  protected SharedPreferences settings;
   protected SharedPreferences settingsChrono;
 
   protected long race_timestamp;
@@ -42,7 +43,8 @@ public class PenaltyActivity extends Activity {
     Bundle extras;
     super.onCreate(savedInstanceState);
 
-    settingsChrono = getSharedPreferences("chrono", Context.MODE_PRIVATE);
+    settings = getSharedPreferences("main", Context.MODE_PRIVATE);
+    settingsChrono = Default.getCompetitionsSharedPreferences(this, "chrono", settings, Context.MODE_PRIVATE);
     setContentView(R.layout.gate_penalties);
 
     if ((extras = getIntent().getExtras()) != null) {

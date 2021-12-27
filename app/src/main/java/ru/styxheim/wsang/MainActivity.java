@@ -84,8 +84,8 @@ public class MainActivity extends Activity {
     super.onCreate(savedInstanceState);
 
     settings = getSharedPreferences("main", Context.MODE_PRIVATE);
-    settingsRace = getSharedPreferences("race", Context.MODE_PRIVATE);
-    settingsChrono = getSharedPreferences("chrono", Context.MODE_PRIVATE);
+    settingsRace = Default.getCompetitionsSharedPreferences(this, "race", settings, Context.MODE_PRIVATE);
+    settingsChrono = Default.getCompetitionsSharedPreferences(this, "chrono", settings, Context.MODE_PRIVATE);
     setContentView(R.layout.main);
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
       setShowWhenLocked(true);
@@ -1926,8 +1926,8 @@ public class MainActivity extends Activity {
     Collections.sort(race.crews);
 
     chrono = new Chrono(MainActivity.this,
-        getSharedPreferences("chrono", Context.MODE_PRIVATE),
-        getSharedPreferences("chrono_data", Context.MODE_PRIVATE),
+        Default.getCompetitionsSharedPreferences(this, "chrono", settings, Context.MODE_PRIVATE),
+        Default.getCompetitionsSharedPreferences(this, "chrono_data", settings, Context.MODE_PRIVATE),
         (Vibrator) getSystemService(Context.VIBRATOR_SERVICE));
   }
 }

@@ -61,7 +61,10 @@ class ServerSetupActivity : AppCompatActivity() {
 
   private fun setServer(serverAddress: String, competition: API.RaceStatus) {
     val intent = Intent(this, Launcher::class.java)
-    val raceSettings = getSharedPreferences("race", MODE_PRIVATE)
+    val raceSettings = getSharedPreferences(
+      Default.competitionConfig("race", competition.CompetitionId),
+      MODE_PRIVATE
+    )
 
     with(mainSettings.edit()) {
       putString("server_addr", serverAddress)

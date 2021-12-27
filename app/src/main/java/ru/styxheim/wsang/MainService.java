@@ -259,9 +259,9 @@ public class MainService extends Service {
 
   @Override
   public void onCreate() {
-    chrono_settings = getSharedPreferences("chrono", Context.MODE_PRIVATE);
-    race_settings = getSharedPreferences("race", Context.MODE_PRIVATE);
     settings = getSharedPreferences("main", Context.MODE_PRIVATE);
+    chrono_settings = Default.getCompetitionsSharedPreferences(this, "chrono", settings, Context.MODE_PRIVATE);
+    race_settings = Default.getCompetitionsSharedPreferences(this, "race", settings, Context.MODE_PRIVATE);
     // The service is being created
     Log.i("wsa-ng-service", _("service created"));
     EventBus.getDefault().register(this);
@@ -677,7 +677,7 @@ public class MainService extends Service {
           starts = new StartList();
           starts.Save(getApplicationContext());
 
-          SharedPreferences chrono_data = getSharedPreferences("chrono_data", Context.MODE_PRIVATE);
+          SharedPreferences chrono_data = Default.getCompetitionsSharedPreferences(this, "chrono_data", settings, Context.MODE_PRIVATE);
           SharedPreferences.Editor ed;
 
           /* clear stopwatch memory */

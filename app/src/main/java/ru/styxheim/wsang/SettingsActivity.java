@@ -58,7 +58,7 @@ public class SettingsActivity extends Activity {
     super.onCreate(savedInstanceState);
 
     settings = getSharedPreferences("main", Context.MODE_PRIVATE);
-    settings_chrono = getSharedPreferences("chrono", Context.MODE_PRIVATE);
+    settings_chrono = Default.getCompetitionsSharedPreferences(this, "chrono", settings, Context.MODE_PRIVATE);
     setContentView(R.layout.settings);
   }
 
@@ -113,7 +113,7 @@ public class SettingsActivity extends Activity {
   public void _update_race_info() {
     final TextView tv = findViewById(R.id.settings_race_id);
     final TextView tv_t = findViewById(R.id.settings_race_title);
-    SharedPreferences race_settings = getSharedPreferences("race", Context.MODE_PRIVATE);
+    SharedPreferences race_settings = Default.getCompetitionsSharedPreferences(this, "race", settings, Context.MODE_PRIVATE);
     RaceStatus raceStatus = new RaceStatus(race_settings);
 
     tv.setText(Long.toString(raceStatus.competitionId));
@@ -125,7 +125,7 @@ public class SettingsActivity extends Activity {
 
   public void _update_terminal_id() {
     final TextView tv = findViewById(R.id.settings_terminal_id);
-    SharedPreferences race_settings = getSharedPreferences("race", Context.MODE_PRIVATE);
+    SharedPreferences race_settings = Default.getCompetitionsSharedPreferences(this, "race", settings, Context.MODE_PRIVATE);
     TerminalStatus terminalStatus = new TerminalStatus(race_settings);
 
     tv.setText(terminalStatus.terminalId);
@@ -174,11 +174,11 @@ public class SettingsActivity extends Activity {
         starts_local.Save(getApplicationContext());
 
         SharedPreferences.Editor ed;
-        ed = getSharedPreferences("chrono_data", Context.MODE_PRIVATE).edit();
+        ed = Default.getCompetitionsSharedPreferences(SettingsActivity.this, "chrono_data", settings, Context.MODE_PRIVATE).edit();
         ed.clear();
         ed.commit();
 
-        SharedPreferences race_settings = getSharedPreferences("race", Context.MODE_PRIVATE);
+        SharedPreferences race_settings = Default.getCompetitionsSharedPreferences(SettingsActivity.this, "race", settings, Context.MODE_PRIVATE);
         RaceStatus race = new RaceStatus();
         race.saveSettings(race_settings);
 
@@ -228,7 +228,7 @@ public class SettingsActivity extends Activity {
     StartList starts_local = new StartList();
     ServerStatus ss = new ServerStatus();
     File raceFile;
-    SharedPreferences race_settings = getSharedPreferences("race", Context.MODE_PRIVATE);
+    SharedPreferences race_settings = Default.getCompetitionsSharedPreferences(SettingsActivity.this, "race", settings, Context.MODE_PRIVATE);
     ss.terminalStatus.add(new TerminalStatus(race_settings));
     ss.raceStatus = new RaceStatus(race_settings);
     raceFile = new File(Environment.getExternalStorageDirectory(), "tid_" + ss.terminalStatus.get(0).terminalId + ".json");

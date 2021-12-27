@@ -1,8 +1,11 @@
 package ru.styxheim.wsang;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.view.KeyEvent;
 
 import java.util.Calendar;
+import java.util.Locale;
 import java.util.TimeZone;
 
 public class Default {
@@ -15,6 +18,18 @@ public class Default {
   final static public int chrono_vibro = 100;
 
   final static Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+
+  public static String competitionConfig(String name, Long competitionId) {
+    return String.format(Locale.US, "%s_CID_%s", name, Long.toHexString(competitionId));
+  }
+
+  public static SharedPreferences getCompetitionsSharedPreferences(Context context,
+                                                                   String name,
+                                                                   SharedPreferences mainSettings, int mode) {
+    String configName = competitionConfig(name, mainSettings.getLong("CompetitionId", 0));
+
+    return context.getSharedPreferences(configName, mode);
+  }
 
   public static String millisecondsToString(long ms) {
     long millis = Math.abs(ms);
