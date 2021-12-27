@@ -108,7 +108,7 @@ public class MainService extends Service {
 
   private void _updateTimeStamp(long newTimeStamp) {
     this.timestamp = newTimeStamp;
-    Log.d("wsa-ng", _("Update timestamp to: %d", newTimeStamp));
+    Log.d("wsa-ng-service", _("Update timestamp to: %d", newTimeStamp));
     SharedPreferences.Editor ed = settings.edit();
     ed.putLong(RaceStatus.TIMESTAMP, this.timestamp);
     ed.apply();
@@ -116,7 +116,7 @@ public class MainService extends Service {
 
   @Subscribe(threadMode = ThreadMode.MAIN)
   public void onEvent(SubscriberExceptionEvent exceptionEvent) {
-    Log.e("wsa-ng", "Exception: " + e2trace((Exception) exceptionEvent.throwable));
+    Log.e("wsa-ng-service", "Exception: " + e2trace((Exception) exceptionEvent.throwable));
 
     Toast.makeText(MainService.this,
         "Look to logcat 'wsa-ng'", Toast.LENGTH_SHORT).show();
@@ -129,7 +129,7 @@ public class MainService extends Service {
     JsonWriter jw = new JsonWriter(sw);
 
     if (!settings.contains("server_addr")) {
-      Log.d("wsa-ng", _("sync: `server_addr` is not defined: rows not synced"));
+      Log.d("wsa-ng-service", _("sync: `server_addr` is not defined: rows not synced"));
       /* FIXME: why need restart sync when server address not defined */
       _sync_sched();
       return;
@@ -147,12 +147,12 @@ public class MainService extends Service {
           try {
             inprint = row.prepareJSON(jw);
           } catch (Exception e) {
-            Log.e("wsa-ng", _("sync rowId #%d error: %s ->\n%s",
+            Log.e("wsa-ng-service", _("sync rowId #%d error: %s ->\n%s",
                 row.getRowId(), e.getMessage(), e2trace(e)));
             row.setState(StartRow.SyncState.ERROR);
             continue;
           }
-          Log.d("wsa-ng", _("sync: prepare row %s -> inprint=%d",
+          Log.d("wsa-ng-service", _("sync: prepare row %s -> inprint=%d",
               row.toString(), inprint));
           rows.add(row);
           row.setState(StartRow.SyncState.SYNCING);
@@ -160,7 +160,7 @@ public class MainService extends Service {
       }
       jw.endArray();
     } catch (IOException e) {
-      Log.e("wsa-ng", _("sync array error: %s ->\n%s",
+      Log.e("wsa-ng-service", _("sync array error: %s ->\n%s",
           e.getMessage(), e2trace(e)));
       _sync_sched();
       return;
@@ -180,7 +180,7 @@ public class MainService extends Service {
         raceStatus.competitionId,
         terminalId);
 
-    Log.d("wsa-ng", _("sync: push %d rows to %s", rows.size(), url));
+    Log.d("wsa-ng-service", _("sync: push %d rows to %s", rows.size(), url));
     final MediaType MIME_JSON = MediaType.get("application/json; charset=utf-8");
     RequestBody body = RequestBody.create(MIME_JSON, sw.toString());
     Request request = new Request.Builder().url(url).post(body).build();
@@ -193,18 +193,18 @@ public class MainService extends Service {
 
         if (code == 200 && body.compareTo("true") == 0) {
           /* sync ok */
-          Log.d("wsa-ng", _("sync: %d rows pushed to server", rows.size()));
+          Log.d("wsa-ng-service", _("sync: %d rows pushed to server", rows.size()));
           EventBus.getDefault().post(new EventMessage.SyncSuccess(rows));
           return;
         }
 
-        Log.e("wsa-ng", _("sync: %d rows not pushed: code == %d (%s)",
+        Log.e("wsa-ng-service", _("sync: %d rows not pushed: code == %d (%s)",
             rows.size(), code, body));
         EventBus.getDefault().post(new EventMessage.SyncFailure(rows));
       }
 
       public void onFailure(Call call, IOException e) {
-        Log.e("wsa-ng", _("sync: failed: %s", e.getMessage()));
+        Log.e("wsa-ng-service", _("sync: failed: %s", e.getMessage()));
         EventBus.getDefault().post(new EventMessage.SyncFailure(rows));
       }
     });
@@ -238,10 +238,10 @@ public class MainService extends Service {
       this.syncTimeout = 3000;
       _sync_handler.removeCallbacks(_sync_runnable);
       // TODO: fix raise conditional
-      Log.d("wsa-ng", _("sync: Urgent sync call"));
+      Log.d("wsa-ng-service", _("sync: Urgent sync call"));
       _sync_receive();
     }
-    Log.d("wsa-ng", _("sync: Set syncTimeout to '%d'", syncTimeout));
+    Log.d("wsa-ng-service", _("sync: Set syncTimeout to '%d'", syncTimeout));
   }
 
   protected Runnable _sync_runnable = new Runnable() {
@@ -251,7 +251,7 @@ public class MainService extends Service {
   };
 
   protected void _sync_sched() {
-    Log.d("wsa-ng", _("sync: delay next event at %d seconds", syncTimeout));
+    Log.d("wsa-ng-service", _("sync: delay next event at %d seconds", syncTimeout));
     _sync_handler.removeCallbacks(_sync_runnable);
     _sync_handler.postDelayed(_sync_runnable, syncTimeout);
 
@@ -263,7 +263,7 @@ public class MainService extends Service {
     race_settings = getSharedPreferences("race", Context.MODE_PRIVATE);
     settings = getSharedPreferences("main", Context.MODE_PRIVATE);
     // The service is being created
-    Log.i("wsa-ng", _("service created"));
+    Log.i("wsa-ng-service", _("service created"));
     EventBus.getDefault().register(this);
     starts = new StartList();
     /* Load data */
@@ -276,11 +276,11 @@ public class MainService extends Service {
     this.timestamp = settings.getLong(raceStatus.TIMESTAMP, 0);
 
     if (this.terminalId.compareTo("") == 0) {
-      Log.e("wsa-ng", _("TerminalId not set. Stopping the service"));
+      Log.e("wsa-ng-service", _("TerminalId not set. Stopping the service"));
       return;
     }
 
-    Log.i("wsa-ng", _("TerminalId=" + this.terminalId));
+    Log.i("wsa-ng-service", _("TerminalId=" + this.terminalId));
 
     IntentFilter filter;
     filter = new IntentFilter(Intent.ACTION_SCREEN_ON);
@@ -291,7 +291,7 @@ public class MainService extends Service {
     try {
       Version = this.getPackageManager().getPackageInfo(this.getPackageName(), 0).versionName;
     } catch (PackageManager.NameNotFoundException e) {
-      Log.e("wsa-ng", _("Version get error ->\n%s",
+      Log.e("wsa-ng-service", _("Version get error ->\n%s",
           e.getMessage(), e2trace(e)));
       Version = "";
     }
@@ -307,7 +307,7 @@ public class MainService extends Service {
   @Override
   public int onStartCommand(Intent intent, int flags, int startId) {
     // The service is starting, due to a call to startService()
-    Log.i("wsa-ng", _("service got start command: flags= " +
+    Log.i("wsa-ng-service", _("service got start command: flags= " +
         Integer.toString(flags) + " startId=" +
         Integer.toString(startId)));
 
@@ -325,12 +325,12 @@ public class MainService extends Service {
 
     starts.Save(getApplicationContext());
 
-    Log.i("wsa-ng", _("service destroyed"));
+    Log.i("wsa-ng-service", _("service destroyed"));
     super.onDestroy();
   }
 
   private void _boot() {
-    Log.i("wsa-ng", _("Begin boot"));
+    Log.i("wsa-ng-service", _("Begin boot"));
     ArrayList<StartRow> row_list = new ArrayList<StartRow>();
 
     EventBus.getDefault().post(raceStatus);
@@ -345,7 +345,7 @@ public class MainService extends Service {
 
     EventBus.getDefault().post(row_list);
 
-    Log.i("wsa-ng", _("Boot End"));
+    Log.i("wsa-ng-service", _("Boot End"));
   }
 
   /* receive and sync data from server */
@@ -363,7 +363,7 @@ public class MainService extends Service {
 
     post_body = String.format("{ \"Version\": \"%s\" }", Version);
 
-    Log.d("wsa-ng", _("rsync: query url %s", url));
+    Log.d("wsa-ng-service", _("rsync: query url %s", url));
     request = new Request.Builder()
         .url(url)
         .post(RequestBody.create(MediaType.parse("application/json"),
@@ -372,7 +372,7 @@ public class MainService extends Service {
     call.enqueue(new Callback() {
       public void onResponse(Call call, Response response) throws IOException {
         ServerStatus serverStatus = new ServerStatus();
-        Log.d("wsa-ng", _("rsync: result code == %d", response.code()));
+        Log.d("wsa-ng-service", _("rsync: result code == %d", response.code()));
 
         if (response.code() == 200) {
           try (StringReader sr = new StringReader(response.body().string());
@@ -380,7 +380,7 @@ public class MainService extends Service {
             try {
               serverStatus.loadJSON(jr);
             } catch (Exception e) {
-              Log.e("wsa-ng", _("[RECEIVE] Got error: %s ->\n%s",
+              Log.e("wsa-ng-service", _("[RECEIVE] Got error: %s ->\n%s",
                   e.getMessage(), e2trace(e)));
 
               serverStatus = new ServerStatus();
@@ -393,7 +393,7 @@ public class MainService extends Service {
       }
 
       public void onFailure(Call call, IOException e) {
-        Log.e("wsa-ng", _("rsync: failed: %s", e.getMessage()));
+        Log.e("wsa-ng-service", _("rsync: failed: %s", e.getMessage()));
         EventBus.getDefault().post(new EventMessage.RSyncResult(null));
       }
     });
@@ -410,7 +410,7 @@ public class MainService extends Service {
         EventMessage.TimeSync msg;
         String body = response.body().string();
 
-        Log.d("wsa-ng", _("tsync: response code == %d, data = %s",
+        Log.d("wsa-ng-service", _("tsync: response code == %d, data = %s",
             response.code(), body));
 
         data = body.split(":", 3);
@@ -425,7 +425,7 @@ public class MainService extends Service {
       }
 
       public void onFailure(Call call, IOException e) {
-        Log.e("wsa-ng", _("tsync: failed: %s", e.getMessage()));
+        Log.e("wsa-ng-service", _("tsync: failed: %s", e.getMessage()));
       }
     });
 
@@ -439,11 +439,11 @@ public class MainService extends Service {
       long syncdtime = (msg.T4 + dtime) - raceStatus.syncPoint;
       long ctime = msg.T4 - syncdtime;
 
-      Log.d("wsa-ng", _("tsync SyncPoint: %d", raceStatus.syncPoint));
-      Log.d("wsa-ng", _("tsync delta: %d", dtime));
-      Log.d("wsa-ng", _("tsync local time: %d", msg.T4));
-      Log.d("wsa-ng", _("tsync server time: %d", (msg.T4 + dtime)));
-      Log.d("wsa-ng", _("tsync zero delta: %d", syncdtime));
+      Log.d("wsa-ng-service", _("tsync SyncPoint: %d", raceStatus.syncPoint));
+      Log.d("wsa-ng-service", _("tsync delta: %d", dtime));
+      Log.d("wsa-ng-service", _("tsync local time: %d", msg.T4));
+      Log.d("wsa-ng-service", _("tsync server time: %d", (msg.T4 + dtime)));
+      Log.d("wsa-ng-service", _("tsync zero delta: %d", syncdtime));
 
       ed.putLong("offset", ctime);
       ed.apply();
@@ -475,7 +475,7 @@ public class MainService extends Service {
 
     inCountDownMode = CountDownMode.CANCEL;
 
-    Log.d("wsa-ng", _("MediaPlayer: play stop sound"));
+    Log.d("wsa-ng-service", _("MediaPlayer: play stop sound"));
     mPlayer = MediaPlayer.create(MainService.this, R.raw.seconds_stop);
     mPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
       @Override
@@ -485,7 +485,7 @@ public class MainService extends Service {
           _event_countdown_start(nextCountDownMsg);
           nextCountDownMsg = null;
         }
-        Log.d("wsa-ng", _("MediaPlayer: stop sound ended"));
+        Log.d("wsa-ng-service", _("MediaPlayer: stop sound ended"));
         mp.release();
       }
     });
@@ -529,7 +529,7 @@ public class MainService extends Service {
         signal_offset = 12000;
         break;
       default:
-        Log.d("wsa-ng", "Unknown timeout mode: " + Long.toString(timeout));
+        Log.d("wsa-ng-service", "Unknown timeout mode: " + Long.toString(timeout));
         return;
     }
 
@@ -542,7 +542,7 @@ public class MainService extends Service {
       public void onPrepared(MediaPlayer mp) {
         long millis = System.currentTimeMillis();
         mp.start();
-        Log.d("wsa-ng", _("MediaPlayer: prepared at " + Long.toString(millis)));
+        Log.d("wsa-ng-service", _("MediaPlayer: prepared at " + Long.toString(millis)));
         startCountDownAt = millis;
         cdmsg = new EventMessage.CountDownMsg(lapId, disciplineId, millis, millis + signal_offset);
         EventBus.getDefault().post(cdmsg);
@@ -553,7 +553,7 @@ public class MainService extends Service {
       @Override
       public void onCompletion(MediaPlayer mp) {
         long millis = System.currentTimeMillis();
-        Log.d("wsa-ng", _("MediaPlayer: end at " + Long.toString(millis)));
+        Log.d("wsa-ng-service", _("MediaPlayer: end at " + Long.toString(millis)));
 
         long endAt = startCountDownAt - chrono_settings.getLong("offset", Default.chrono_offset) + signal_offset;
 
@@ -573,7 +573,7 @@ public class MainService extends Service {
     for (StartRow row : starts) {
       if (row.lapId != msg.lapId || row.disciplineId != msg.disciplineId)
         continue;
-      Log.d("wsa-ng", _("Set time to " + time + " (" + msg.endAtMs + ") for row #" + row.getRowId()));
+      Log.d("wsa-ng-service", _("Set time to " + time + " (" + msg.endAtMs + ") for row #" + row.getRowId()));
       row.setStartData(msg.endAtMs);
       EventBus.getDefault().post(row);
     }
@@ -586,19 +586,19 @@ public class MainService extends Service {
 
     if (msg.rowId == -1) {
       /* new record */
-      Log.d("wsa-ng", _("Add new StartRow record"));
+      Log.d("wsa-ng-service", _("Add new StartRow record"));
 
       row = starts.addRecord(msg.crewId, msg.lapId, msg.disciplineId);
     } else {
       row = starts.getRecord(msg.rowId);
       if (row == null) {
-        Log.e("wsa-ng", _("StartList does not have rowId #" +
+        Log.e("wsa-ng-service", _("StartList does not have rowId #" +
             Integer.toString(msg.rowId)));
         return;
       }
       ostate = row.state;
 
-      Log.d("wsa-ng", _("Got message " + msg.type.name() + " for rowId #" +
+      Log.d("wsa-ng-service", _("Got message " + msg.type.name() + " for rowId #" +
           Integer.toString(msg.rowId)));
 
       switch (msg.type) {
@@ -632,7 +632,7 @@ public class MainService extends Service {
             row.setGateData(msg.gate, msg.penalty);
           break;
         default:
-          Log.e("wsa-ng", _("Unknown msg type for rowId #" +
+          Log.e("wsa-ng-service", _("Unknown msg type for rowId #" +
               Integer.toString(msg.rowId) + ": " + msg.type.name()));
           return;
       }
@@ -652,12 +652,12 @@ public class MainService extends Service {
     ServerStatus status = rstatus.serverStatus;
 
     if (status == null) {
-      Log.d("wsa-ng", _("[RECEIVE] Empty ServerStatus, sched next sync"));
+      Log.d("wsa-ng-service", _("[RECEIVE] Empty ServerStatus, sched next sync"));
       _sync_sched();
       return;
     }
 
-    Log.d("wsa-ng", _("[RECEIVE] process ServerStatus -> [ " +
+    Log.d("wsa-ng-service", _("[RECEIVE] process ServerStatus -> [ " +
         (status.raceStatus == null ? "" : "RaceStatus ") +
         (status.terminalStatus.size() == 0 ? "" : " T" + Integer.toString(status.terminalStatus.size())) +
         (status.lap.size() == 0 ? "" : " L" + Integer.toString(status.lap.size())) +
@@ -669,7 +669,7 @@ public class MainService extends Service {
 
       if (status.raceStatus != null) {
         if (status.raceStatus.competitionId != raceStatus.competitionId) {
-          Log.i("wsa-ng", _("[RECEIVE] CompetitionId: local = %d, remote = %d",
+          Log.i("wsa-ng-service", _("[RECEIVE] CompetitionId: local = %d, remote = %d",
               raceStatus.competitionId,
               status.raceStatus.competitionId));
           /* clear all data */
@@ -698,7 +698,7 @@ public class MainService extends Service {
         }
 
         if (status.raceStatus.timestamp > timestamp) {
-          Log.i("wsa-ng", _("[RECEIVE] RaceStatus timestamp: local = %d, remote = %d",
+          Log.i("wsa-ng-service", _("[RECEIVE] RaceStatus timestamp: local = %d, remote = %d",
               timestamp,
               status.raceStatus.timestamp));
           /* update settings */
@@ -715,7 +715,7 @@ public class MainService extends Service {
         TerminalStatus term = status.terminalStatus.get(i);
 
         if (term.terminalId.compareTo(this.terminalId) == 0) {
-          Log.i("wsa-ng", _("[RECEIVE] apply new TerminalStatus"));
+          Log.i("wsa-ng-service", _("[RECEIVE] apply new TerminalStatus"));
           this.terminalStatus = term;
           this.terminalStatus.saveSettings(race_settings);
           /* update Screen */
@@ -724,7 +724,7 @@ public class MainService extends Service {
 
         if (term.timestamp > timestamp) {
           /* apply timestamp from any received struct */
-          Log.i("wsa-ng", _("[RECEIVE] TerminalStatus timestamp: local = %d, remote = %d",
+          Log.i("wsa-ng-service", _("[RECEIVE] TerminalStatus timestamp: local = %d, remote = %d",
               timestamp,
               term.timestamp));
           _updateTimeStamp(term.timestamp);
@@ -739,12 +739,12 @@ public class MainService extends Service {
         StartRow lrow;
 
         if (rrow.rowId == null) {
-          Log.e("wsa-ng", _("[RECEIVE]: Sync row without rowId, skip"));
+          Log.e("wsa-ng-service", _("[RECEIVE]: Sync row without rowId, skip"));
           continue;
         }
 
         if (rrow.timestamp == null) {
-          Log.e("wsa-ng", _("[RECEIVE]: not timestamp in lap data, skip"));
+          Log.e("wsa-ng-service", _("[RECEIVE]: not timestamp in lap data, skip"));
           continue;
         }
 
@@ -762,14 +762,14 @@ public class MainService extends Service {
 
           lrow.updateNotPendingFields(rrow, previous, diff);
 
-          Log.d("wsa-ng", _("[RECEIVE] received=%s, previous=%s, diff=%s",
+          Log.d("wsa-ng-service", _("[RECEIVE] received=%s, previous=%s, diff=%s",
               rrow.toString(), previous.toString(), diff.toString()));
 
           if (lrow.state == StartRow.SyncState.SYNCED) {
             if (!previous.isEmpty())
               changed = true;
             if (!diff.isEmpty())
-              Log.e("wsa-ng", _("rsync: diff is not empty"));
+              Log.e("wsa-ng-service", _("rsync: diff is not empty"));
           } else {
             if (diff.isEmpty()) {
               lrow.setState(StartRow.SyncState.SYNCED);
@@ -787,7 +787,7 @@ public class MainService extends Service {
 
         if (rrow.timestamp > timestamp) {
           _updateTimeStamp(rrow.timestamp);
-          Log.i("wsa-ng", _("[RECEIVE] StartRow timestamp: local = %d, remote = %d",
+          Log.i("wsa-ng-service", _("[RECEIVE] StartRow timestamp: local = %d, remote = %d",
               timestamp,
               rrow.timestamp));
         }
@@ -798,7 +798,7 @@ public class MainService extends Service {
       if (changed)
         starts.Save(getApplicationContext());
     } catch (Exception e) {
-      Log.e("wsa-ng", _("[RECEIVE] Got error: %s ->\n%s",
+      Log.e("wsa-ng-service", _("[RECEIVE] Got error: %s ->\n%s",
           e.getMessage(), e2trace(e)));
 
       Toast.makeText(MainService.this,
@@ -814,11 +814,11 @@ public class MainService extends Service {
   public void onEventMessage(EventMessage ev) {
     switch (ev.type) {
       case COUNTDOWN_START:
-        Log.i("wsa-ng", _("Event " + ev.type.name() + " received"));
+        Log.i("wsa-ng-service", _("Event " + ev.type.name() + " received"));
         _event_countdown_start((EventMessage.CountDownMsg) ev.obj);
         break;
       case COUNTDOWN_END:
-        Log.i("wsa-ng", _("Event " + ev.type.name() + " received"));
+        Log.i("wsa-ng-service", _("Event " + ev.type.name() + " received"));
 
         if (ev.obj == null)
           return;
@@ -826,15 +826,15 @@ public class MainService extends Service {
         _event_countdown_end((EventMessage.CountDownMsg) ev.obj);
         break;
       case COUNTDOWN_STOP:
-        Log.i("wsa-ng", _("Event " + ev.type.name() + " received"));
+        Log.i("wsa-ng-service", _("Event " + ev.type.name() + " received"));
         _event_countdown_stop(null);
         break;
       case PROPOSE:
-        Log.i("wsa-ng", _("Event " + ev.type.name() + " received"));
+        Log.i("wsa-ng-service", _("Event " + ev.type.name() + " received"));
         _event_propose((EventMessage.ProposeMsg) ev.obj);
         break;
       default:
-        Log.i("wsa-ng", _("Event " + ev.type.name() + " received"));
+        Log.i("wsa-ng-service", _("Event " + ev.type.name() + " received"));
         break;
     }
   }
