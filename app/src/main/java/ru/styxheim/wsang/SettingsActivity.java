@@ -209,7 +209,7 @@ public class SettingsActivity extends Activity {
     builder.create().show();
   }
 
-  public void setNewServerAddress(View v) {
+  public void setNewServerAddress() {
     SharedPreferences.Editor ed;
 
     ed = settings.edit();
@@ -221,6 +221,25 @@ public class SettingsActivity extends Activity {
     intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK |
         Intent.FLAG_ACTIVITY_CLEAR_TASK);
     startActivity(intent);
+  }
+
+  public void showSetNewServerAddressDialog(View v) {
+    AlertDialog.Builder builder = new AlertDialog.Builder(this);
+    builder.setTitle(R.string.server_setup_new_title);
+    builder.setMessage(R.string.server_setup_new_message);
+    builder.setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
+      @Override
+      public void onClick(DialogInterface dialog, int id) {
+        setNewServerAddress();
+      }
+    });
+    builder.setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
+      @Override
+      public void onClick(DialogInterface dialog, int id) {
+        dialog.dismiss();
+      }
+    });
+    builder.create().show();
   }
 
   public void exportOnClick(View v) {

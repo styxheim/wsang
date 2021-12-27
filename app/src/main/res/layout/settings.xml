@@ -199,7 +199,7 @@
 					android:layout_width="match_parent"
 					style="?android:attr/buttonBarButtonStyle"
 					android:layout_height="wrap_content"
-					android:onClick="setNewServerAddress"
+					android:onClick="showSetNewServerAddressDialog"
 					android:text="@string/change_server_address"/>
 
 			</LinearLayout>

@@ -53,4 +53,7 @@
     <string name="server_choose_competition">Выберите соревнование</string>
 
     <string name="server_no_active_competitions">Нет активных соревнований. Свяжитесь с администратором.</string>
+
+    <string name="server_setup_new_title">Подключение к другому серверу</string>
+    <string name="server_setup_new_message">Вы хотите подключиться к другому серверу или выбрать другие соревнования?</string>
 </resources>
