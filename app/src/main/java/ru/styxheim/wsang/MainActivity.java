@@ -1002,7 +1002,7 @@ public class MainActivity extends Activity {
       }
 
       String finishText = Default.millisecondsToString(finish);
-      if (finish > start || finish == 0) {
+      if (finish < start && finish != 0) {
         finishText = "⚠ " + finishText;
       }
       tFinish.setText(finishText);
