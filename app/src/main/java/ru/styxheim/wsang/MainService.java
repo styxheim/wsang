@@ -41,6 +41,7 @@ import android.widget.*;
 public class MainService extends Service {
   private StartList starts;
   private TerminalStatus terminalStatus;
+  private String terminalId = "";
   private RaceStatus raceStatus;
 
   protected int syncTimeout = 3000;
@@ -177,7 +178,7 @@ public class MainService extends Service {
     url = String.format(SET_URL,
         settings.getString("server_addr", Default.server_addr),
         raceStatus.competitionId,
-        terminalStatus.terminalId);
+        terminalId);
 
     Log.d("wsa-ng", _("sync: push %d rows to %s", rows.size(), url));
     final MediaType MIME_JSON = MediaType.get("application/json; charset=utf-8");
@@ -270,15 +271,16 @@ public class MainService extends Service {
 
     this.terminalStatus = new TerminalStatus(race_settings);
     this.raceStatus = new RaceStatus(race_settings);
-
-    if (this.terminalStatus.terminalId.compareTo("") == 0) {
-      this.terminalStatus.terminalId = Long.toHexString(java.util.concurrent.ThreadLocalRandom.current().nextLong());
-      this.terminalStatus.saveSettings(race_settings);
-    }
+    this.terminalId = settings.getString("TerminalId", "");
 
     this.timestamp = settings.getLong(raceStatus.TIMESTAMP, 0);
 
-    Log.i("wsa-ng", _("TerminalId=" + this.terminalStatus.terminalId));
+    if (this.terminalId.compareTo("") == 0) {
+      Log.e("wsa-ng", _("TerminalId not set. Stopping the service"));
+      return;
+    }
+
+    Log.i("wsa-ng", _("TerminalId=" + this.terminalId));
 
     IntentFilter filter;
     filter = new IntentFilter(Intent.ACTION_SCREEN_ON);
@@ -357,7 +359,7 @@ public class MainService extends Service {
         settings.getString("server_addr", Default.server_addr),
         this.raceStatus.competitionId,
         this.timestamp,
-        this.terminalStatus.terminalId);
+        this.terminalId);
 
     post_body = String.format("{ \"Version\": \"%s\" }", Version);
 
@@ -712,7 +714,7 @@ public class MainService extends Service {
       for (int i = 0; i < status.terminalStatus.size(); i++) {
         TerminalStatus term = status.terminalStatus.get(i);
 
-        if (term.terminalId.compareTo(this.terminalStatus.terminalId) == 0) {
+        if (term.terminalId.compareTo(this.terminalId) == 0) {
           Log.i("wsa-ng", _("[RECEIVE] apply new TerminalStatus"));
           this.terminalStatus = term;
           this.terminalStatus.saveSettings(race_settings);
