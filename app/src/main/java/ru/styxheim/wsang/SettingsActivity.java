@@ -170,7 +170,7 @@ public class SettingsActivity extends Activity {
         starts.Save(getApplicationContext());
 
         StartList starts_local = new StartList();
-        starts_local.setOutput(Default.competitionJson("localRows", settings));
+        starts_local.setOutput(Default.competitionJson(Default.localRowsFile, settings));
         starts_local.Save(getApplicationContext());
 
         SharedPreferences.Editor ed;
@@ -244,7 +244,7 @@ public class SettingsActivity extends Activity {
     ss.raceStatus = new RaceStatus(race_settings);
     raceFile = new File(Environment.getExternalStorageDirectory(), "tid_" + ss.terminalStatus.get(0).terminalId + ".json");
     starts.Load(getApplicationContext());
-    starts_local.setOutput(Default.competitionJson("localRows", settings));
+    starts_local.setOutput(Default.competitionJson(Default.localRowsFile, settings));
     starts_local.Load(this);
 
     try {

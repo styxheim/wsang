@@ -18,6 +18,9 @@ public class Default {
   final static public String time_empty = "00:00:00.00";
   final static public int chrono_vibro = 100;
 
+  /** Filename for local competition data (notebook) */
+  final static public String localRowsFile = "localRows";
+
   final static Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
 
   public static String competitionConfig(String name, Long competitionId) {

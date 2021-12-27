@@ -94,7 +94,7 @@ public class MainActivity extends Activity {
     }
 
     local_startList = new StartList();
-    local_startList.setOutput(Default.competitionJson("localRows", settings));
+    local_startList.setOutput(Default.competitionJson(Default.localRowsFile, settings));
     local_startList.Load(this);
   }
 
