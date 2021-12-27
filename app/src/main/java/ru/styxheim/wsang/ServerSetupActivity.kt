@@ -65,6 +65,7 @@ class ServerSetupActivity : AppCompatActivity() {
 
     with(mainSettings.edit()) {
       putString("server_addr", serverAddress)
+      putLong("CompetitionId", competition.CompetitionId)
       putString("TerminalId", terminalId)
       putBoolean("newServerAddressRequired", false)
       apply()
