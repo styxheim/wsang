@@ -166,7 +166,7 @@ public class SettingsActivity extends Activity {
         Intent intent = new Intent(SettingsActivity.this, MainService.class);
         stopService(intent);
 
-        StartList starts = new StartList(Default.remoteRowsFile);
+        StartList starts = new StartList(Default.competitionJson(Default.remoteRowsFile, settings));
         starts.Save(getApplicationContext());
 
         StartList starts_local = new StartList(Default.competitionJson(Default.localRowsFile, settings));
@@ -234,7 +234,7 @@ public class SettingsActivity extends Activity {
   }
 
   public void exportOnClick(View v) {
-    StartList starts = new StartList(Default.remoteRowsFile);
+    StartList starts = new StartList(Default.competitionJson(Default.remoteRowsFile, settings));
     StartList starts_local = new StartList(Default.competitionJson(Default.localRowsFile, settings));
     ServerStatus ss = new ServerStatus();
     File raceFile;
