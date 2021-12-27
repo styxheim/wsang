@@ -24,10 +24,18 @@ public class Default {
     return String.format(Locale.US, "%s_CID_%s", name, Long.toHexString(competitionId));
   }
 
+  public static String competitionConfig(String name, SharedPreferences mainSettings) {
+    return competitionConfig(name, mainSettings.getLong("CompetitionId", Default.competitionId));
+  }
+
+  public static String competitionJson(String name, SharedPreferences mainSettigs) {
+    return String.format(Locale.US, "%s.json", competitionConfig(name, mainSettigs));
+  }
+
   public static SharedPreferences getCompetitionsSharedPreferences(Context context,
                                                                    String name,
                                                                    SharedPreferences mainSettings, int mode) {
-    String configName = competitionConfig(name, mainSettings.getLong("CompetitionId", 0));
+    String configName = competitionConfig(name, mainSettings);
 
     return context.getSharedPreferences(configName, mode);
   }
