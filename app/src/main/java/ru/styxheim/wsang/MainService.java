@@ -177,7 +177,7 @@ public class MainService extends Service {
     /* tell to server */
     url = String.format(SET_URL,
         settings.getString("server_addr", Default.server_addr),
-        raceStatus.competitionId,
+        settings.getLong("CompetitionId", Default.competitionId),
         terminalId);
 
     Log.d("wsa-ng-service", _("sync: push %d rows to %s", rows.size(), url));
@@ -357,7 +357,7 @@ public class MainService extends Service {
 
     url = String.format(GET_URL,
         settings.getString("server_addr", Default.server_addr),
-        this.raceStatus.competitionId,
+        settings.getLong("CompetitionId", Default.competitionId),
         this.timestamp,
         this.terminalId);
 

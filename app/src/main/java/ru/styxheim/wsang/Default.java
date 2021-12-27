@@ -10,6 +10,7 @@ import java.util.TimeZone;
 
 public class Default {
   final static public int disciplineId = -1;
+  final static public long competitionId = 0;
   final static public String server_addr = "127.0.0.1";
   final static public String CHRONO_PREFS = "chrono";
   final static public long chrono_offset = 0;
