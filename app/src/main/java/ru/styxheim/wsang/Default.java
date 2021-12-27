@@ -21,6 +21,8 @@ public class Default {
   /** Filename for local competition data (notebook) */
   final static public String localRowsFile = "localRows";
 
+  final static public String remoteRowsFile = "removeRows";
+
   final static Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
 
   public static String competitionConfig(String name, Long competitionId) {

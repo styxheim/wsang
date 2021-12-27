@@ -11,29 +11,19 @@ import java.io.*;
 public class StartList implements Iterable<StartRow> {
   private ArrayList<StartRow> Rows = new ArrayList<StartRow>();
   private int genId = 0;
-  private String _FILE_NAME = "_list_start.txt";
-  /* for safe write: write to this file and rename to FILE_NAME */
-  private String _FILE_NAME_NEW = "_list_start_write.txt";
-  private String _FILE_NAME_OLD = "_list_start_old.txt";
 
   private String FILE_NAME;
   private String FILE_NAME_NEW;
   private String FILE_NAME_OLD;
 
-  public StartList() {
-    setOutput(null);
+  public StartList(String file) {
+    setOutput(file);
   }
 
   public void setOutput(String file) {
-    if (file != null) {
-      FILE_NAME = file;
-      FILE_NAME_NEW = file + ".new";
-      FILE_NAME_OLD = file + ".old";
-    } else {
-      FILE_NAME = _FILE_NAME;
-      FILE_NAME_OLD = _FILE_NAME_OLD;
-      FILE_NAME_NEW = _FILE_NAME_NEW;
-    }
+    FILE_NAME = file;
+    FILE_NAME_NEW = file + ".new";
+    FILE_NAME_OLD = file + ".old";
   }
 
 

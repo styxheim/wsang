@@ -166,11 +166,10 @@ public class SettingsActivity extends Activity {
         Intent intent = new Intent(SettingsActivity.this, MainService.class);
         stopService(intent);
 
-        StartList starts = new StartList();
+        StartList starts = new StartList(Default.remoteRowsFile);
         starts.Save(getApplicationContext());
 
-        StartList starts_local = new StartList();
-        starts_local.setOutput(Default.competitionJson(Default.localRowsFile, settings));
+        StartList starts_local = new StartList(Default.competitionJson(Default.localRowsFile, settings));
         starts_local.Save(getApplicationContext());
 
         SharedPreferences.Editor ed;
@@ -235,8 +234,8 @@ public class SettingsActivity extends Activity {
   }
 
   public void exportOnClick(View v) {
-    StartList starts = new StartList();
-    StartList starts_local = new StartList();
+    StartList starts = new StartList(Default.remoteRowsFile);
+    StartList starts_local = new StartList(Default.competitionJson(Default.localRowsFile, settings));
     ServerStatus ss = new ServerStatus();
     File raceFile;
     SharedPreferences race_settings = Default.getCompetitionsSharedPreferences(SettingsActivity.this, "race", settings, Context.MODE_PRIVATE);
@@ -244,7 +243,6 @@ public class SettingsActivity extends Activity {
     ss.raceStatus = new RaceStatus(race_settings);
     raceFile = new File(Environment.getExternalStorageDirectory(), "tid_" + ss.terminalStatus.get(0).terminalId + ".json");
     starts.Load(getApplicationContext());
-    starts_local.setOutput(Default.competitionJson(Default.localRowsFile, settings));
     starts_local.Load(this);
 
     try {

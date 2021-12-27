@@ -265,7 +265,7 @@ public class MainService extends Service {
     // The service is being created
     Log.i("wsa-ng-service", _("service created"));
     EventBus.getDefault().register(this);
-    starts = new StartList();
+    starts = new StartList(Default.remoteRowsFile);
     /* Load data */
     starts.Load(getApplicationContext());
 
@@ -674,7 +674,7 @@ public class MainService extends Service {
               status.raceStatus.competitionId));
           /* clear all data */
           _updateTimeStamp(0);
-          starts = new StartList();
+          starts = new StartList(Default.remoteRowsFile);
           starts.Save(getApplicationContext());
 
           SharedPreferences chrono_data = Default.getCompetitionsSharedPreferences(this, "chrono_data", settings, Context.MODE_PRIVATE);

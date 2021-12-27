@@ -93,8 +93,7 @@ public class MainActivity extends Activity {
       this.getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED);
     }
 
-    local_startList = new StartList();
-    local_startList.setOutput(Default.competitionJson(Default.localRowsFile, settings));
+    local_startList = new StartList(Default.competitionJson(Default.localRowsFile, settings));
     local_startList.Load(this);
   }
 
