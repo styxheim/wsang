@@ -21,6 +21,11 @@ class ServerSetupActivity : AppCompatActivity() {
   private val moshi: Moshi = Moshi.Builder().build()
   private val competitionAdapter = moshi.adapter(API.RaceStatus::class.java)
 
+  /** Key to store setup's address. It is avoid collisions with 'server_address' key
+   *  in case of first start.
+   */
+  private val ServerAddressSetupKey = "server_addr_for_setup";
+
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
 
@@ -72,6 +77,7 @@ class ServerSetupActivity : AppCompatActivity() {
       putLong("CompetitionId", competition.CompetitionId)
       putString("TerminalId", terminalId)
       putBoolean("newServerAddressRequired", false)
+      remove(ServerAddressSetupKey)
       apply()
     }
 
@@ -146,7 +152,7 @@ class ServerSetupActivity : AppCompatActivity() {
 
         loadCompetition(server_addr)
         with(mainSettings.edit()) {
-          putString("server_addr", server_addr)
+          putString(ServerAddressSetupKey, server_addr)
           apply()
         }
       }
@@ -154,6 +160,10 @@ class ServerSetupActivity : AppCompatActivity() {
 
     mainSettings.getString("server_addr", null)?.let {
       binding!!.serverAddress.setText(it)
+    }.run {
+      mainSettings.getString(ServerAddressSetupKey, null)?.let {
+        binding!!.serverAddress.setText(it)
+      }
     }
   }
 
