@@ -144,17 +144,19 @@ class ServerSetupActivity : AppCompatActivity() {
     binding!!.serverSetupErrorMessage.visibility = View.VISIBLE
   }
 
+  private fun saveTemporaryServerAddress(newServerAddress: String) {
+    loadCompetition(newServerAddress)
+    with(mainSettings.edit()) {
+      putString(ServerAddressSetupKey, newServerAddress)
+      apply()
+    }
+  }
+
   private fun setupView() {
     clearError()
     binding!!.serverApply.setOnClickListener {
       if (binding!!.serverAddress.text.isNotEmpty()) {
-        val server_addr = binding!!.serverAddress.text.toString()
-
-        loadCompetition(server_addr)
-        with(mainSettings.edit()) {
-          putString(ServerAddressSetupKey, server_addr)
-          apply()
-        }
+        saveTemporaryServerAddress(binding!!.serverAddress.text.toString())
       }
     }
 
