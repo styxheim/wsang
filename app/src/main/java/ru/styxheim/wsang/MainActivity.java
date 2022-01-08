@@ -1151,14 +1151,6 @@ public class MainActivity extends Activity {
 
       _selectByRowId();
 
-      if (!is_local && disp.startGate && ((disp.gates.size() == 0) ||
-          (disp.gates.size() != 0 && strike))) {
-        // instand dialog: when only start gate
-        // or not striked on linear judge
-        _show_edit_dialog();
-        return;
-      }
-
       popup = new PopupMenu(MainActivity.this, v);
 
       if (disp.startGate || is_local) {
