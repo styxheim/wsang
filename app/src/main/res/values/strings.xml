@@ -13,8 +13,9 @@
     <string name="new_crew_cancel_title">Cancel</string>
     <string name="new_crew_save_title">Add</string>
     <string name="edit_crew_save_title">Save</string>
-    <string name="new_crew_dialog_title">Lap edit</string>
-
+    <string name="crew_dialog_new_title">New lap</string>
+    <string name="crew_dialog_edit_title">Lap edit</string>
+    <string name="create_dialog_to_notebook_title">Save to notebook</string>
     <string name="crew_short"> C </string>
     <string name="lap_short"> L </string>
 

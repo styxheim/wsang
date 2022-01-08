@@ -13,7 +13,9 @@
     <string name="new_crew_cancel_title">Отменить</string>
     <string name="new_crew_save_title">Добавить</string>
     <string name="edit_crew_save_title">Сохранить</string>
-    <string name="new_crew_dialog_title">Редактирование заезда</string>
+    <string name="crew_dialog_new_title">Добавление нового заезда</string>
+    <string name="crew_dialog_edit_title">Редактирование заезда</string>
+    <string name="create_dialog_to_notebook_title">Сохранить в записную книжку</string>
 
     <string name="crew_short"> Э </string>
     <string name="lap_short"> З </string>

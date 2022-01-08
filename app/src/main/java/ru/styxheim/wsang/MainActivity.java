@@ -259,6 +259,7 @@ public class MainActivity extends Activity {
 
     lap_values.add(0);
     sled = new StartLineEditDialog(-1, -1, selectedDisciplineNum, false);
+    sled.setTitle(getString(R.string.create_dialog_to_notebook_title));
     sled.setLapValues(lap_values);
     sled.setDisciplines(disp_names);
     sled.setStartLineEditDialogListener(new StartLineEditDialog.StartLineEditDialogListener() {
@@ -321,6 +322,7 @@ public class MainActivity extends Activity {
     }
 
     Log.d("wsa-ng-ui", "show sled");
+    sled.setTitle(getString(R.string.crew_dialog_new_title));
     sled.setLapValues(lap_values);
     sled.setDisciplines(disp_names);
     sled.setStartLineEditDialogListener(new StartLineEditDialog.StartLineEditDialogListener() {
@@ -1679,6 +1681,7 @@ public class MainActivity extends Activity {
       } else {
         sled = new StartLineEditDialog(crew, lap_values.indexOf(lap), -1, true);
       }
+      sled.setTitle(getString(R.string.crew_dialog_edit_title));
       sled.setLapValues(lap_values);
       sled.setDisciplines(disps);
 

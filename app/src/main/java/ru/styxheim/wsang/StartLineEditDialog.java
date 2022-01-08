@@ -24,6 +24,8 @@ public class StartLineEditDialog extends DialogFragment
 
   private StartLineEditDialogListener listener;
 
+  private String title = "";
+
   private int crew_chosen;
   private int lap_chosen;
   private int disp_choosen;
@@ -61,6 +63,10 @@ public class StartLineEditDialog extends DialogFragment
 
   public void setDisciplines(ArrayList<String> disps) {
     this.disps = disps;
+  }
+
+  public void setTitle(String title) {
+    this.title = title;
   }
 
   @Override
@@ -124,6 +130,12 @@ public class StartLineEditDialog extends DialogFragment
     });
   }
 
+  private void updateTitle(View v) {
+    TextView textView = (TextView) v.findViewById(R.id.start_line_edit_dialog_title);
+
+    textView.setText(this.title);
+  }
+
   public View onCreateView(LayoutInflater inflater, ViewGroup container,
                            Bundle savedInstanceState) {
     View v = inflater.inflate(R.layout.start_line_edit_dialog, container, false);
@@ -131,6 +143,7 @@ public class StartLineEditDialog extends DialogFragment
     Button b;
 
     setupDisciplineButton(v);
+    updateTitle(v);
 
     b = (Button) v.findViewById(R.id.start_line_edit_dialog_save);
     b.setOnClickListener(this);
