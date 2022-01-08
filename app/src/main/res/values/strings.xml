@@ -43,7 +43,7 @@
     <string name="yes">Yes</string>
     <string name="no">No</string>
 
-    <string name="notebook_title">Notes</string>
+    <string name="notebook_title">Notebook</string>
 
     <string name="server_apply">Connect</string>
     <string name="server_addr_description">Type the server IP and port</string>

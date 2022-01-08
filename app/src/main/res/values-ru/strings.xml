@@ -44,7 +44,7 @@
     <string name="yes">Да</string>
     <string name="no">Нет</string>
 
-    <string name="notebook_title">Лист для заметок</string>
+    <string name="notebook_title">Записная книжка</string>
 
     <string name="server_apply">Использовать</string>
     <string name="server_addr_description">Введите IP адрес сервера и порт</string>
