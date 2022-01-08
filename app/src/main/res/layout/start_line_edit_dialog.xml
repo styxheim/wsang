@@ -9,11 +9,12 @@
 
 	<TextView
 		android:id="@+id/start_line_edit_dialog_title"
-		android:layout_width="wrap_content"
+		android:layout_width="match_parent"
 		android:layout_height="wrap_content"
+		android:layout_marginBottom="10dp"
+		android:gravity="center_horizontal"
 		android:text="@string/crew_dialog_new_title"
-		android:textAppearance="?android:attr/textAppearanceLarge"
-		android:layout_marginBottom="10dp"/>
+		android:textAppearance="@style/TextAppearance.AppCompat.Medium" />
 
 	<Button
 		android:layout_width="match_parent"
