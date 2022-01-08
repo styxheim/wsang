@@ -46,6 +46,7 @@ class API {
 
   @JsonClass(generateAdapter = true)
   open class CompetitionListResponse(
+    val ServerId: String,
     val Competitions: MutableList<RaceStatus> = mutableListOf(),
   ) : Response()
 }

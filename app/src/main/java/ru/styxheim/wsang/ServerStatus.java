@@ -11,6 +11,7 @@ import java.io.*;
 
 public class ServerStatus {
   public Error error;
+  String serverId;
   RaceStatus raceStatus;
   ArrayList<StartRow.SyncData> lap = new ArrayList<StartRow.SyncData>();
   ArrayList<TerminalStatus> terminalStatus = new ArrayList<TerminalStatus>();
@@ -64,6 +65,9 @@ public class ServerStatus {
     jr.beginObject();
     while (jr.hasNext()) {
       switch (jr.nextName()) {
+        case "ServerId":
+          serverId = jr.nextString();
+          break;
         case RaceStatus.CLASS_NAME:
           raceStatus = new RaceStatus(jr);
           break;
@@ -94,6 +98,9 @@ public class ServerStatus {
 
   public void saveJSON(JsonWriter jw) throws IOException {
     jw.beginObject();
+
+    jw.name("ServerId");
+    jw.value(serverId);
 
     if (raceStatus != null) {
       jw.name(RaceStatus.CLASS_NAME);

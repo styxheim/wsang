@@ -43,6 +43,7 @@ public class MainService extends Service {
   private TerminalStatus terminalStatus;
   private String terminalId = "";
   private RaceStatus raceStatus;
+  private String serverId = "";
 
   protected int syncTimeout = 3000;
 
@@ -272,6 +273,7 @@ public class MainService extends Service {
     this.terminalStatus = new TerminalStatus(race_settings);
     this.raceStatus = new RaceStatus(race_settings);
     this.terminalId = settings.getString("TerminalId", "");
+    this.serverId = settings.getString("ServerId", Default.serverId);
 
     this.timestamp = settings.getLong(raceStatus.TIMESTAMP, 0);
 
@@ -280,7 +282,7 @@ public class MainService extends Service {
       return;
     }
 
-    Log.i("wsa-ng-service", _("TerminalId=" + this.terminalId));
+    Log.i("wsa-ng-service", _("TerminalId=" + this.terminalId + ", ServerId=" + this.serverId));
 
     IntentFilter filter;
     filter = new IntentFilter(Intent.ACTION_SCREEN_ON);
@@ -348,6 +350,25 @@ public class MainService extends Service {
     Log.i("wsa-ng-service", _("Boot End"));
   }
 
+  private boolean _sync_receive_assert_serverStatus(ServerStatus serverStatus) {
+    if (!serverStatus.serverId.equals(serverId)) {
+      ServerStatus newServerStatus = new ServerStatus();
+
+      newServerStatus.error = new ServerStatus.Error();
+      newServerStatus.error.text = getString(R.string.server_id_changed);
+
+      EventBus.getDefault().post(new EventMessage.RSyncResult(newServerStatus));
+
+      Log.e("wsa-ng-service", _("[RECEIVE] ServerId " + serverStatus.serverId + " is not equal to expected (" + serverId + "). ServerStatus message dropped."));
+
+      /* ServerStatus must be posted. Next scheduling depends of this (look to _event_receive()) */
+      EventBus.getDefault().post(new EventMessage.RSyncResult(newServerStatus));
+      return false;
+    }
+
+    return true;
+  }
+
   /* receive and sync data from server */
   private void _sync_receive() {
     final String url;
@@ -390,6 +411,9 @@ public class MainService extends Service {
           }
         }
         EventBus.getDefault().post(new EventMessage.RSyncResult(serverStatus));
+
+        if( _sync_receive_assert_serverStatus(serverStatus) )
+          return;
       }
 
       public void onFailure(Call call, IOException e) {

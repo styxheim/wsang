@@ -56,4 +56,6 @@
 
     <string name="server_setup_new_title">Connect to another server?</string>
     <string name="server_setup_new_message">Do you want to connect to another server or choose another competition?</string>
+
+    <string name="server_id_changed">Server is changed. Contact to your administrator or press the "Edit" button in settings.</string>
 </resources>

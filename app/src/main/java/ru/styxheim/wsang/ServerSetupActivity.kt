@@ -63,10 +63,10 @@ class ServerSetupActivity : AppCompatActivity() {
     Log.i("wsa-ng-setup", "TerminalId: ".plus(terminalId))
   }
 
-  private fun setServer(serverAddress: String, competition: API.RaceStatus) {
+  private fun setServer(serverAddress: String, serverId: String, competition: API.RaceStatus) {
     val intent = Intent(this, Launcher::class.java)
     val raceSettings = getSharedPreferences(
-      Default.competitionConfig("race", competition.CompetitionId),
+      Default.competitionConfig("race", serverId, competition.CompetitionId),
       MODE_PRIVATE
     )
 
@@ -76,6 +76,7 @@ class ServerSetupActivity : AppCompatActivity() {
       putString("server_addr", serverAddress)
       putLong("CompetitionId", competition.CompetitionId)
       putString("TerminalId", terminalId)
+      putString("ServerId", serverId)
       putBoolean("newServerAddressRequired", false)
       remove(ServerAddressSetupKey)
       apply()
@@ -92,6 +93,7 @@ class ServerSetupActivity : AppCompatActivity() {
 
   private fun chooseCompetitionIdFromList(
     serverAddress: String,
+    serverId: String,
     competitions: MutableList<API.RaceStatus>
   ) {
     val builder = AlertDialog.Builder(this)
@@ -100,7 +102,7 @@ class ServerSetupActivity : AppCompatActivity() {
     builder.setTitle(R.string.server_choose_competition)
 
     builder.setItems(competitionsNames) { _, which ->
-      setServer(serverAddress, competitions[which])
+      setServer(serverAddress, serverId, competitions[which])
     }
 
     val dialog = builder.create()
@@ -129,7 +131,11 @@ class ServerSetupActivity : AppCompatActivity() {
           if (terminalActivityList.Competitions.count() == 0) {
             setError(getString(R.string.server_no_active_competitions))
           } else {
-            chooseCompetitionIdFromList(serverAddress, terminalActivityList.Competitions)
+            chooseCompetitionIdFromList(
+              serverAddress,
+              terminalActivityList.ServerId,
+              terminalActivityList.Competitions
+            )
           }
         }
       })
